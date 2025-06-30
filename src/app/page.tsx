@@ -7,12 +7,10 @@ import { CurriculumData } from "@/lib/database"
 import { AppLayout } from "@/components/app-layout"
 import { CurriculaOverview } from "@/components/ui/curricula-overview"
 import { LearningCalendar } from "@/components/ui/learning-calendar"
-import { BookCarousel } from "@/components/ui/book-carousel"
-import { ResourcesTable } from "@/components/ui/resources-table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, Calendar, FileText, TrendingUp, Clock } from "lucide-react"
+import { BookOpen, Calendar, FileText, Clock } from "lucide-react"
 
 interface DashboardData {
   curricula: CurriculumData[]
@@ -228,15 +226,6 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
-          </div>
-
-          {/* Resources Section */}
-          <div className="space-y-6 min-w-0">
-            {/* Books Carousel - Primary focus */}
-            <BookCarousel books={dashboardData.bookResources} />
-
-            {/* Other Resources Table */}
-            <ResourcesTable resources={dashboardData.otherResources} />
           </div>
         </div>
       </div>

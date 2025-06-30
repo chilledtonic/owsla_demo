@@ -39,13 +39,12 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-sm min-w-[200px]">Title</TableHead>
-                <TableHead className="text-sm min-w-[120px]">Author</TableHead>
-                <TableHead className="text-sm min-w-[100px]">Source</TableHead>
-                <TableHead className="text-sm min-w-[80px]">Type</TableHead>
-                <TableHead className="text-sm min-w-[80px]">Time</TableHead>
-                <TableHead className="text-sm min-w-[100px]">Module</TableHead>
-                <TableHead className="text-sm min-w-[80px]">Actions</TableHead>
+                <TableHead className="text-xs">Resource</TableHead>
+                <TableHead className="text-xs w-24">Author</TableHead>
+                <TableHead className="text-xs w-16">Type</TableHead>
+                <TableHead className="text-xs w-16">Time</TableHead>
+                <TableHead className="text-xs w-16">Day</TableHead>
+                <TableHead className="text-xs w-12">Link</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -55,11 +54,11 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => router.push(`/curriculum/${resource.curriculumId}`)}
                 >
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0 max-w-[180px]">
-                        <p className="font-medium text-sm line-clamp-2">
+                  <TableCell className="py-2 pr-2">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <FileText className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-xs line-clamp-2 leading-tight">
                           {resource.title}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
@@ -68,48 +67,39 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="max-w-[100px]">
-                      <p className="text-sm truncate">{resource.author}</p>
+                  <TableCell className="py-2 px-2">
+                    <div className="w-24">
+                      <p className="text-xs truncate">{resource.author}</p>
                       {resource.year && (
                         <p className="text-xs text-muted-foreground">{resource.year}</p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <p className="text-sm truncate max-w-[80px]">{resource.journal}</p>
-                  </TableCell>
-                  <TableCell className="py-3">
-                    <Badge variant="outline" className="text-xs">
-                      {resource.type}
+                  <TableCell className="py-2 px-1">
+                    <Badge variant="outline" className="text-xs px-1 py-0">
+                      {resource.type === 'research_paper' ? 'Paper' : 
+                       resource.type === 'article' ? 'Article' :
+                       resource.type}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <p className="text-sm">{resource.readingTime}</p>
+                  <TableCell className="py-2 px-1">
+                    <p className="text-xs">{resource.readingTime}</p>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="max-w-[80px]">
-                      <p className="text-sm font-medium">Day {resource.day}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {resource.moduleTitle}
-                      </p>
-                    </div>
+                  <TableCell className="py-2 px-1">
+                    <p className="text-xs font-medium">{resource.day}</p>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex items-center gap-2">
-                      {resource.doi && (
-                        <a
-                          href={`https://doi.org/${resource.doi}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          DOI
-                        </a>
-                      )}
-                    </div>
+                  <TableCell className="py-2 pl-1">
+                    {resource.doi && (
+                      <a
+                        href={`https://doi.org/${resource.doi}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

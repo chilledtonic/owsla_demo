@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, LogOut, User } from "lucide-react"
+import { Settings, LogOut, User, BookOpen, LayoutDashboard } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { CurriculumData } from "@/lib/database"
 import {
@@ -40,6 +40,30 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
         <h2 className="text-lg font-semibold"><a href="/">Owsla</a></h2>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/" className="flex items-center gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span className="text-sm">Dashboard</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/library" className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-sm">Library</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Your Curricula</SidebarGroupLabel>
           <SidebarGroupContent>
