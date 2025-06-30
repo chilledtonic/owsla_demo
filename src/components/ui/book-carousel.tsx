@@ -8,6 +8,7 @@ import { Button } from "./button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { getAmazonIsbnUrl } from "@/lib/utils"
 
 interface BookCarouselProps {
   books: BookResource[]
@@ -29,6 +30,15 @@ export function BookCarousel({ books }: BookCarouselProps) {
 
   const handleNext = () => {
     setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))
+  }
+
+  const handleBookClick = (book: BookResource) => {
+    if (book.isbn && book.isbn !== 'N/A') {
+      const url = getAmazonIsbnUrl(book.isbn)
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    }
   }
 
   if (books.length === 0) {
@@ -84,7 +94,7 @@ export function BookCarousel({ books }: BookCarouselProps) {
             <Card 
               key={`${book.curriculumId}-${startIndex + index}`}
               className="cursor-pointer hover:shadow-md transition-shadow h-full"
-              onClick={() => router.push(`/curriculum/${book.curriculumId}`)}
+              onClick={() => handleBookClick(book)}
             >
               <CardContent className="p-3 h-full">
                 <div className="flex flex-col items-center space-y-3 h-full">

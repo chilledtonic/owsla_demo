@@ -6,6 +6,7 @@ import { Badge } from "./badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table"
 import { ExternalLink, FileText } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { handleResourceClick } from "@/lib/utils"
 
 interface ResourcesTableProps {
   resources: OtherResource[]
@@ -52,7 +53,7 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
                 <TableRow 
                   key={`${resource.curriculumId}-${resource.day}-${index}`}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => router.push(`/curriculum/${resource.curriculumId}`)}
+                  onClick={() => handleResourceClick(resource)}
                 >
                   <TableCell className="py-2 pr-2">
                     <div className="flex items-start gap-2 min-w-0">
@@ -89,16 +90,10 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
                     <p className="text-xs font-medium">{resource.day}</p>
                   </TableCell>
                   <TableCell className="py-2 pl-1">
-                    {resource.doi && (
-                      <a
-                        href={`https://doi.org/${resource.doi}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                    {resource.doi ? (
+                      <ExternalLink className="h-3 w-3 text-blue-600" />
+                    ) : (
+                      <ExternalLink className="h-3 w-3 text-muted-foreground" />
                     )}
                   </TableCell>
                 </TableRow>

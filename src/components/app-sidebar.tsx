@@ -82,21 +82,6 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="#" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span className="text-sm">Preferences</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
       
       <SidebarFooter className="p-4">

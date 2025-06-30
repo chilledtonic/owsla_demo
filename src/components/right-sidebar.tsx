@@ -16,9 +16,11 @@ import {
   Timer,
   TrendingUp,
   PlayCircle,
-  PauseCircle
+  PauseCircle,
+  ChevronRight
 } from "lucide-react"
 import * as React from "react"
+import { handleResourceClick } from "@/lib/utils"
 
 interface DailyModule {
   day: number
@@ -216,8 +218,6 @@ export function RightSidebar({
         </CardContent>
       </Card>
 
-
-
       {/* Today's Learning Checklist */}
       {currentModule && (
         <Card>
@@ -285,6 +285,7 @@ export function RightSidebar({
                 <div
                   key={index}
                   className="p-2 bg-muted/30 rounded border hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => handleResourceClick(reading)}
                 >
                   <div className="flex justify-between items-start mb-1">
                     <h5 className="text-xs font-medium leading-tight">{reading.title}</h5>
@@ -330,8 +331,6 @@ export function RightSidebar({
           </CardContent>
         </Card>
       )}
-
-
     </div>
   )
 }

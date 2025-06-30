@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Clock, Target, BookOpen, Lightbulb, CheckCircle, MapPin, Users, Calendar, Timer, ChevronLeft, ChevronRight } from "lucide-react"
+import { getAmazonIsbnUrl, getDoiUrl, handleResourceClick } from "@/lib/utils"
 
 interface DailyModule {
   day: number
@@ -34,6 +35,7 @@ interface DailyModule {
     reading_time: string
     focus: string
     isbn?: string
+    doi?: string
   }>
 }
 
@@ -59,7 +61,22 @@ export function CurriculumContent({ curriculum, currentDay, onPreviousDay, onNex
   const progress = (currentDay / totalDays) * 100
 
   const currentModule = curriculum.daily_modules[currentDay - 1]
-  const nextModule = curriculum.daily_modules[currentDay]
+  const nextModule = currentDay < curriculum.daily_modules.length 
+    ? curriculum.daily_modules[currentDay] 
+    : null
+
+  const handlePrimaryBookClick = () => {
+    if (curriculum.primary_resource.isbn && curriculum.primary_resource.isbn !== 'N/A') {
+      const url = getAmazonIsbnUrl(curriculum.primary_resource.isbn)
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      }
+    }
+  }
+
+  const handleSupplementaryClick = (reading: { isbn?: string; doi?: string }) => {
+    handleResourceClick(reading)
+  }
 
   return (
     <div className="flex-1 p-6 space-y-6 max-w-5xl">
@@ -184,7 +201,7 @@ export function CurriculumContent({ curriculum, currentDay, onPreviousDay, onNex
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4">
+            <div className="flex gap-4 cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors" onClick={handlePrimaryBookClick}>
               <BookCover 
                 isbn={curriculum.primary_resource.isbn}
                 title={curriculum.primary_resource.title}
@@ -254,7 +271,11 @@ export function CurriculumContent({ curriculum, currentDay, onPreviousDay, onNex
           <AccordionContent className="pt-4">
             <div className="space-y-4">
               {currentModule.supplementary_readings.map((reading, index) => (
-                <Card key={index} className="p-4">
+                <Card 
+                  key={index} 
+                  className="p-4 cursor-pointer hover:shadow-md transition-shadow" 
+                  onClick={() => handleSupplementaryClick(reading)}
+                >
                   <div className="space-y-2">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-sm">{reading.title}</h4>
