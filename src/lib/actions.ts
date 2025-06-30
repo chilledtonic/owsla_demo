@@ -1,6 +1,6 @@
 'use server'
 
-import { getLatestCurriculumByUserId, getCurriculumsByUserId } from './database'
+import { getLatestCurriculumByUserId, getCurriculumsByUserId, getCurriculumById } from './database'
 
 export async function fetchLatestCurriculum(userId: string) {
   try {
@@ -19,5 +19,15 @@ export async function fetchUserCurricula(userId: string) {
   } catch (error) {
     console.error('Error fetching user curricula:', error)
     return { success: false, error: 'Failed to fetch curricula' }
+  }
+}
+
+export async function fetchCurriculumById(id: number) {
+  try {
+    const curriculum = await getCurriculumById(id)
+    return { success: true, data: curriculum }
+  } catch (error) {
+    console.error('Error fetching curriculum by ID:', error)
+    return { success: false, error: 'Failed to fetch curriculum' }
   }
 } 

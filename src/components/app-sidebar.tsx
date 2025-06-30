@@ -2,6 +2,7 @@
 
 import { Settings, LogOut, User } from "lucide-react"
 import { useUser } from "@stackframe/stack"
+import { CurriculumData } from "@/lib/database"
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +26,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  onCurriculumSelect?: (curriculum: CurriculumData) => void
+  activeCurriculumId?: number
+}
+
+export function AppSidebar({ onCurriculumSelect, activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
 
   return (
@@ -37,7 +43,10 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Your Curricula</SidebarGroupLabel>
           <SidebarGroupContent>
-            <CurriculaList />
+            <CurriculaList 
+              onCurriculumSelect={onCurriculumSelect}
+              activeCurriculumId={activeCurriculumId}
+            />
           </SidebarGroupContent>
         </SidebarGroup>
 
