@@ -13,84 +13,90 @@ import { Suspense, useEffect, useState } from "react"
 const fallbackCurriculumData = {
   curriculum: {
     title: "Welcome to Your Learning Journey",
-    executive_overview: {
-      learning_objective:
-        "Create your first curriculum to begin your personalized learning experience.",
-      time_commitment: "Get started by creating a curriculum tailored to your interests",
-      prerequisites:
-        "No prerequisites required - begin your learning journey today",
-      learning_outcome:
-        "You'll have access to AI-generated curricula customized for your learning goals",
-    },
+    executive_overview: "Create your first curriculum to begin your personalized learning experience. Use the sidebar to generate a curriculum tailored to your interests and learning goals.",
     visual_learning_path: {
-      milestone_1: "Create Your First Curriculum",
-      milestone_2: "Begin Your Learning Journey",
-      milestone_3: "Track Your Progress",
-      milestone_4: "Complete Your Studies",
-      milestone_5: "Continue Learning",
+      day_1: "Create Your First Curriculum",
+      day_2: "Begin Your Learning Journey",
+      day_3: "Track Your Progress",
+      day_4: "Complete Your Studies",
+      day_5: "Continue Learning",
     },
     daily_modules: [
       {
         day: 1,
-        title: "Get Started",
-        milestone: "Create Your First Curriculum",
-        primary_reading: {
-          book: "No curriculum created yet",
-          chapters: "Create your first curriculum to get started",
-          pages: "Use the sidebar to create a new curriculum",
+        date: new Date().toISOString().split('T')[0],
+        title: "Get Started with Your Learning Journey",
+        key_insights: [
+          "Personalized curricula provide structured learning paths",
+          "AI-generated content adapts to your specific goals",
+          "Self-directed learning requires clear objectives and timelines"
+        ],
+        core_concepts: [
+          "Understanding curriculum structure",
+          "Setting learning objectives",
+          "Creating study schedules",
+          "Tracking progress effectively"
+        ],
+        time_allocation: {
+          total: "30 minutes",
+          primary_text: "20 minutes",
+          supplementary_materials: "10 minutes"
         },
-        time_allocation: "Create a curriculum to begin your learning journey",
+        knowledge_benchmark: {
+          connect: "Understand how structured learning applies to your goals",
+          explain: "Describe the benefits of personalized curriculum design",
+          awareness: "Recognize the importance of self-directed learning",
+          recognize: "Identify key components of effective curricula",
+          understand: "Grasp the concept of adaptive learning systems"
+        },
+        practical_connections: "Use the sidebar to create your first curriculum based on a topic you're interested in learning. Consider your available time, current knowledge level, and learning preferences.",
+        primary_reading_focus: "Understanding how to get started with curriculum creation and learning goal setting",
+        supplementary_readings: []
       },
     ],
+    primary_resource: {
+      title: "Getting Started Guide",
+      author: "Learning Platform",
+      isbn: "9780000000000"
+    }
   },
 }
 
 function transformDatabaseCurriculum(dbCurriculum: any, rawCurriculumData?: CurriculumData) {
-  // Transform visual learning path from day_1, day_2... to milestone_1, milestone_2...
-  const visualLearningPath = {
-    milestone_1: "Create Your First Curriculum",
-    milestone_2: "Begin Your Learning Journey", 
-    milestone_3: "Track Your Progress",
-    milestone_4: "Complete Your Studies",
-    milestone_5: "Continue Learning",
-  }
-  
-  if (dbCurriculum.visual_learning_path) {
-    const pathEntries = Object.entries(dbCurriculum.visual_learning_path)
-    pathEntries.forEach(([key, value], index) => {
-      const milestoneKey = `milestone_${Math.min(index + 1, 5)}` as keyof typeof visualLearningPath
-      if (milestoneKey in visualLearningPath) {
-        visualLearningPath[milestoneKey] = String(value)
-      }
-    })
-  }
-
-  // Transform daily modules to match component expectations
+  // Transform daily modules with complete data structure
   const dailyModules = (dbCurriculum.daily_modules || []).map((module: any) => ({
     day: module.day || 1,
+    date: module.date || new Date().toISOString().split('T')[0],
     title: String(module.title || "Untitled Module"),
-    milestone: String(module.title || "Module Milestone"), // Use title as milestone for now
-    primary_reading: {
-      book: String(dbCurriculum.primary_resource?.title || rawCurriculumData?.primary_resource_title || "Primary Reading"),
-      chapters: "As specified in curriculum",
-      pages: String(module.primary_reading_focus || "Reading focus as defined"),
-      isbn: rawCurriculumData?.primary_resource_isbn || dbCurriculum.primary_resource?.isbn || null
+    key_insights: module.key_insights || ["Key insights for this module"],
+    core_concepts: module.core_concepts || ["Core concepts to master"],
+    time_allocation: module.time_allocation || {
+      total: "60 minutes",
+      primary_text: "42 minutes", 
+      supplementary_materials: "18 minutes"
     },
-    time_allocation: typeof module.time_allocation === 'object' 
-      ? String(module.time_allocation.total || "Time as allocated")
-      : String(module.time_allocation || "Time not specified")
+    knowledge_benchmark: module.knowledge_benchmark || {
+      connect: "Connect concepts to real-world applications",
+      explain: "Explain key concepts in your own words",
+      awareness: "Be aware of the broader context and significance",
+      recognize: "Recognize patterns and relationships",
+      understand: "Understand fundamental principles"
+    },
+    practical_connections: module.practical_connections || "Apply these concepts in practical situations",
+    primary_reading_focus: module.primary_reading_focus || "Focus on understanding the core concepts",
+    supplementary_readings: module.supplementary_readings || []
   }))
 
   return {
     title: String(dbCurriculum.title || "Untitled Curriculum"),
-    executive_overview: {
-      learning_objective: String(dbCurriculum.executive_overview || "No learning objective provided"),
-      time_commitment: `${dbCurriculum.daily_modules?.length || 0} days of intensive study`,
-      prerequisites: String(dbCurriculum.knowledge_framework?.foundational_concepts || "Prerequisites as defined in curriculum"),
-      learning_outcome: String(dbCurriculum.knowledge_framework?.synthesis_goals || "Learning outcomes as defined in curriculum")
-    },
-    visual_learning_path: visualLearningPath,
-    daily_modules: dailyModules
+    executive_overview: String(dbCurriculum.executive_overview || "This curriculum provides comprehensive coverage of the subject matter"),
+    visual_learning_path: dbCurriculum.visual_learning_path || {},
+    daily_modules: dailyModules,
+    primary_resource: dbCurriculum.primary_resource || {
+      title: rawCurriculumData?.primary_resource_title || "Primary Resource",
+      author: rawCurriculumData?.primary_resource_author || "Author",
+      isbn: rawCurriculumData?.primary_resource_isbn || dbCurriculum.primary_resource?.isbn || "9780000000000"
+    }
   }
 }
 
@@ -99,6 +105,7 @@ export default function Dashboard() {
   const [currentCurriculum, setCurrentCurriculum] = useState<CurriculumData | null>(null)
   const [curriculumData, setCurriculumData] = useState(fallbackCurriculumData)
   const [loading, setLoading] = useState(true)
+  const [currentDay, setCurrentDay] = useState(1)
 
   // Load initial curriculum when user is available
   useEffect(() => {
@@ -112,6 +119,7 @@ export default function Dashboard() {
           setCurriculumData({
             curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data, result.data)
           })
+          setCurrentDay(1) // Reset to day 1 when loading initial curriculum
         }
       } catch (error) {
         console.error('Error loading initial curriculum:', error)
@@ -132,6 +140,7 @@ export default function Dashboard() {
         setCurriculumData({
           curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data, result.data)
         })
+        setCurrentDay(1) // Reset to day 1 when loading new curriculum
       }
     } catch (error) {
       console.error('Error loading selected curriculum:', error)
@@ -140,13 +149,21 @@ export default function Dashboard() {
     }
   }
 
+  const handlePreviousDay = () => {
+    setCurrentDay(prev => Math.max(1, prev - 1))
+  }
+
+  const handleNextDay = () => {
+    setCurrentDay(prev => Math.min(curriculumData.curriculum.daily_modules.length, prev + 1))
+  }
+
   if (!user) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
+      <div className="flex min-h-screen w-full">
         <AppSidebar 
           onCurriculumSelect={handleCurriculumSelect}
           activeCurriculumId={currentCurriculum?.id}
@@ -156,11 +173,21 @@ export default function Dashboard() {
             {loading ? (
               <div className="flex items-center justify-center h-full">Loading curriculum...</div>
             ) : (
-              <CurriculumContent curriculum={curriculumData.curriculum} />
+              <CurriculumContent 
+                curriculum={curriculumData.curriculum}
+                currentDay={currentDay}
+                onPreviousDay={handlePreviousDay}
+                onNextDay={handleNextDay}
+              />
             )}
           </Suspense>
         </SidebarInset>
-        <RightSidebar />
+        <RightSidebar 
+          currentModule={curriculumData.curriculum.daily_modules[currentDay - 1]}
+          totalDays={curriculumData.curriculum.daily_modules.length}
+          currentDay={currentDay}
+          nextModules={curriculumData.curriculum.daily_modules.slice(currentDay)}
+        />
       </div>
     </SidebarProvider>
   )

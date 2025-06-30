@@ -2,98 +2,333 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, FileText, Clock } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { 
+  Calendar, 
+  FileText, 
+  Clock, 
+  CheckCircle2, 
+  Target, 
+  BookOpen, 
+  Timer,
+  TrendingUp,
+  PlayCircle,
+  PauseCircle
+} from "lucide-react"
 import * as React from "react"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 
-const tasks = [
-  {
-    title: "Complete Chapter 1-3 Reading",
-    type: "Reading",
-    due: "Today",
-    priority: "high",
-  },
-  {
-    title: "Sigil Construction Exercise",
-    type: "Practical",
-    due: "Tomorrow",
-    priority: "medium",
-  },
-]
+interface DailyModule {
+  day: number
+  date: string
+  title: string
+  key_insights: string[]
+  core_concepts: string[]
+  time_allocation: {
+    total: string
+    primary_text: string
+    supplementary_materials: string
+  }
+  knowledge_benchmark: {
+    connect: string
+    explain: string
+    awareness: string
+    recognize: string
+    understand: string
+  }
+  practical_connections: string
+  primary_reading_focus: string
+  supplementary_readings: Array<{
+    title: string
+    author: string
+    reading_time: string
+    focus: string
+    isbn?: string
+  }>
+}
 
-const papers = [
-  "Urban, Hugh B. 'Unleashing the Beast: Aleister Crowley...'",
-  "Partridge, Christopher. 'Lost Horizon: P.D. Ouspensky...'",
-  "Lynch, Gordon. 'What is this Religion in the Study...'",
-  "Carroll, Peter J. 'The Paradigmatic Pirate'",
-  "Sherwin, Ray. 'The Theatre of Magick'",
-  "Hine, Phil. 'Chaos Servitors: A User Guide'",
-]
+interface RightSidebarProps {
+  currentModule?: DailyModule
+  totalDays?: number
+  currentDay?: number
+  nextModules?: DailyModule[]
+}
 
-export function RightSidebar() {
-  const [date, setDate] = React.useState<Date | undefined>(new Date())
+export function RightSidebar({ 
+  currentModule, 
+  totalDays = 10, 
+  currentDay = 1, 
+  nextModules = [] 
+}: RightSidebarProps) {
+  const [studyTimer, setStudyTimer] = React.useState(0)
+  const [isTimerRunning, setIsTimerRunning] = React.useState(false)
+  const [completedConcepts, setCompletedConcepts] = React.useState<Set<number>>(new Set())
+  const [completedBenchmarks, setCompletedBenchmarks] = React.useState<Set<string>>(new Set())
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setStudyTimer(prev => prev + 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [isTimerRunning])
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const toggleConcept = (index: number) => {
+    const newCompleted = new Set(completedConcepts)
+    if (newCompleted.has(index)) {
+      newCompleted.delete(index)
+    } else {
+      newCompleted.add(index)
+    }
+    setCompletedConcepts(newCompleted)
+  }
+
+  const toggleBenchmark = (key: string) => {
+    const newCompleted = new Set(completedBenchmarks)
+    if (newCompleted.has(key)) {
+      newCompleted.delete(key)
+    } else {
+      newCompleted.add(key)
+    }
+    setCompletedBenchmarks(newCompleted)
+  }
+
+  const progress = (currentDay / totalDays) * 100
+  const conceptsProgress = currentModule ? (completedConcepts.size / currentModule.core_concepts.length) * 100 : 0
+  const benchmarkProgress = currentModule ? (completedBenchmarks.size / Object.keys(currentModule.knowledge_benchmark).length) * 100 : 0
 
   return (
-    <div className="w-80 border-l bg-muted/10 p-4 space-y-4">
-      {/* Calendar */}
+    <div className="w-80 border-l bg-muted/10 p-4 space-y-4 self-stretch">
+      {/* Study Session Timer */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Calendar
+            <Timer className="h-4 w-4" />
+            Study Session
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <CalendarComponent mode="single" selected={date} onSelect={setDate} className="border-0" />
-        </CardContent>
-      </Card>
-
-      {/* Task Blocks */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Task Blocks</CardTitle>
-          <CardDescription className="text-xs">Upcoming assignments and activities</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {tasks.map((task, index) => (
-            <div key={index} className="p-3 bg-muted/50 rounded-none space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{task.title}</span>
-                <Badge variant={task.priority === "high" ? "destructive" : "secondary"} className="text-xs">
-                  {task.type}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {task.due}
-              </div>
+        <CardContent className="space-y-4">
+          <div className="text-center">
+            <div className="text-2xl font-mono font-bold">
+              {formatTime(studyTimer)}
             </div>
-          ))}
+            <div className="text-xs text-muted-foreground">
+              Today's Study Time
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={isTimerRunning ? "destructive" : "default"}
+              onClick={() => setIsTimerRunning(!isTimerRunning)}
+              className="flex-1"
+            >
+              {isTimerRunning ? (
+                <>
+                  <PauseCircle className="h-3 w-3 mr-1" />
+                  Pause
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-3 w-3 mr-1" />
+                  Start
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setStudyTimer(0)
+                setIsTimerRunning(false)
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+          {currentModule && (
+            <div className="text-xs text-muted-foreground text-center">
+              Target: {currentModule.time_allocation.total}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Paper Database */}
+      {/* Progress Overview */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Paper Database
+            <TrendingUp className="h-4 w-4" />
+            Progress Overview
           </CardTitle>
-          <CardDescription className="text-xs">Reference materials and academic sources</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {papers.map((paper, index) => (
-              <div
-                key={index}
-                className="p-2 bg-muted/30 rounded-none text-xs leading-relaxed hover:bg-muted/50 cursor-pointer transition-colors"
-              >
-                {paper}
-              </div>
-            ))}
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Course Progress</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+            <div className="text-xs text-muted-foreground">
+              Day {currentDay} of {totalDays}
+            </div>
           </div>
+
+          {currentModule && (
+            <>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Today's Concepts</span>
+                  <span>{Math.round(conceptsProgress)}%</span>
+                </div>
+                <Progress value={conceptsProgress} className="h-2" />
+                <div className="text-xs text-muted-foreground">
+                  {completedConcepts.size} of {currentModule.core_concepts.length} completed
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Learning Objectives</span>
+                  <span>{Math.round(benchmarkProgress)}%</span>
+                </div>
+                <Progress value={benchmarkProgress} className="h-2" />
+                <div className="text-xs text-muted-foreground">
+                  {completedBenchmarks.size} of {Object.keys(currentModule.knowledge_benchmark).length} mastered
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
+
+      {/* Today's Learning Checklist */}
+      {currentModule && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Today's Checklist
+            </CardTitle>
+            <CardDescription className="text-xs">Track your mastery of core concepts</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Core Concepts</h4>
+              {currentModule.core_concepts.map((concept, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <Checkbox
+                    checked={completedConcepts.has(index)}
+                    onCheckedChange={() => toggleConcept(index)}
+                    className="mt-0.5"
+                  />
+                  <span className={`text-xs leading-relaxed ${completedConcepts.has(index) ? 'line-through text-muted-foreground' : ''}`}>
+                    {concept}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Learning Objectives</h4>
+              {Object.entries(currentModule.knowledge_benchmark).map(([key, value]) => (
+                <div key={key} className="flex items-start gap-2">
+                  <Checkbox
+                    checked={completedBenchmarks.has(key)}
+                    onCheckedChange={() => toggleBenchmark(key)}
+                    className="mt-0.5"
+                  />
+                  <div className="space-y-1">
+                    <span className={`text-xs font-medium capitalize ${completedBenchmarks.has(key) ? 'line-through text-muted-foreground' : ''}`}>
+                      {key}
+                    </span>
+                    <p className={`text-xs leading-relaxed ${completedBenchmarks.has(key) ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}>
+                      {value}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quick Access Resources */}
+      {currentModule && currentModule.supplementary_readings.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Quick Resources
+            </CardTitle>
+            <CardDescription className="text-xs">Supplementary readings for today</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {currentModule.supplementary_readings.map((reading, index) => (
+                <div
+                  key={index}
+                  className="p-2 bg-muted/30 rounded border hover:bg-muted/50 cursor-pointer transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <h5 className="text-xs font-medium leading-tight">{reading.title}</h5>
+                    <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">
+                      {reading.reading_time}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{reading.author}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upcoming Schedule */}
+      {nextModules.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Coming Up
+            </CardTitle>
+            <CardDescription className="text-xs">Next few days in your learning journey</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {nextModules.slice(0, 3).map((module, index) => (
+                <div key={module.day} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Day {module.day}</span>
+                    <span className="text-xs text-muted-foreground">{module.date}</span>
+                  </div>
+                  <p className="text-xs leading-relaxed">{module.title}</p>
+                  {index === 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      Next Up
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
     </div>
   )
 }
