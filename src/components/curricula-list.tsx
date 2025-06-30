@@ -3,6 +3,7 @@
 import { BookOpen, Plus } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { fetchUserCurricula } from "@/lib/actions"
 import { CurriculumData } from "@/lib/database"
 import {
@@ -13,12 +14,12 @@ import {
 import { Button } from "@/components/ui/button"
 
 interface CurriculaListProps {
-  onCurriculumSelect?: (curriculum: CurriculumData) => void
   activeCurriculumId?: number
 }
 
-export function CurriculaList({ onCurriculumSelect, activeCurriculumId }: CurriculaListProps) {
+export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
   const user = useUser()
+  const router = useRouter()
   const [curricula, setCurricula] = useState<CurriculumData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +81,12 @@ export function CurriculaList({ onCurriculumSelect, activeCurriculumId }: Curric
             <div className="text-sm text-muted-foreground">
               No curricula found
             </div>
-            <Button variant="outline" size="sm" className="w-full">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => router.push("/new-curriculum")}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Curriculum
             </Button>
@@ -96,7 +102,7 @@ export function CurriculaList({ onCurriculumSelect, activeCurriculumId }: Curric
         <SidebarMenuItem key={curriculum.id}>
           <SidebarMenuButton 
             isActive={activeCurriculumId === curriculum.id}
-            onClick={() => onCurriculumSelect?.(curriculum)}
+            onClick={() => router.push(`/curriculum/${curriculum.id}`)}
           >
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
@@ -114,7 +120,12 @@ export function CurriculaList({ onCurriculumSelect, activeCurriculumId }: Curric
       ))}
       
       <SidebarMenuItem>
-        <Button variant="outline" size="sm" className="w-full">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={() => router.push("/new-curriculum")}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Create New
         </Button>

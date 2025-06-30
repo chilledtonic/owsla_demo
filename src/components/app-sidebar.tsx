@@ -27,24 +27,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
 
 interface AppSidebarProps {
-  onCurriculumSelect?: (curriculum: CurriculumData) => void
   activeCurriculumId?: number
 }
 
-export function AppSidebar({ onCurriculumSelect, activeCurriculumId }: AppSidebarProps) {
+export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
 
   return (
     <Sidebar className="w-64">
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">Curricula Selector</h2>
+        <h2 className="text-lg font-semibold">Owsla</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Your Curricula</SidebarGroupLabel>
           <SidebarGroupContent>
             <CurriculaList 
-              onCurriculumSelect={onCurriculumSelect}
               activeCurriculumId={activeCurriculumId}
             />
           </SidebarGroupContent>
