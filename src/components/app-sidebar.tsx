@@ -37,7 +37,7 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   return (
     <Sidebar className="w-64">
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">Owsla</h2>
+        <h2 className="text-lg font-semibold"><a href="/">Owsla</a></h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
