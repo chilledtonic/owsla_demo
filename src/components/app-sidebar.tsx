@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, GraduationCap, Library, Settings, LogOut, User } from "lucide-react"
+import { Settings, LogOut, User } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import {
   Sidebar,
@@ -23,22 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-const curricula = [
-  {
-    title: "Chaos Magic: Theory & Practice",
-    icon: BookOpen,
-    isActive: true,
-  },
-  {
-    title: "Advanced Semiotics",
-    icon: Library,
-  },
-  {
-    title: "Postmodern Philosophy",
-    icon: GraduationCap,
-  },
-]
+import { CurriculaList } from "./curricula-list"
 
 export function AppSidebar() {
   const user = useUser()
@@ -50,20 +35,9 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Available Curricula</SidebarGroupLabel>
+          <SidebarGroupLabel>Your Curricula</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {curricula.map((curriculum) => (
-                <SidebarMenuItem key={curriculum.title}>
-                  <SidebarMenuButton asChild isActive={curriculum.isActive}>
-                    <a href="#" className="flex items-center gap-2">
-                      <curriculum.icon className="h-4 w-4" />
-                      <span className="text-sm">{curriculum.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            <CurriculaList />
           </SidebarGroupContent>
         </SidebarGroup>
 
