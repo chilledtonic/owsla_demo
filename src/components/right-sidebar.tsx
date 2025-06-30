@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ActiveJobsList } from "@/components/active-jobs-list"
+
 import { 
   Calendar, 
   FileText, 
@@ -216,11 +216,7 @@ export function RightSidebar({
         </CardContent>
       </Card>
 
-      {/* Active Jobs List */}
-      <ActiveJobsList onJobComplete={(job) => {
-        // Refresh the page when a curriculum generation is completed
-        window.location.reload()
-      }} />
+
 
       {/* Today's Learning Checklist */}
       {currentModule && (

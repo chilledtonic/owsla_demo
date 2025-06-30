@@ -46,18 +46,38 @@ function transformDatabaseCurriculum(dbCurriculum: any, rawCurriculumData?: Curr
   }
 }
 
-export default function CurriculumPage({ params }: { params: { id: string } }) {
+export default function CurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [curriculum, setCurriculum] = useState<CurriculumData | null>(null)
   const [curriculumData, setCurriculumData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentDay, setCurrentDay] = useState(1)
+  const [curriculumId, setCurriculumId] = useState<string | null>(null)
 
   useEffect(() => {
+    async function initParams() {
+      const resolvedParams = await params
+      setCurriculumId(resolvedParams.id)
+    }
+    initParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!curriculumId) return
+
     async function loadCurriculum() {
       try {
-        const result = await fetchCurriculumById(parseInt(params.id))
+        setLoading(true)
+        if (!curriculumId) return
+        
+        const id = parseInt(curriculumId)
+        if (isNaN(id)) {
+          setError("Invalid curriculum ID")
+          return
+        }
+        
+        const result = await fetchCurriculumById(id)
         if (result.success && result.data?.full_curriculum_data) {
           setCurriculum(result.data)
           setCurriculumData({
@@ -75,11 +95,9 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
     }
 
     loadCurriculum()
-  }, [params.id])
+  }, [curriculumId])
 
-  const handleCurriculumSelect = (selectedCurriculum: CurriculumData) => {
-    router.push(`/curriculum/${selectedCurriculum.id}`)
-  }
+
 
   const handlePreviousDay = () => {
     setCurrentDay(prev => Math.max(1, prev - 1))
@@ -93,7 +111,7 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
 
   if (error) {
     return (
-      <AppLayout onCurriculumSelect={handleCurriculumSelect}>
+      <AppLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Error</h1>
@@ -106,7 +124,6 @@ export default function CurriculumPage({ params }: { params: { id: string } }) {
 
   return (
     <AppLayout 
-      onCurriculumSelect={handleCurriculumSelect}
       activeCurriculumId={curriculum?.id}
       rightSidebar={
         curriculumData && (

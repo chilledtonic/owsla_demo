@@ -66,13 +66,4 @@ export async function submitNewCurriculum(payload: any) {
   }
 }
 
-// Function to get active jobs for a user
-export async function getActiveJobs(userId: string) {
-  try {
-    const activeJobs = await getActiveJobsByUserId(userId)
-    return { success: true, data: activeJobs }
-  } catch (error) {
-    console.error('Error fetching active jobs:', error)
-    return { success: false, error: 'Failed to fetch active jobs' }
-  }
-} 
+ 
