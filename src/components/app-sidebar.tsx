@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
+import { JobQueue } from "./job-queue"
 
 interface AppSidebarProps {
   activeCurriculumId?: number
@@ -47,6 +48,15 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             />
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {user && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Job Queue</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <JobQueue userId={user.id} />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>

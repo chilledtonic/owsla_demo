@@ -85,4 +85,62 @@ export async function getAllCurricula(): Promise<CurriculumData[]> {
   }
 }
 
+export async function deleteCurriculumById(id: number): Promise<boolean> {
+  try {
+    const result = await sql`
+      DELETE FROM curriculums WHERE id = ${id}
+    `
+    
+    // For DELETE operations, check if any rows were affected
+    return Array.isArray(result) ? result.length > 0 : true
+  } catch (error) {
+    console.error('Error deleting curriculum:', error)
+    throw new Error('Failed to delete curriculum')
+  }
+}
+
+export interface ActiveJobData {
+  id: number
+  curriculum_id: number | null
+  user_id: string | null
+  topic: string | null
+  job_type: string | null
+  progress: number | null
+  created_at: string | null
+  updated_at: string | null
+  error_message: string | null
+  result_data: any
+  status: string | null
+}
+
+export async function getActiveJobsByUserId(userId: string): Promise<ActiveJobData[]> {
+  try {
+    const result = await sql`
+      SELECT * FROM active_jobs 
+      WHERE user_id = ${userId} AND status IN ('pending', 'true')
+      ORDER BY created_at DESC
+    `
+    
+    return result as ActiveJobData[]
+  } catch (error) {
+    console.error('Error fetching active jobs by user ID:', error)
+    throw new Error('Failed to fetch active jobs')
+  }
+}
+
+export async function getAllJobsByUserId(userId: string): Promise<ActiveJobData[]> {
+  try {
+    const result = await sql`
+      SELECT * FROM active_jobs 
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+    `
+    
+    return result as ActiveJobData[]
+  } catch (error) {
+    console.error('Error fetching all jobs by user ID:', error)
+    throw new Error('Failed to fetch jobs')
+  }
+}
+
  

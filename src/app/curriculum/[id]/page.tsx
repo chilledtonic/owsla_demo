@@ -3,10 +3,23 @@
 import { AppLayout } from "@/components/app-layout"
 import { CurriculumContent } from "@/components/curriculum-content"
 import { RightSidebar } from "@/components/right-sidebar"
-import { fetchCurriculumById } from "@/lib/actions"
+import { fetchCurriculumById, deleteCurriculum } from "@/lib/actions"
 import { CurriculumData } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Transform database curriculum to display format
 function transformDatabaseCurriculum(dbCurriculum: any, rawCurriculumData?: CurriculumData) {
@@ -97,8 +110,6 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
     loadCurriculum()
   }, [curriculumId])
 
-
-
   const handlePreviousDay = () => {
     setCurrentDay(prev => Math.max(1, prev - 1))
   }
@@ -106,6 +117,22 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
   const handleNextDay = () => {
     if (curriculumData) {
       setCurrentDay(prev => Math.min(curriculumData.curriculum.daily_modules.length, prev + 1))
+    }
+  }
+
+  async function handleDeleteCurriculum() {
+    if (!curriculum?.id) return
+    
+    try {
+      const result = await deleteCurriculum(curriculum.id)
+      if (result.success) {
+        router.push('/')
+      } else {
+        setError(result.error || 'Failed to delete curriculum')
+      }
+    } catch (error) {
+      console.error('Error deleting curriculum:', error)
+      setError('Failed to delete curriculum')
     }
   }
 
@@ -140,12 +167,47 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
         {loading ? (
           <div className="flex items-center justify-center h-full">Loading curriculum...</div>
         ) : curriculumData ? (
-          <CurriculumContent 
-            curriculum={curriculumData.curriculum}
-            currentDay={currentDay}
-            onPreviousDay={handlePreviousDay}
-            onNextDay={handleNextDay}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h1 className="text-2xl font-bold">{curriculumData.curriculum.title}</h1>
+                <p className="text-muted-foreground">Day {currentDay} of {curriculumData.curriculum.daily_modules.length}</p>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Curriculum
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{curriculumData.curriculum.title}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteCurriculum}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+            <div className="flex-1">
+              <CurriculumContent 
+                curriculum={curriculumData.curriculum}
+                currentDay={currentDay}
+                onPreviousDay={handlePreviousDay}
+                onNextDay={handleNextDay}
+              />
+            </div>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
