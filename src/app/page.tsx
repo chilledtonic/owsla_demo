@@ -45,7 +45,7 @@ const fallbackCurriculumData = {
   },
 }
 
-function transformDatabaseCurriculum(dbCurriculum: any) {
+function transformDatabaseCurriculum(dbCurriculum: any, rawCurriculumData?: CurriculumData) {
   // Transform visual learning path from day_1, day_2... to milestone_1, milestone_2...
   const visualLearningPath = {
     milestone_1: "Create Your First Curriculum",
@@ -71,9 +71,10 @@ function transformDatabaseCurriculum(dbCurriculum: any) {
     title: String(module.title || "Untitled Module"),
     milestone: String(module.title || "Module Milestone"), // Use title as milestone for now
     primary_reading: {
-      book: String(dbCurriculum.primary_resource?.title || "Primary Reading"),
+      book: String(dbCurriculum.primary_resource?.title || rawCurriculumData?.primary_resource_title || "Primary Reading"),
       chapters: "As specified in curriculum",
-      pages: String(module.primary_reading_focus || "Reading focus as defined")
+      pages: String(module.primary_reading_focus || "Reading focus as defined"),
+      isbn: rawCurriculumData?.primary_resource_isbn || dbCurriculum.primary_resource?.isbn || null
     },
     time_allocation: typeof module.time_allocation === 'object' 
       ? String(module.time_allocation.total || "Time as allocated")
@@ -109,7 +110,7 @@ export default function Dashboard() {
         if (result.success && result.data?.full_curriculum_data) {
           setCurrentCurriculum(result.data)
           setCurriculumData({
-            curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data)
+            curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data, result.data)
           })
         }
       } catch (error) {
@@ -129,7 +130,7 @@ export default function Dashboard() {
       if (result.success && result.data?.full_curriculum_data) {
         setCurrentCurriculum(result.data)
         setCurriculumData({
-          curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data)
+          curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data, result.data)
         })
       }
     } catch (error) {

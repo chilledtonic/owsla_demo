@@ -3,7 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Target, BookOpen } from "lucide-react"
+import { BookCover } from "@/components/ui/book-cover"
+import { Clock, Target } from "lucide-react"
 
 interface CurriculumProps {
   curriculum: {
@@ -23,6 +24,7 @@ interface CurriculumProps {
         book: string
         chapters: string
         pages: string
+        isbn?: string | null
       }
       time_allocation: string
     }>
@@ -50,9 +52,11 @@ export function CurriculumContent({ curriculum }: CurriculumProps) {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-4">
-            <div className="relative h-16 w-12 bg-muted rounded-none">
-              <BookOpen className="h-6 w-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
-            </div>
+            <BookCover 
+              isbn={currentModule.primary_reading.isbn}
+              title={currentModule.primary_reading.book}
+              className="h-32 w-24"
+            />
             <div className="flex-1 space-y-1">
               <CardTitle className="text-base font-medium">{currentModule.primary_reading.book}</CardTitle>
               <CardDescription className="text-xs">{currentModule.primary_reading.pages}</CardDescription>
