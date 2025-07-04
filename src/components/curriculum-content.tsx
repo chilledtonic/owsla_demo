@@ -8,6 +8,7 @@ import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Clock, Target, BookOpen, Lightbulb, CheckCircle, MapPin, Users, Calendar, Timer, ChevronLeft, ChevronRight } from "lucide-react"
 import { getAmazonIsbnUrl, getDoiUrl, handleResourceClick } from "@/lib/utils"
+import { ExpertRecommendation } from "./expert-recommendation"
 
 interface DailyModule {
   day: number
@@ -257,6 +258,12 @@ export function CurriculumContent({ curriculum, currentDay, onPreviousDay, onNex
           </div>
         </CardContent>
       </Card>
+
+      {/* Expert Recommendation */}
+      <ExpertRecommendation 
+        curriculumTitle={curriculum.title}
+        curriculumTopics={currentModule.core_concepts}
+      />
 
       {/* Expandable Sections */}
       <Accordion type="single" collapsible className="w-full">

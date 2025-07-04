@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, LogOut, User, BookOpen, LayoutDashboard } from "lucide-react"
+import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { CurriculumData } from "@/lib/database"
 import {
@@ -57,6 +57,14 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                   <a href="/library" className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     <span className="text-sm">Library</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/experts" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">Experts</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
