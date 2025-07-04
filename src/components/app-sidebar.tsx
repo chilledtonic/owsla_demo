@@ -31,6 +31,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
 import { JobQueue } from "./job-queue"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
+import logoImage from "@/images/logo.png"
 
 interface AppSidebarProps {
   activeCurriculumId?: number
@@ -44,7 +46,20 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   return (
     <Sidebar className="w-64">
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold"><button type="button" onClick={() => router.push("/")}>Owsla</button></h2>
+        <h2 className="text-lg font-semibold">
+          <button type="button" onClick={() => router.push("/")}>
+            <div className="flex items-center gap-2">
+              <Image 
+                src={logoImage} 
+                alt="Owsla Logo" 
+                width={32} 
+                height={32}
+                className="w-8 h-8"
+              />
+              <span>Owsla</span>
+            </div>
+          </button>
+        </h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
