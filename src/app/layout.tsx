@@ -2,6 +2,7 @@ import type React from "react"
 import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackServerApp } from "../stack";
 import type { Metadata } from "next"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -24,7 +25,20 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body><StackProvider app={stackServerApp}><StackTheme>{children}</StackTheme></StackProvider></body>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <StackProvider app={stackServerApp}>
+            <StackTheme>
+              {children}
+            </StackTheme>
+          </StackProvider>
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

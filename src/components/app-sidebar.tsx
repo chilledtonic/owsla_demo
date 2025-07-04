@@ -1,7 +1,8 @@
 "use client"
 
-import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users } from "lucide-react"
+import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor } from "lucide-react"
 import { useUser } from "@stackframe/stack"
+import { useTheme } from "next-themes"
 import { CurriculumData } from "@/lib/database"
 import {
   Sidebar,
@@ -22,6 +23,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
@@ -33,6 +38,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
+  const { setTheme, theme } = useTheme()
 
   return (
     <Sidebar className="w-64">
@@ -126,6 +132,29 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                   <span>Settings</span>
                 </a>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Monitor className="mr-2 h-4 w-4" />
+                  <span>Theme</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                      <Sun className="mr-2 h-4 w-4" />
+                      <span>Light</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                      <Moon className="mr-2 h-4 w-4" />
+                      <span>Dark</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                      <Monitor className="mr-2 h-4 w-4" />
+                      <span>System</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => user.signOut()}>
                 <LogOut className="mr-2 h-4 w-4" />
