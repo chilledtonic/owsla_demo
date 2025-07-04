@@ -3,7 +3,6 @@
 import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { useTheme } from "next-themes"
-import { CurriculumData } from "@/lib/database"
 import {
   Sidebar,
   SidebarContent,
@@ -39,7 +38,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
-  const { setTheme, theme } = useTheme()
+  const { setTheme } = useTheme()
   const router = useRouter()
 
   return (

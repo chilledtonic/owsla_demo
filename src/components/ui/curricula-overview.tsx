@@ -4,7 +4,7 @@ import { CurriculumData } from "@/lib/database"
 import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import { Badge } from "./badge"
 import { Button } from "./button"
-import { BookOpen, Calendar, Clock, Plus, TrendingUp } from "lucide-react"
+import { BookOpen, Calendar, Clock, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface CurriculaOverviewProps {

@@ -117,7 +117,7 @@ export default function Dashboard() {
           <div className="space-y-1">
             <h1 className="text-2xl font-bold">Learning Dashboard</h1>
             <p className="text-sm text-muted-foreground">
-              Your complete overview of everything you're learning
+              Your complete overview of everything you&apos;re learning
             </p>
           </div>
 

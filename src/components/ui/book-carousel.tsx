@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import { Badge } from "./badge"
 import { Button } from "./button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { getAmazonIsbnUrl } from "@/lib/utils"
 
@@ -15,7 +14,6 @@ interface BookCarouselProps {
 }
 
 export function BookCarousel({ books }: BookCarouselProps) {
-  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(0)
   const booksPerPage = 4
   const totalPages = Math.ceil(books.length / booksPerPage)

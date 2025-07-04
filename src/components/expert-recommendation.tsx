@@ -126,7 +126,7 @@ export function ExpertRecommendation({
     }
     
     // Find matches based on curriculum content
-    let matchingExpertIds: string[] = []
+    const matchingExpertIds: string[] = []
     
     for (const [subject, expertIds] of Object.entries(subjectMatches)) {
       if (titleLower.includes(subject) || topicsLower.some(topic => topic.includes(subject))) {

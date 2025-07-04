@@ -47,7 +47,38 @@ export async function deleteCurriculum(id: number) {
 }
 
 // New function to submit curriculum to webhook
-export async function submitNewCurriculum(payload: any) {
+export async function submitNewCurriculum(payload: {
+  body: {
+    topic: string
+    preliminaries: string
+    course_parameters: {
+      length_of_study: number
+      daily_time_commitment: number
+      depth_level: number
+      pace: string
+    }
+    learner_profile: {
+      education_level: string
+      prior_knowledge: string
+      learning_style: string
+    }
+    curriculum_preferences: {
+      focus_areas: string[]
+      supplementary_material_ratio: number
+      contemporary_vs_classical: number
+    }
+    schedule: {
+      start_date: string
+      study_days: string[]
+      break_weeks: string[]
+    }
+  }
+  user_context: {
+    user_id: string
+    user_email: string
+    user_name: string | null
+  }
+}) {
   try {
     const webhookUrl = "https://owslaio.app.n8n.cloud/webhook/bf680982-c224-4bc2-a17f-3023d9e99ceb"
     const hookUser = process.env.HOOK_USER
@@ -164,7 +195,26 @@ export async function fetchDashboardData(userId: string) {
 
       // Extract daily modules and resources from full_curriculum_data
       if (curriculum.full_curriculum_data?.daily_modules) {
-        curriculum.full_curriculum_data.daily_modules.forEach((module: any) => {
+        curriculum.full_curriculum_data.daily_modules.forEach((module: {
+          day: number
+          date: string
+          title: string
+          time_allocation?: {
+            total?: string
+            primary_text?: string
+            supplementary_materials?: string
+          }
+          supplementary_readings?: Array<{
+            title: string
+            author: string
+            year?: number
+            isbn?: string
+            doi?: string
+            journal?: string
+            publisher?: string
+            reading_time?: string
+          }>
+        }) => {
           // Add daily module
           dailyModules.push({
             curriculumId: curriculum.id,
@@ -179,7 +229,16 @@ export async function fetchDashboardData(userId: string) {
 
           // Add supplementary resources
           if (module.supplementary_readings) {
-            module.supplementary_readings.forEach((reading: any) => {
+            module.supplementary_readings.forEach((reading: {
+              title: string
+              author: string
+              year?: number
+              isbn?: string
+              doi?: string
+              journal?: string
+              publisher?: string
+              reading_time?: string
+            }) => {
               if (reading.isbn && reading.isbn !== 'N/A') {
                 // This is a book
                 bookResources.push({
@@ -187,7 +246,7 @@ export async function fetchDashboardData(userId: string) {
                   curriculumTitle: curriculum.title,
                   title: reading.title,
                   author: reading.author,
-                  year: reading.year,
+                  year: reading.year ?? null,
                   isbn: reading.isbn,
                   type: 'supplementary'
                 })
@@ -198,7 +257,7 @@ export async function fetchDashboardData(userId: string) {
                   curriculumTitle: curriculum.title,
                   title: reading.title,
                   author: reading.author,
-                  year: reading.year,
+                  year: reading.year ?? 0,
                   journal: reading.journal || reading.publisher || 'Unknown',
                   doi: reading.doi && reading.doi !== 'N/A' ? reading.doi : null,
                   type: reading.journal ? 'Paper' : 'Resource',

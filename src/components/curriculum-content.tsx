@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Clock, Target, BookOpen, Lightbulb, CheckCircle, MapPin, Users, Calendar, Timer, ChevronLeft, ChevronRight } from "lucide-react"
-import { getAmazonIsbnUrl, getDoiUrl, handleResourceClick } from "@/lib/utils"
+import { Target, BookOpen, Lightbulb, CheckCircle, MapPin, Users, Calendar, Timer, ChevronLeft, ChevronRight } from "lucide-react"
+import { getAmazonIsbnUrl, handleResourceClick } from "@/lib/utils"
 import { ExpertRecommendation } from "./expert-recommendation"
 
 interface DailyModule {
@@ -107,7 +107,7 @@ export function CurriculumContent({ curriculum, currentDay, onPreviousDay, onNex
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              <CardTitle className="text-xl">Today's Focus - Day {currentModule.day}</CardTitle>
+              <CardTitle className="text-xl">Today&apos;s Focus - Day {currentModule.day}</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -356,7 +356,7 @@ export function CurriculumContent({ curriculum, currentDay, onPreviousDay, onNex
         <Card className="border-dashed border-2 border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg text-green-700 dark:text-green-300">Course Complete!</CardTitle>
-            <CardDescription>You've reached the end of this curriculum</CardDescription>
+            <CardDescription>You&apos;ve reached the end of this curriculum</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">

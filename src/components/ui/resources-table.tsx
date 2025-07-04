@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import { Badge } from "./badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table"
 import { ExternalLink, FileText } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { handleResourceClick } from "@/lib/utils"
 
 interface ResourcesTableProps {
@@ -13,8 +12,6 @@ interface ResourcesTableProps {
 }
 
 export function ResourcesTable({ resources }: ResourcesTableProps) {
-  const router = useRouter()
-
   if (resources.length === 0) {
     return (
       <Card>

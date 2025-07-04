@@ -8,16 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 import { 
   Calendar, 
-  FileText, 
-  Clock, 
-  CheckCircle2, 
-  Target, 
-  BookOpen, 
   Timer,
   TrendingUp,
   PlayCircle,
   PauseCircle,
-  ChevronRight
+  Target, 
+  BookOpen
 } from "lucide-react"
 import * as React from "react"
 import { handleResourceClick } from "@/lib/utils"
@@ -129,7 +125,7 @@ export function RightSidebar({
               {formatTime(studyTimer)}
             </div>
             <div className="text-xs text-muted-foreground">
-              Today's Study Time
+              Today&apos;s Study Time
             </div>
           </div>
           <div className="flex gap-2">
@@ -194,7 +190,7 @@ export function RightSidebar({
             <>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Today's Concepts</span>
+                  <span>Today&apos;s Concepts</span>
                   <span>{Math.round(conceptsProgress)}%</span>
                 </div>
                 <Progress value={conceptsProgress} className="h-2" />
@@ -224,7 +220,7 @@ export function RightSidebar({
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Today's Checklist
+              Today&apos;s Checklist
             </CardTitle>
             <CardDescription className="text-xs">Track your mastery of core concepts</CardDescription>
           </CardHeader>

@@ -165,7 +165,7 @@ export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete "{curriculum.title}"? This action cannot be undone.
+                    Are you sure you want to delete &quot;{curriculum.title}&quot;? This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

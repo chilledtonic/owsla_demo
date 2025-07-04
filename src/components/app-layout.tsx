@@ -3,7 +3,6 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { useUser } from "@stackframe/stack"
-import { CurriculumData } from "@/lib/database"
 
 interface AppLayoutProps {
   children: React.ReactNode

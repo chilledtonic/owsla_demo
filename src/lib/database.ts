@@ -17,7 +17,41 @@ export interface CurriculumData {
   primary_resource_author: string | null
   primary_resource_year: number | null
   primary_resource_isbn: string | null
-  full_curriculum_data: any
+  full_curriculum_data: {
+    title?: string
+    executive_overview?: string
+    visual_learning_path?: Record<string, string>
+    daily_modules?: Array<{
+      day: number
+      date: string
+      title: string
+      time_allocation?: {
+        total?: string
+        primary_text?: string
+        supplementary_materials?: string
+      }
+      supplementary_readings?: Array<{
+        title: string
+        author: string
+        year?: number
+        isbn?: string
+        doi?: string
+        journal?: string
+        publisher?: string
+        reading_time?: string
+      }>
+      key_insights?: string[]
+      core_concepts?: string[]
+      knowledge_benchmark?: Record<string, string>
+      practical_connections?: string
+      primary_reading_focus?: string
+    }>
+    primary_resource?: {
+      title?: string
+      author?: string
+      isbn?: string
+    }
+  } | null
   created_at: string
   updated_at: string
   user_id: string | null
@@ -109,7 +143,7 @@ export interface ActiveJobData {
   created_at: string | null
   updated_at: string | null
   error_message: string | null
-  result_data: any
+  result_data: Record<string, unknown> | null
   status: string | null
 }
 

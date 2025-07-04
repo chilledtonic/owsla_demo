@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/app-layout"
 import { BookCarousel } from "@/components/ui/book-carousel"
 import { ResourcesTable } from "@/components/ui/resources-table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { BookOpen, FileText } from "lucide-react"
 
 interface LibraryData {

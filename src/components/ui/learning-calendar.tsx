@@ -4,10 +4,7 @@ import { DailyModule } from "@/lib/actions"
 import { Card, CardContent, CardHeader, CardTitle } from "./card"
 import { Calendar } from "./calendar"
 import { Badge } from "./badge"
-import { Button } from "./button"
-import { Popover, PopoverContent, PopoverTrigger } from "./popover"
 import { ScrollArea } from "./scroll-area"
-import { Separator } from "./separator"
 import { Clock, BookOpen, Calendar as CalendarIcon, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -191,7 +188,7 @@ export function LearningCalendar({ modules }: LearningCalendarProps) {
                 <Clock className="h-4 w-4 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium">Today's Modules</p>
+                <p className="text-sm font-medium">Today&apos;s Modules</p>
                 <p className="text-lg font-bold">
                   {modulesByDate[new Date().toISOString().split('T')[0]]?.length || 0}
                 </p>
