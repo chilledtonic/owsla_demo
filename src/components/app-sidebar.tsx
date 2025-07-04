@@ -31,6 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
 import { JobQueue } from "./job-queue"
+import { useRouter } from "next/navigation"
 
 interface AppSidebarProps {
   activeCurriculumId?: number
@@ -39,11 +40,12 @@ interface AppSidebarProps {
 export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
   const { setTheme, theme } = useTheme()
+  const router = useRouter()
 
   return (
     <Sidebar className="w-64">
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold"><a href="/">Owsla</a></h2>
+        <h2 className="text-lg font-semibold"><button type="button" onClick={() => router.push("/")}>Owsla</button></h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -52,26 +54,38 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/" className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2"
+                    onClick={() => router.push("/")}
+                  >
                     <LayoutDashboard className="h-4 w-4" />
                     <span className="text-sm">Dashboard</span>
-                  </a>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/library" className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2"
+                    onClick={() => router.push("/library")}
+                  >
                     <BookOpen className="h-4 w-4" />
                     <span className="text-sm">Library</span>
-                  </a>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/experts" className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex items-center gap-2"
+                    onClick={() => router.push("/experts")}
+                  >
                     <Users className="h-4 w-4" />
                     <span className="text-sm">Experts</span>
-                  </a>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -122,15 +136,19 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/profile")}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href="/handler/account-settings">
+                <button
+                  type="button"
+                  onClick={() => router.push("/handler/account-settings")}
+                  className="flex items-center w-full"
+                >
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
-                </a>
+                </button>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
@@ -164,10 +182,14 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
           </DropdownMenu>
         ) : (
           <SidebarMenuButton asChild>
-            <a href="/sign-in" className="flex items-center gap-2">
+            <button
+              type="button"
+              className="flex items-center gap-2"
+              onClick={() => router.push("/sign-in")}
+            >
               <User className="h-4 w-4" />
               <span className="text-sm">Sign In</span>
-            </a>
+            </button>
           </SidebarMenuButton>
         )}
       </SidebarFooter>
