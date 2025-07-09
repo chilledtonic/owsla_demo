@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import Link from "next/link"
-import React from "react"
+import React, { useState, useCallback, useMemo } from "react"
+import { CurriculumData } from "@/lib/database"
+import { DailyModule } from "@/lib/actions"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { 
@@ -27,7 +29,8 @@ import {
   Plus,
   RefreshCw
 } from "lucide-react"
-import { useState, useMemo, useCallback } from "react"
+
+
 
 export default function Dashboard() {
   const user = useUser({ or: "redirect" })
@@ -248,7 +251,7 @@ export default function Dashboard() {
               <div>
                 <h1 className="text-2xl font-bold">Learning Dashboard</h1>
                 <p className="text-muted-foreground">
-                  Welcome back, {user?.displayName || 'learner'}! Here's your study overview.
+                  Welcome back, {user?.displayName || 'learner'}! Here&apos;s your study overview.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -316,7 +319,7 @@ export default function Dashboard() {
           dailyModules={calculatedData.todayModules.concat(calculatedData.upcomingModules)}
         />
 
-        {/* Today's Focus */}
+        {/* Today&apos;s Focus */}
         {todayModules.length > 0 && (
           <TodaysFocus 
             modules={todayModules}
@@ -345,7 +348,7 @@ const TodaysFocus = React.memo(function TodaysFocus({
   completedModules, 
   onToggleCompletion 
 }: {
-  modules: any[]
+  modules: DailyModule[]
   completedModules: Set<string>
   onToggleCompletion: (key: string) => void
 }) {
@@ -363,7 +366,7 @@ const TodaysFocus = React.memo(function TodaysFocus({
         </div>
         
         <div className="space-y-3">
-          {modules.map((module: any) => (
+          {modules.map((module: DailyModule) => (
             <TodayModule
               key={`${module.curriculumId}-${module.day}`}
               module={module}
@@ -382,7 +385,7 @@ const TodayModule = React.memo(function TodayModule({
   isCompleted,
   onToggleCompletion
 }: {
-  module: any
+  module: DailyModule
   isCompleted: boolean
   onToggleCompletion: (key: string) => void
 }) {
@@ -439,7 +442,7 @@ const UpcomingSchedule = React.memo(function UpcomingSchedule({
   nextDay
 }: {
   sortedDates: string[]
-  groupedModules: Record<string, any[]>
+  groupedModules: Record<string, DailyModule[]>
   nextDay: string
 }) {
   return (
@@ -469,11 +472,11 @@ const UpcomingDay = React.memo(function UpcomingDay({
   isNextDay
 }: {
   dateKey: string
-  modules: any[]
+  modules: DailyModule[]
   isNextDay: boolean
 }) {
   const date = new Date(dateKey)
-  const totalMinutes = modules.reduce((total: number, module: any) => {
+  const totalMinutes = modules.reduce((total: number, module: DailyModule) => {
     const time = parseInt(module.totalTime.replace(/\D/g, '')) || 60
     return total + time
   }, 0)
@@ -501,7 +504,7 @@ const UpcomingDay = React.memo(function UpcomingDay({
         </Badge>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 ml-6 space-y-2">
-        {modules.map((module: any) => (
+        {modules.map((module: DailyModule) => (
           <Link
             key={`${module.curriculumId}-${module.day}-upcoming`}
             href={`/curriculum/${module.curriculumId}`}
@@ -532,8 +535,8 @@ const CurriculaOverview = React.memo(function CurriculaOverview({
   curricula,
   dailyModules
 }: {
-  curricula: any[]
-  dailyModules: any[]
+  curricula: CurriculumData[]
+  dailyModules: DailyModule[]
 }) {
   return (
     <div className="border-b">
@@ -566,8 +569,8 @@ const CurriculumCard = React.memo(function CurriculumCard({
   curriculum,
   dailyModules
 }: {
-  curriculum: any
-  dailyModules: any[]
+  curriculum: CurriculumData
+  dailyModules: DailyModule[]
 }) {
   const progressData = React.useMemo(() => {
     if (!dailyModules.length) return null
@@ -599,8 +602,8 @@ const CurriculumCard = React.memo(function CurriculumCard({
       <div className="flex gap-3">
         <div className="flex-shrink-0">
           <BookCover
-            isbn={curriculum.primary_resource_isbn}
-            title={curriculum.primary_resource_title}
+            isbn={curriculum.primary_resource_isbn || undefined}
+            title={curriculum.primary_resource_title || undefined}
             className="h-16 w-12"
           />
         </div>

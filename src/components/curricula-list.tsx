@@ -1,9 +1,8 @@
 "use client"
 
-import { BookOpen, Plus, Trash2 } from "lucide-react"
+import { BookOpen, Plus } from "lucide-react"
 import { useUser } from "@stackframe/stack"
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import Link from "next/link"
 import React from "react"
 import { useCachedUserCurricula } from "@/hooks/use-curriculum-data"
@@ -13,17 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+
 
 interface CurriculaListProps {
   activeCurriculumId?: number
@@ -31,9 +20,8 @@ interface CurriculaListProps {
 
 export const CurriculaList = React.memo(function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
   useUser()
-  const router = useRouter()
-  const { curricula, loading, error, invalidate } = useCachedUserCurricula()
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const { curricula, loading, error } = useCachedUserCurricula()
+  const [deleteError] = useState<string | null>(null)
 
 
 

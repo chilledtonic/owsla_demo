@@ -242,13 +242,13 @@ export function getRelativeDateInfo(moduleDate: string): {
   formattedDate: string
 } {
   const today = new Date()
-  const module = new Date(moduleDate)
+  const moduleDateTime = new Date(moduleDate)
   
   // Reset time to compare just dates
   today.setHours(0, 0, 0, 0)
-  module.setHours(0, 0, 0, 0)
+  moduleDateTime.setHours(0, 0, 0, 0)
   
-  const diffTime = module.getTime() - today.getTime()
+  const diffTime = moduleDateTime.getTime() - today.getTime()
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
   
   return {
@@ -256,11 +256,11 @@ export function getRelativeDateInfo(moduleDate: string): {
     isPast: diffDays < 0,
     isFuture: diffDays > 0,
     daysFromToday: diffDays,
-    formattedDate: module.toLocaleDateString('en-US', { 
+    formattedDate: moduleDateTime.toLocaleDateString('en-US', { 
       weekday: 'short', 
       month: 'short', 
       day: 'numeric',
-      year: module.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      year: moduleDateTime.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
     })
   }
 }

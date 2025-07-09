@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Target, BookOpen, Lightbulb, CheckCircle, MapPin, Users, Calendar, Timer, ChevronLeft, ChevronRight, Clock } from "lucide-react"
-import { getAmazonIsbnUrl, handleResourceClick, getCurriculumProgressStatus, getRelativeDateInfo } from "@/lib/utils"
+import { Target, Lightbulb, CheckCircle, MapPin, Calendar, Timer, ChevronLeft, ChevronRight } from "lucide-react"
+import { handleResourceClick, getCurriculumProgressStatus, getRelativeDateInfo } from "@/lib/utils"
 
 interface DailyModule {
   day: number

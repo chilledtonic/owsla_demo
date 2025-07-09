@@ -20,8 +20,6 @@ import {
   Eye,
   Plus,
   TrendingUp,
-  BookOpen,
-  Users,
   Award,
   CheckCircle
 } from "lucide-react"
@@ -337,10 +335,7 @@ export default function ExpertsPage() {
     console.log(`${isUpvote ? 'Upvoted' : 'Downvoted'} question ${questionId}`)
   }
 
-  const handleAnswerVote = (questionId: string, answerId: string, isUpvote: boolean) => {
-    // In a real app, this would make an API call
-    console.log(`${isUpvote ? 'Upvoted' : 'Downvoted'} answer ${answerId} on question ${questionId}`)
-  }
+
 
   const handleBookmark = (questionId: string) => {
     // In a real app, this would make an API call

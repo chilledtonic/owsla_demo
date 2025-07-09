@@ -26,7 +26,7 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
 
   // Filter and sort resources
   const filteredAndSortedResources = useMemo(() => {
-    let filtered = resources.filter(resource => 
+    const filtered = resources.filter(resource => 
       resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.curriculumTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,14 +35,14 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
 
     // Sort resources
     filtered.sort((a, b) => {
-      let aVal: any = a[sortField]
-      let bVal: any = b[sortField]
+      let aVal: string | number = a[sortField]
+      let bVal: string | number = b[sortField]
 
       // Handle special cases
       if (sortField === 'readingTime') {
         // Extract number from "18 minutes" format
-        aVal = parseInt(aVal.match(/\d+/)?.[0] || '0')
-        bVal = parseInt(bVal.match(/\d+/)?.[0] || '0')
+        aVal = parseInt((aVal as string).match(/\d+/)?.[0] || '0')
+        bVal = parseInt((bVal as string).match(/\d+/)?.[0] || '0')
       } else if (sortField === 'year') {
         aVal = aVal || 0
         bVal = bVal || 0
@@ -294,7 +294,7 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
       {/* No results message */}
       {filteredAndSortedResources.length === 0 && searchTerm && (
         <div className="text-center py-8 text-muted-foreground">
-          <p>No resources found matching "{searchTerm}"</p>
+          <p>No resources found matching &quot;{searchTerm}&quot;</p>
           <Button 
             variant="ghost" 
             size="sm" 

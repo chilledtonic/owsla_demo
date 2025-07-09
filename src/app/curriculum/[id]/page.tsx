@@ -175,12 +175,7 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  // Function to advance actual progress (could be called when user completes a day)
-  const handleCompleteDay = () => {
-    if (curriculumData && actualDay < curriculumData.curriculum.daily_modules.length) {
-      setActualDay(prev => prev + 1)
-    }
-  }
+
 
   async function handleDeleteCurriculum() {
     if (!curriculum?.id) return
@@ -211,7 +206,6 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
   }
 
   const currentModule = curriculumData?.curriculum.daily_modules[currentDay - 1]
-  const nextModules = curriculumData?.curriculum.daily_modules.slice(currentDay).slice(0, 5) || []
 
   return (
     <AppLayout 
@@ -226,7 +220,9 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                 className="cursor-pointer hover:bg-muted/30 p-3 rounded-lg transition-colors border"
                 onClick={() => {
                   if (curriculumData.curriculum.primary_resource.isbn && curriculumData.curriculum.primary_resource.isbn !== 'N/A') {
-                    const url = `https://www.amazon.com/dp/${curriculumData.curriculum.primary_resource.isbn}`
+                    const title = encodeURIComponent(curriculumData.curriculum.primary_resource.title || "");
+                    const author = encodeURIComponent(curriculumData.curriculum.primary_resource.author || "");
+                    const url = `https://www.amazon.com/s?k=${title}+${author}`;
                     window.open(url, '_blank', 'noopener,noreferrer')
                   }
                 }}

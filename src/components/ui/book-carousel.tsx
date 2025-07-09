@@ -7,7 +7,7 @@ import { Button } from "./button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
 import { ChevronLeft, ChevronRight, SortAsc } from "lucide-react"
 import { useState, useMemo, useEffect } from "react"
-import { getAmazonIsbnUrl, deduplicateBooks } from "@/lib/utils"
+import { deduplicateBooks } from "@/lib/utils"
 
 interface BookCarouselProps {
   books: BookResource[]
@@ -93,11 +93,12 @@ export function BookCarousel({ books, onDeduplicatedCountChange }: BookCarouselP
   }
 
   const handleBookClick = (book: BookResource) => {
-    if (book.isbn && book.isbn !== 'N/A') {
-      const url = getAmazonIsbnUrl(book.isbn)
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer')
-      }
+    // Create Amazon search query using title and author
+    const searchTerms = [book.title, book.author].filter(Boolean).join(' ')
+    if (searchTerms) {
+      const encodedSearch = encodeURIComponent(searchTerms)
+      const url = `https://www.amazon.com/s?k=${encodedSearch}&i=stripbooks`
+      window.open(url, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -197,7 +198,7 @@ export function BookCarousel({ books, onDeduplicatedCountChange }: BookCarouselP
         {currentBooks.map((book, index) => (
           <div 
             key={`${book.curriculumId}-${startIndex + index}`}
-            className="group cursor-pointer hover:scale-105 transition-transform duration-200"
+            className="group cursor-pointer"
             onClick={() => handleBookClick(book)}
           >
             {/* Book Cover */}
@@ -205,7 +206,7 @@ export function BookCarousel({ books, onDeduplicatedCountChange }: BookCarouselP
               <BookCover 
                 isbn={book.isbn}
                 title={book.title}
-                className="h-20 w-14 mx-auto shadow-sm group-hover:shadow-md transition-shadow"
+                className="h-20 w-14 mx-auto shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-200"
               />
               {/* Type Badge */}
               <div className="absolute -top-1 -right-1">
