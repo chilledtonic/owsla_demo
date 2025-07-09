@@ -1,6 +1,6 @@
 {
-  "name": "Curriculum Dashboard",
-  "short_name": "Curriculum",
+  "name": "Owsla",
+  "short_name": "Owsla",
   "description": "Academic curriculum management system",
   "start_url": "/",
   "display": "standalone",

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'curriculum-dashboard-v1';
+const CACHE_NAME = 'owsla-v1';
 const urlsToCache = [
   '/',
   '/manifest.json',
