@@ -1,0 +1,539 @@
+[
+    {
+      "output": {
+        "curriculum": {
+          "title": "SIGNALIS: A Deep Dive into Philosophical Horror and Dystopian Narrative - A Critical Media Analysis Curriculum",
+          "primary_video": {
+            "title": "What Happens in SIGNALIS?",
+            "channel": "Worm Girl",
+            "duration": "6H36M22S",
+            "url": "https://www.youtube.com/watch?v=2Pd6YG4oduM",
+            "published": "2025-01-13T14:36:05Z",
+            "video_id": "2Pd6YG4oduM"
+          },
+          "executive_overview": "This curriculum transforms a comprehensive video game analysis into an intellectual journey through dystopian literature, psychological theory, and philosophical concepts. Using the video essay as a gateway, students will explore George Orwell's totalitarian themes, Carl Jung's psychological theories, Nietzsche's eternal recurrence, and Robert Chambers' weird fiction. The video serves not merely as gaming commentary but as applied cultural criticism, demonstrating how contemporary media engages with classical philosophical and literary traditions. Students will examine how the video analyst applies theoretical frameworks to decode narrative meaning, moving from accessible media analysis to rigorous academic theory.",
+          "visual_learning_path": {
+            "day_1": "🎮 Video Game as Text → Understanding how interactive media functions as literature and cultural criticism",
+            "day_2": "👁️ Orwellian Surveillance → From gaming mechanics to state control theory and propaganda analysis",
+            "day_3": "🧠 Jungian Psychology → Collective unconscious, archetypes, and synchronicity in narrative structure",
+            "day_4": "♻️ Nietzschean Cycles → Eternal recurrence, will to power, and existential philosophy through gaming loops",
+            "day_5": "👑 Weird Fiction Tradition → The King in Yellow and cosmic horror as philosophical expression",
+            "day_6": "🔗 Synthesis & Theory → How cultural criticism bridges philosophy, psychology, and contemporary media",
+            "day_7": "🎯 Critical Application → Developing frameworks for analyzing media as philosophical discourse"
+          },
+          "daily_modules": [
+            {
+              "day": 1,
+              "date": "2025-07-09",
+              "title": "Introduction: Video Games as Cultural Texts",
+              "video_segment": {
+                "start": "00:06",
+                "end": "10:33",
+                "duration": "10:27",
+                "chapters": [
+                  "Opening sequence analysis",
+                  "Ship exploration",
+                  "Initial world-building"
+                ],
+                "rewatch_segments": [
+                  "08:28 - 09:05 (Thematic introduction)",
+                  "09:05 - 10:33 (Methodology explanation)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "How video games function as cultural texts worthy of serious analysis",
+                "explain": "The methodology of treating interactive media as literature",
+                "recognize": "Techniques of close reading applied to visual and interactive narratives",
+                "connect": "Gaming analysis to broader traditions of cultural criticism",
+                "awareness": "The legitimacy of pop culture as intellectual subject matter"
+              },
+              "core_concepts": [
+                "Cultural criticism methodology",
+                "Interactive narrative as text",
+                "Close reading techniques",
+                "Popular culture as legitimate academic subject",
+                "Visual storytelling analysis"
+              ],
+              "pre_viewing_primer": "Watch how the analyst treats every detail as meaningful. Note the methodology of extracting intellectual content from gaming mechanics and visual design. Observe how the video establishes gaming as a legitimate subject for serious analysis.",
+              "primary_reading_focus": "Understanding how contemporary media criticism applies traditional analytical frameworks to new forms",
+              "supplementary_readings": [
+                {
+                  "title": "Nineteen Eighty-Four",
+                  "author": "George Orwell",
+                  "year": "1949",
+                  "publisher": "Harcourt Brace",
+                  "isbn": "9780451524935",
+                  "focus": "Introduction to totalitarian themes and state surveillance concepts that will appear throughout the video",
+                  "reading_time": "45 minutes (selected chapters)",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Video games can function as complex cultural texts",
+                "Intellectual analysis can be applied to any cultural form",
+                "Visual and interactive elements carry theoretical weight",
+                "Gaming criticism bridges accessibility with academic rigor"
+              ],
+              "post_viewing_synthesis": "How does the video establish its analytical credibility? What makes this approach to gaming analysis intellectually legitimate? Consider how the analyst transforms plot description into cultural criticism.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "45 minutes",
+                "synthesis": "30 minutes",
+                "total": "2 hours"
+              }
+            },
+            {
+              "day": 2,
+              "date": "2025-07-10",
+              "title": "Orwellian Control: Language, Surveillance, and Social Engineering",
+              "video_segment": {
+                "start": "15:52",
+                "end": "26:09",
+                "duration": "10:17",
+                "chapters": [
+                  "Re-education facility analysis",
+                  "Language as social control",
+                  "Replica hierarchy"
+                ],
+                "rewatch_segments": [
+                  "16:13 - 16:45 (Language control)",
+                  "23:16 - 23:39 (Dehumanizing language)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "Orwell's theories of language manipulation and social control",
+                "explain": "How totalitarian states use language to shape reality",
+                "recognize": "Techniques of dehumanization and control in both fiction and reality",
+                "connect": "Gaming mechanics to real-world surveillance and control systems",
+                "awareness": "The political implications of linguistic and technological control"
+              },
+              "core_concepts": [
+                "Orwellian newspeak and language control",
+                "State surveillance mechanisms",
+                "Dehumanization through language",
+                "Social stratification and control",
+                "Technological authoritarianism"
+              ],
+              "pre_viewing_primer": "Watch how the analyst identifies Orwellian themes in the game's mechanics. Note how language restrictions, surveillance, and social hierarchy function as both game elements and political commentary.",
+              "primary_reading_focus": "Orwell's theories of how language shapes reality and enables social control",
+              "supplementary_readings": [
+                {
+                  "title": "Nineteen Eighty-Four",
+                  "author": "George Orwell",
+                  "year": "1949",
+                  "publisher": "Harcourt Brace",
+                  "isbn": "9780451524935",
+                  "focus": "Newspeak, doublethink, and the Ministry of Truth - how totalitarian states control reality through language",
+                  "reading_time": "60 minutes",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Language control enables thought control",
+                "Surveillance creates self-regulating behavior",
+                "Dehumanizing language enables oppression",
+                "Gaming mechanics can model political systems"
+              ],
+              "post_viewing_synthesis": "How does the video demonstrate Orwellian concepts through gaming analysis? What makes the game's approach to these themes particularly effective? Consider how interactive media might communicate political ideas differently than literature.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "60 minutes",
+                "synthesis": "35 minutes",
+                "total": "2 hours 20 minutes"
+              }
+            },
+            {
+              "day": 3,
+              "date": "2025-07-11",
+              "title": "Jungian Psychology: Collective Unconscious and Archetypal Narrative",
+              "video_segment": {
+                "start": "33:42",
+                "end": "43:17",
+                "duration": "9:35",
+                "chapters": [
+                  "Synchronicity and meaningful coincidences",
+                  "Collective memories",
+                  "Archetypal imagery"
+                ],
+                "rewatch_segments": [
+                  "36:46 - 37:17 (Synchronicity explanation)",
+                  "41:03 - 41:34 (Collective unconscious themes)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "Jung's theories of collective unconscious, archetypes, and synchronicity",
+                "explain": "How Jungian concepts manifest in narrative and character psychology",
+                "recognize": "Archetypal patterns and synchronistic events in storytelling",
+                "connect": "Individual psychology to collective human experience",
+                "awareness": "The influence of Jungian theory on modern narrative and culture"
+              },
+              "core_concepts": [
+                "Collective unconscious theory",
+                "Archetypal psychology",
+                "Synchronicity and meaningful coincidence",
+                "Shared cultural memories",
+                "Psychological interpretation of narrative"
+              ],
+              "pre_viewing_primer": "Watch how the analyst applies Jungian concepts to explain the game's psychological mechanics. Note how collective memories, archetypal imagery, and synchronistic events function both as gameplay elements and psychological theory.",
+              "primary_reading_focus": "Jung's foundational concepts of how individual psychology connects to universal human patterns",
+              "supplementary_readings": [
+                {
+                  "title": "The Archetypes and the Collective Unconscious",
+                  "author": "Carl Jung",
+                  "year": "1959",
+                  "publisher": "Princeton University Press",
+                  "isbn": "9780415059439",
+                  "focus": "Core concepts of collective unconscious, archetypes, and how they manifest in human experience and culture",
+                  "reading_time": "75 minutes",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Individual experiences connect to universal patterns",
+                "Synchronicity suggests meaningful connections beyond causality",
+                "Archetypes appear across cultures and narratives",
+                "Gaming can model psychological processes"
+              ],
+              "post_viewing_synthesis": "How does the video use Jungian theory to explain narrative events? What makes the psychological interpretation compelling? Consider how gaming might uniquely express psychological concepts through interactivity.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "75 minutes",
+                "synthesis": "40 minutes",
+                "total": "2 hours 40 minutes"
+              }
+            },
+            {
+              "day": 4,
+              "date": "2025-07-12",
+              "title": "Nietzschean Philosophy: Eternal Recurrence and Existential Loops",
+              "video_segment": {
+                "start": "1:59:04",
+                "end": "2:09:39",
+                "duration": "10:35",
+                "chapters": [
+                  "Time loop mechanics",
+                  "Eternal recurrence themes",
+                  "Will to power concepts"
+                ],
+                "rewatch_segments": [
+                  "2:00:08 - 2:00:41 (Eternal recurrence)",
+                  "2:05:16 - 2:06:11 (Philosophical implications)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "Nietzsche's concepts of eternal recurrence, will to power, and self-overcoming",
+                "explain": "How cyclical time relates to existential philosophy and meaning-making",
+                "recognize": "Nietzschean themes in narrative structure and character development",
+                "connect": "Gaming loops to philosophical concepts of repetition and transcendence",
+                "awareness": "The influence of Nietzschean thought on modern existential philosophy"
+              },
+              "core_concepts": [
+                "Eternal recurrence as existential test",
+                "Will to power and self-overcoming",
+                "Cyclical versus linear time",
+                "Existential meaning-making",
+                "Philosophical pessimism and transcendence"
+              ],
+              "pre_viewing_primer": "Watch how the analyst connects the game's looping structure to Nietzschean philosophy. Note how repetition functions both as game mechanic and philosophical concept.",
+              "primary_reading_focus": "Nietzsche's exploration of how we might live if everything recurred eternally",
+              "supplementary_readings": [
+                {
+                  "title": "Thus Spoke Zarathustra",
+                  "author": "Friedrich Nietzsche",
+                  "year": "1883",
+                  "publisher": "Penguin Classics",
+                  "isbn": "9780140441185",
+                  "focus": "Eternal recurrence, will to power, and the concept of self-overcoming through cyclical existence",
+                  "reading_time": "60 minutes",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Eternal recurrence as a test of life's value",
+                "Repetition can lead to either despair or transcendence",
+                "Gaming loops model existential concepts",
+                "Cyclical narratives explore philosophical themes"
+              ],
+              "post_viewing_synthesis": "How does the video use Nietzschean philosophy to explain the game's structure? What makes the eternal recurrence concept relevant to interactive media? Consider how repetition in gaming might uniquely express existential themes.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "60 minutes",
+                "synthesis": "35 minutes",
+                "total": "2 hours 20 minutes"
+              }
+            },
+            {
+              "day": 5,
+              "date": "2025-07-13",
+              "title": "Weird Fiction and Cosmic Horror: The King in Yellow Tradition",
+              "video_segment": {
+                "start": "4:47:05",
+                "end": "4:57:37",
+                "duration": "10:32",
+                "chapters": [
+                  "King in Yellow references",
+                  "Cosmic horror themes",
+                  "Weird fiction tradition"
+                ],
+                "rewatch_segments": [
+                  "4:48:59 - 4:50:26 (Chambers vs. Derleth)",
+                  "4:54:47 - 4:55:19 (Literary tradition)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "The weird fiction tradition and its philosophical implications",
+                "explain": "How cosmic horror expresses existential themes about knowledge and reality",
+                "recognize": "Techniques of weird fiction and their cultural significance",
+                "connect": "Horror literature to philosophical questions about reality and knowledge",
+                "awareness": "The intellectual tradition behind modern horror and weird fiction"
+              },
+              "core_concepts": [
+                "Weird fiction as philosophical literature",
+                "Cosmic horror and unknowable reality",
+                "Literature as existential exploration",
+                "The dangers and power of forbidden knowledge",
+                "Cultural transmission of literary ideas"
+              ],
+              "pre_viewing_primer": "Watch how the analyst traces the intellectual tradition behind horror references. Note how weird fiction functions as philosophy rather than mere entertainment.",
+              "primary_reading_focus": "Chambers' exploration of art, madness, and the limits of human knowledge",
+              "supplementary_readings": [
+                {
+                  "title": "The King in Yellow",
+                  "author": "Robert W. Chambers",
+                  "year": "1895",
+                  "publisher": "Dover Publications",
+                  "isbn": "9781599869395",
+                  "focus": "The original weird fiction exploring themes of decadent art, madness, and reality breakdown",
+                  "reading_time": "90 minutes",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Horror literature can express philosophical ideas",
+                "Weird fiction explores limits of knowledge and reality",
+                "Art and literature can be 'dangerous' to conventional thinking",
+                "Gaming inherits intellectual traditions from literature"
+              ],
+              "post_viewing_synthesis": "How does the video connect weird fiction to intellectual themes? What makes this literary tradition philosophically significant? Consider how gaming might continue or transform weird fiction traditions.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "90 minutes",
+                "synthesis": "45 minutes",
+                "total": "3 hours"
+              }
+            },
+            {
+              "day": 6,
+              "date": "2025-07-14",
+              "title": "Theoretical Synthesis: Culture, Media, and Philosophical Analysis",
+              "video_segment": {
+                "start": "5:38:49",
+                "end": "5:49:21",
+                "duration": "10:32",
+                "chapters": [
+                  "Meta-commentary on analysis",
+                  "Cultural criticism methodology",
+                  "Theoretical integration"
+                ],
+                "rewatch_segments": [
+                  "5:41:34 - 5:42:50 (Analytical methodology)",
+                  "5:47:16 - 5:48:32 (Cultural synthesis)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "How cultural criticism integrates multiple theoretical frameworks",
+                "explain": "The methodology of serious media analysis and cultural interpretation",
+                "recognize": "How contemporary media engages with classical philosophical traditions",
+                "connect": "Different theoretical approaches into coherent cultural analysis",
+                "awareness": "The role of cultural criticism in understanding modern media and society"
+              },
+              "core_concepts": [
+                "Interdisciplinary cultural analysis",
+                "Theoretical framework integration",
+                "Media as cultural expression",
+                "Contemporary engagement with classical ideas",
+                "Cultural criticism methodology"
+              ],
+              "pre_viewing_primer": "Watch how the analyst synthesizes multiple theoretical frameworks into comprehensive cultural analysis. Note how different philosophical and psychological approaches complement each other.",
+              "primary_reading_focus": "Understanding how cultural criticism operates as intellectual methodology",
+              "supplementary_readings": [
+                {
+                  "title": "The Archetypes and the Collective Unconscious",
+                  "author": "Carl Jung",
+                  "year": "1959",
+                  "publisher": "Princeton University Press",
+                  "isbn": "9780415059439",
+                  "focus": "Review of synchronicity and archetypal concepts for synthesis with other frameworks",
+                  "reading_time": "45 minutes",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Multiple theoretical frameworks can illuminate different aspects of culture",
+                "Cultural criticism requires interdisciplinary thinking",
+                "Contemporary media continues classical intellectual traditions",
+                "Serious analysis can be applied to any cultural form"
+              ],
+              "post_viewing_synthesis": "How does the video demonstrate effective cultural criticism? What makes the integration of multiple theoretical approaches successful? Consider how you might apply similar analytical frameworks to other cultural texts.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "45 minutes",
+                "synthesis": "50 minutes",
+                "total": "2 hours 20 minutes"
+              }
+            },
+            {
+              "day": 7,
+              "date": "2025-07-15",
+              "title": "Critical Application: Developing Analytical Frameworks",
+              "video_segment": {
+                "start": "6:26:16",
+                "end": "6:36:22",
+                "duration": "10:06",
+                "chapters": [
+                  "Conclusion and synthesis",
+                  "Final thematic integration",
+                  "Metacritical reflection"
+                ],
+                "rewatch_segments": [
+                  "6:28:04 - 6:29:25 (Final analysis)",
+                  "6:34:16 - 6:36:22 (Closing thoughts)"
+                ]
+              },
+              "knowledge_benchmark": {
+                "understand": "How to construct comprehensive analytical frameworks for cultural texts",
+                "explain": "The process of developing original cultural criticism and analysis",
+                "recognize": "Opportunities for applying theoretical frameworks to contemporary media",
+                "connect": "Academic theory to practical cultural analysis and criticism",
+                "awareness": "The ongoing relevance of philosophical and psychological theory to cultural understanding"
+              },
+              "core_concepts": [
+                "Analytical framework construction",
+                "Original cultural criticism development",
+                "Theory-to-practice application",
+                "Contemporary cultural analysis",
+                "Intellectual engagement with popular culture"
+              ],
+              "pre_viewing_primer": "Watch how the analyst concludes with broader implications about cultural analysis and theoretical application. Note how the specific analysis opens to general methodological insights.",
+              "primary_reading_focus": "Developing your own approach to cultural criticism and analysis",
+              "supplementary_readings": [
+                {
+                  "title": "Thus Spoke Zarathustra",
+                  "author": "Friedrich Nietzsche",
+                  "year": "1883",
+                  "publisher": "Penguin Classics",
+                  "isbn": "9780140441185",
+                  "focus": "Review of eternal recurrence themes for final synthesis",
+                  "reading_time": "30 minutes",
+                  "journal": "N/A",
+                  "doi": "N/A"
+                }
+              ],
+              "key_insights": [
+                "Cultural criticism requires both theoretical knowledge and analytical skill",
+                "Popular culture offers rich material for serious intellectual engagement",
+                "Analytical frameworks can be applied across different cultural texts",
+                "Cultural analysis connects individual works to broader human concerns"
+              ],
+              "post_viewing_synthesis": "What analytical techniques from this video could you apply to other cultural texts? How might you develop your own approach to cultural criticism? Consider how this methodology might be applied to films, literature, or other games.",
+              "time_allocation": {
+                "video_viewing": "25 minutes",
+                "preparation": "20 minutes",
+                "supplementary_materials": "30 minutes",
+                "synthesis": "60 minutes",
+                "total": "2 hours 15 minutes"
+              }
+            }
+          ],
+          "knowledge_framework": {
+            "foundational_concepts": "The curriculum establishes cultural criticism as legitimate intellectual practice, demonstrates how contemporary media engages with classical philosophical traditions, and provides frameworks for analyzing any cultural text through multiple theoretical lenses.",
+            "advanced_applications": "Students develop skills in interdisciplinary analysis, learn to connect abstract theory to concrete cultural examples, and gain ability to construct original analytical frameworks for cultural texts.",
+            "synthesis_goals": "By completion, students should ability to approach any cultural text with serious analytical tools, understand how popular culture continues intellectual traditions, and develop original cultural criticism using integrated theoretical approaches."
+          },
+          "resource_requirements": {
+            "primary_video": {
+              "title": "What Happens in SIGNALIS?",
+              "channel": "Worm Girl",
+              "duration": "6H36M22S",
+              "url": "https://www.youtube.com/watch?v=2Pd6YG4oduM",
+              "access": "Free on YouTube"
+            },
+            "supplementary_books": [
+              {
+                "title": "Nineteen Eighty-Four",
+                "author": "George Orwell",
+                "year": "1949",
+                "publisher": "Harcourt Brace",
+                "isbn": "9780451524935"
+              },
+              {
+                "title": "The Archetypes and the Collective Unconscious",
+                "author": "Carl Jung",
+                "year": "1959",
+                "publisher": "Princeton University Press",
+                "isbn": "9780415059439"
+              },
+              {
+                "title": "Thus Spoke Zarathustra",
+                "author": "Friedrich Nietzsche",
+                "year": "1883",
+                "publisher": "Penguin Classics",
+                "isbn": "9780140441185"
+              },
+              {
+                "title": "The King in Yellow",
+                "author": "Robert W. Chambers",
+                "year": "1895",
+                "publisher": "Dover Publications",
+                "isbn": "9781599869395"
+              }
+            ],
+            "academic_papers": [
+              {
+                "title": "Behind the Black Mirror: The Limits of Orwellian Dystopia",
+                "authors": "Tony McKenna",
+                "year": "2019",
+                "journal": "Critique: Studies in Contemporary Fiction",
+                "doi": "10.1080/03017605.2019.1601887"
+              },
+              {
+                "title": "Nietzsche, Skepticism, and Eternal Recurrence",
+                "authors": "Philip J. Kain",
+                "year": "1983",
+                "journal": "Canadian Journal of Philosophy",
+                "doi": "10.1080/00455091.1983.10715843"
+              },
+              {
+                "title": "Jung's Conceptualization of Synchronicity Theory and the Role of Astrology",
+                "authors": "Jingchao Zeng",
+                "year": "2021",
+                "journal": "Jung Journal",
+                "doi": "10.1163/19409060-bja10030"
+              },
+              {
+                "title": "A Jaundiced View of America: Robert W. Chambers and The King in Yellow",
+                "authors": "Scott D. Emmert",
+                "year": "1999",
+                "journal": "Studies in Weird Fiction",
+                "doi": "10.1111/j.1542-734x.1999.2202_39.x"
+              }
+            ],
+            "total_time_commitment": "17 hours 35 minutes over 7 days",
+            "equipment_needed": "Computer/device for video viewing, note-taking materials, access to books and academic papers"
+          }
+        }
+      }
+    }
+  ]

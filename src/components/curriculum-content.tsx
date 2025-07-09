@@ -68,7 +68,7 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
   const progressStatus = getCurriculumProgressStatus(currentDay, actualDay, currentModule.date)
   const currentDateInfo = getRelativeDateInfo(currentModule.date)
 
-  const handleSupplementaryClick = (reading: { isbn?: string; doi?: string }) => {
+  const handleSupplementaryClick = (reading: { title: string; author: string; isbn?: string; doi?: string }) => {
     handleResourceClick(reading)
   }
 

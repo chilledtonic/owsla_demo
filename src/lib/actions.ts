@@ -111,6 +111,73 @@ export async function submitNewCurriculum(payload: {
   }
 }
 
+// New function to submit YouTube curriculum to webhook
+export async function submitYoutubeCurriculum(payload: {
+  body: {
+    youtubeURL: string
+    videoID: string
+    videoTitle: string
+    preliminaries: string
+    course_parameters: {
+      length_of_study: number
+      daily_time_commitment: number
+      depth_level: number
+      pace: string
+    }
+    learner_profile: {
+      education_level: string
+      prior_knowledge: string
+      learning_style: string
+    }
+    curriculum_preferences: {
+      focus_areas: string[]
+      supplementary_material_ratio: number
+      contemporary_vs_classical: number
+    }
+    schedule: {
+      start_date: string
+      study_days: string[]
+      break_weeks: string[]
+    }
+  }
+  user_context: {
+    user_id: string
+    user_email: string
+    user_name: string | null
+  }
+}) {
+  try {
+    const webhookUrl = "https://owslaio.app.n8n.cloud/webhook/ae212955-503a-4f69-b9bf-c36b6e0b4d1e"
+    const hookUser = process.env.HOOK_USER
+    const hookPass = process.env.HOOK_PASS
+
+    if (!hookUser || !hookPass) {
+      throw new Error('Webhook credentials not configured')
+    }
+
+    const credentials = Buffer.from(`${hookUser}:${hookPass}`).toString('base64')
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      throw new Error(`Webhook submission failed: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('Error submitting YouTube curriculum:', error)
+    throw error
+  }
+}
+
 export async function fetchActiveJobs(userId: string) {
   try {
     const jobs = await getActiveJobsByUserId(userId)

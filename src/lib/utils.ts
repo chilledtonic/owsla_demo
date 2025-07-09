@@ -28,9 +28,15 @@ export function getDoiUrl(doi: string): string {
 /**
  * Helper function to handle resource clicks based on resource type
  */
-export function handleResourceClick(resource: { isbn?: string | null, doi?: string | null }) {
-  if (resource.isbn && resource.isbn !== 'N/A') {
-    // It's a book - go to Amazon.ca
+export function handleResourceClick(resource: { title?: string, author?: string, isbn?: string | null, doi?: string | null }) {
+  if (resource.title && resource.author) {
+    // It's a book - search Amazon by title and author
+    const title = encodeURIComponent(resource.title);
+    const author = encodeURIComponent(resource.author);
+    const url = `https://www.amazon.com/s?k=${title}+${author}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else if (resource.isbn && resource.isbn !== 'N/A') {
+    // Fallback to ISBN if title/author not available
     const url = getAmazonIsbnUrl(resource.isbn)
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer')

@@ -1,29 +1,27 @@
 "use client"
 
-import { BookOpen, Plus } from "lucide-react"
-import { useUser } from "@stackframe/stack"
-import { useState } from "react"
-import Link from "next/link"
-import React from "react"
-import { useCachedUserCurricula } from "@/hooks/use-curriculum-data"
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-
+import { BookOpen, Plus, Video } from "lucide-react"
+import Link from "next/link"
+import React, { useState } from "react"
+import { CurriculumData } from "@/lib/database"
+import { useCachedUserCurricula } from "@/hooks/use-curriculum-data"
+import { useUser } from "@stackframe/stack"
 
 interface CurriculaListProps {
   activeCurriculumId?: number
+}
+
+interface CurriculumItemProps {
+  curriculum: CurriculumData
+  isActive: boolean
 }
 
 export const CurriculaList = React.memo(function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
   useUser()
   const { curricula, loading, error } = useCachedUserCurricula()
   const [deleteError] = useState<string | null>(null)
-
-
 
   if (loading) {
     return (
@@ -87,16 +85,17 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
   )
 })
 
-interface CurriculumItemProps {
-  curriculum: { id: number; title: string; topic: string }
-  isActive: boolean
-  onDelete?: (id: number) => void
-}
-
 const CurriculumItem = React.memo(function CurriculumItem({ 
   curriculum, 
   isActive, 
 }: CurriculumItemProps) {
+  // Determine the correct link path and icon based on curriculum type
+  const curriculumPath = curriculum.curriculum_type === 'video' 
+    ? `/video-curriculum/${curriculum.id}` 
+    : `/curriculum/${curriculum.id}`
+  
+  const IconComponent = curriculum.curriculum_type === 'video' ? Video : BookOpen
+
   return (
     <SidebarMenuItem>
       <div className="flex items-center w-full">
@@ -105,9 +104,9 @@ const CurriculumItem = React.memo(function CurriculumItem({
           className="flex-1"
           asChild
         >
-          <Link href={`/curriculum/${curriculum.id}`} prefetch={true}>
+          <Link href={curriculumPath} prefetch={true}>
             <div className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
+              <IconComponent className="h-4 w-4" />
               <div className="flex flex-col text-left">
                 <span className="text-sm font-medium truncate">
                   {curriculum.title}

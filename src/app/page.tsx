@@ -31,12 +31,11 @@ import {
   BarChart3,
   Plus,
   RefreshCw,
-  Play,
-  Pause
+  Play
 } from "lucide-react"
 
 export default function Dashboard() {
-  useUser({ or: "redirect" })
+  const user = useUser({ or: "redirect" })
   const { dashboardData, loading, error, refresh } = useCachedDashboardData()
   const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
   const isMobile = useIsMobile()
@@ -206,7 +205,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">Learning Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Welcome back, Y Combinator! Here&apos;s your study overview.</p>
+              <p className="text-sm text-muted-foreground">Welcome back, {user?.displayName || 'there'}! Here&apos;s your study overview.</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={refresh}>
@@ -379,7 +378,7 @@ export default function Dashboard() {
               <div>
                 <h1 className="text-2xl font-bold">Learning Dashboard</h1>
                 <p className="text-sm text-muted-foreground">
-                  Welcome back, Y Combinator! Here&apos;s your study overview.
+                  Welcome back, {user?.displayName || 'Learner'}! Here&apos;s your study overview.
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -469,6 +468,22 @@ const TodaysFocus = React.memo(function TodaysFocus({
 }) {
   const isMobile = useIsMobile()
 
+  // Sort modules by completion status and then by day (oldest curricula first)
+  const sortedModules = useMemo(() => {
+    return [...modules].sort((a, b) => {
+      const aCompleted = completedModules.has(`${a.curriculumId}-${a.day}`)
+      const bCompleted = completedModules.has(`${b.curriculumId}-${b.day}`)
+      
+      // If completion status differs, uncompleted modules come first
+      if (aCompleted !== bCompleted) {
+        return aCompleted ? 1 : -1
+      }
+      
+      // Within the same completion status, sort by day descending (oldest curricula first)
+      return b.day - a.day
+    })
+  }, [modules, completedModules])
+
   if (modules.length === 0) {
     return (
       <div className={cn("text-center py-8", isMobile && "py-6")}>
@@ -492,7 +507,7 @@ const TodaysFocus = React.memo(function TodaysFocus({
       )}
       
       <div className={cn("space-y-3", !isMobile && "space-y-4")}>
-        {modules.map((module) => (
+        {sortedModules.map((module) => (
           <TodayModule
             key={`${module.curriculumId}-${module.day}`}
             module={module}
@@ -517,14 +532,19 @@ const TodayModule = React.memo(function TodayModule({
   const isMobile = useIsMobile()
   const moduleKey = `${module.curriculumId}-${module.day}`
 
+  // Need to determine curriculum type to route correctly
+  // Since module doesn't have curriculum type, we'll default to /curriculum
+  // but this should be enhanced with actual curriculum data
+  const curriculumPath = `/curriculum/${module.curriculumId}`
+
   return (
-    <Link href={`/curriculum/${module.curriculumId}`}>
+    <Link href={curriculumPath}>
       <div 
         className={cn(
-          "flex items-start gap-3 p-4 rounded-lg border transition-all duration-200 hover:bg-muted/50 cursor-pointer",
+          "flex items-start gap-3 p-4 rounded-lg border transition-all duration-300 hover:bg-muted/50 cursor-pointer transform",
           isCompleted 
-            ? "bg-primary/5 border-primary/20" 
-            : "bg-background",
+            ? "bg-muted/30 border-muted opacity-75 scale-[0.98]" 
+            : "bg-background hover:shadow-sm",
           isMobile && "p-3 gap-2"
         )}
       >
@@ -537,7 +557,7 @@ const TodayModule = React.memo(function TodayModule({
           className="mt-1 flex-shrink-0"
         >
           {isCompleted ? (
-            <CheckCircle className="h-5 w-5 text-primary" />
+            <CheckCircle className="h-5 w-5 text-green-600" />
           ) : (
             <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
           )}
@@ -546,22 +566,30 @@ const TodayModule = React.memo(function TodayModule({
         <div className="flex-1 min-w-0">
           <div className={cn("flex items-start gap-2 mb-2", isMobile && "flex-col gap-1")}>
             <h3 className={cn(
-              "font-medium leading-tight",
+              "font-medium leading-tight transition-all duration-200",
               isCompleted && "line-through text-muted-foreground",
               isMobile && "text-sm"
             )}>
               {module.title}
             </h3>
             {!isMobile && (
-              <Badge variant="secondary" className="text-xs flex-shrink-0">
-                {module.curriculumTitle}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                  {module.curriculumTitle}
+                </Badge>
+                <Badge variant="outline" className="text-xs flex-shrink-0">
+                  Day {module.day}
+                </Badge>
+              </div>
             )}
           </div>
           
           {isMobile && (
-            <div className="text-xs text-muted-foreground mb-2">
-              {module.curriculumTitle}
+            <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+              <span>{module.curriculumTitle}</span>
+              <Badge variant="outline" className="text-xs">
+                Day {module.day}
+              </Badge>
             </div>
           )}
           
@@ -570,18 +598,14 @@ const TodayModule = React.memo(function TodayModule({
               <Clock className="h-3 w-3" />
               <span>{module.totalTime}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>Day {module.day}</span>
-            </div>
           </div>
         </div>
         
         {!isMobile && (
           <div className="flex-shrink-0">
             {isCompleted ? (
-              <Button variant="ghost" size="sm" className="text-primary">
-                <Pause className="h-4 w-4 mr-1" />
+              <Button variant="ghost" size="sm" className="text-green-600">
+                <CheckCircle className="h-4 w-4 mr-1" />
                 Completed
               </Button>
             ) : (
@@ -820,21 +844,100 @@ const CurriculumCard = React.memo(function CurriculumCard({
     'overdue': 'Behind Schedule'
   }[progressStatus] || 'Unknown'
 
+  // Determine the correct link path based on curriculum type
+  const curriculumPath = curriculum.curriculum_type === 'video' 
+    ? `/video-curriculum/${curriculum.id}` 
+    : `/curriculum/${curriculum.id}`
+
+  // Helper function to extract YouTube video ID from URL
+  const extractYouTubeVideoId = (url: string): string | null => {
+    const regexPatterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
+    ]
+    
+    for (const pattern of regexPatterns) {
+      const match = url.match(pattern)
+      if (match && match[1]) {
+        return match[1]
+      }
+    }
+    
+    return null
+  }
+
   return (
-    <Link href={`/curriculum/${curriculum.id}`}>
+    <Link href={curriculumPath}>
       <div className={cn(
         "p-4 rounded-lg border hover:bg-muted/50 transition-colors",
         isMobile && "p-3"
       )}>
-        {/* Primary Resource Cover */}
+        {/* Primary Resource Cover or Video Thumbnail */}
         <div className="flex gap-3 mb-3">
-          <BookCover 
-            isbn={curriculum.primary_resource_isbn || undefined}
-            title={curriculum.primary_resource_title || undefined}
-            author={curriculum.primary_resource_author || undefined}
-            year={curriculum.primary_resource_year || undefined}
-            className={cn("flex-shrink-0", isMobile ? "h-16 w-12" : "h-20 w-14")}
-          />
+          {curriculum.curriculum_type === 'video' ? (
+            // Video thumbnail for video curricula
+            <div className={cn("flex-shrink-0 relative", isMobile ? "h-16 w-20" : "h-20 w-26")}>
+              {(() => {
+                // Get video data from either top-level fields or nested full_curriculum_data
+                const videoUrl = curriculum.primary_video_url || curriculum.full_curriculum_data?.primary_video?.url
+                const videoId = curriculum.primary_video_id || curriculum.full_curriculum_data?.primary_video?.video_id
+                const extractedId = videoUrl ? extractYouTubeVideoId(videoUrl) : null
+                const finalVideoId = extractedId || videoId
+                
+                // Debug logging - remove this later
+                if (curriculum.curriculum_type === 'video') {
+                  console.log('Video curriculum debug:', {
+                    curriculumId: curriculum.id,
+                    primary_video_url: curriculum.primary_video_url,
+                    primary_video_id: curriculum.primary_video_id,
+                    nested_video_url: curriculum.full_curriculum_data?.primary_video?.url,
+                    nested_video_id: curriculum.full_curriculum_data?.primary_video?.video_id,
+                    extractedId,
+                    finalVideoId,
+                    thumbnailUrl: finalVideoId ? `https://img.youtube.com/vi/${finalVideoId}/hqdefault.jpg` : 'none'
+                  })
+                }
+                
+                return finalVideoId ? (
+                  <>
+                    <img 
+                      src={`https://img.youtube.com/vi/${finalVideoId}/hqdefault.jpg`}
+                      alt="Video thumbnail"
+                      className="w-full h-full object-cover rounded"
+                      onError={(e) => {
+                        console.error('Thumbnail failed to load for video ID:', finalVideoId)
+                        // Fallback to a different quality
+                        const target = e.target as HTMLImageElement
+                        if (target.src.includes('hqdefault')) {
+                          target.src = `https://img.youtube.com/vi/${finalVideoId}/mqdefault.jpg`
+                        } else if (target.src.includes('mqdefault')) {
+                          target.src = `https://img.youtube.com/vi/${finalVideoId}/default.jpg`
+                        }
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-black/60 rounded-full p-2">
+                        <Play className="h-4 w-4 text-white" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-muted rounded flex items-center justify-center">
+                    <Play className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                )
+              })()}
+            </div>
+          ) : (
+            // Book cover for text curricula
+            <BookCover 
+              isbn={curriculum.primary_resource_isbn || undefined}
+              title={curriculum.primary_resource_title || undefined}
+              author={curriculum.primary_resource_author || undefined}
+              year={curriculum.primary_resource_year || undefined}
+              className={cn("flex-shrink-0", isMobile ? "h-16 w-12" : "h-20 w-14")}
+            />
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <h3 className={cn(
@@ -843,9 +946,16 @@ const CurriculumCard = React.memo(function CurriculumCard({
               )}>
                 {curriculum.title}
               </h3>
-              <Badge variant="secondary" className={cn(statusColor, "text-xs ml-2 flex-shrink-0")}>
-                {statusLabel}
-              </Badge>
+              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                <Badge variant="secondary" className={cn(statusColor, "text-xs")}>
+                  {statusLabel}
+                </Badge>
+                {curriculum.curriculum_type === 'video' && (
+                  <Badge variant="outline" className="text-xs">
+                    Video
+                  </Badge>
+                )}
+              </div>
             </div>
             
             {curriculumModules.length > 0 && (

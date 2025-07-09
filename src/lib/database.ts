@@ -13,22 +13,47 @@ export interface CurriculumData {
   education_level: string | null
   start_date: string
   end_date: string
+  curriculum_type: string // 'text' or 'video'
+  // Text-based curriculum fields
   primary_resource_title: string | null
   primary_resource_author: string | null
   primary_resource_year: number | null
   primary_resource_isbn: string | null
+  // Video-based curriculum fields
+  primary_video_id: string | null
+  primary_video_channel: string | null
+  primary_video_duration: string | null
+  primary_video_url: string | null
+  primary_video_published: string | null
   full_curriculum_data: {
     title?: string
     executive_overview?: string
     visual_learning_path?: Record<string, string>
+    primary_video?: {
+      title?: string
+      channel?: string
+      duration?: string
+      url?: string
+      published?: string
+      video_id?: string
+    }
     daily_modules?: Array<{
       day: number
       date: string
       title: string
+      video_segment?: {
+        start?: string
+        end?: string
+        duration?: string
+        chapters?: string[]
+        rewatch_segments?: string[]
+      }
       time_allocation?: {
         total?: string
-        primary_text?: string
+        video_viewing?: string
+        preparation?: string
         supplementary_materials?: string
+        synthesis?: string
       }
       supplementary_readings?: Array<{
         title: string
@@ -39,12 +64,15 @@ export interface CurriculumData {
         journal?: string
         publisher?: string
         reading_time?: string
+        focus?: string
       }>
       key_insights?: string[]
       core_concepts?: string[]
       knowledge_benchmark?: Record<string, string>
       practical_connections?: string
       primary_reading_focus?: string
+      pre_viewing_primer?: string
+      post_viewing_synthesis?: string
     }>
     primary_resource?: {
       title?: string
