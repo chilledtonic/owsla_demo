@@ -5,10 +5,11 @@ import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CurriculumCacheProvider } from "@/lib/curriculum-cache"
 import { ServiceWorkerRegister } from "@/components/service-worker-register"
+import { PWAInstallBanner } from "@/components/pwa-install-banner"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Curriculum Dashboard",
+  title: "Owsla",
   description: "Academic curriculum management system",
   icons: {
     icon: [
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Curriculum Dashboard',
+    title: 'Owsla',
   },
   formatDetection: {
     telephone: false,
@@ -52,6 +53,7 @@ export default function RootLayout({
               <CurriculumCacheProvider>
                 {children}
                 <ServiceWorkerRegister />
+                <PWAInstallBanner />
               </CurriculumCacheProvider>
             </StackTheme>
           </StackProvider>
