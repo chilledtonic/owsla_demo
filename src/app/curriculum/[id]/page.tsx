@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users } from "lucide-react"
 import {
   AlertDialog,
@@ -123,6 +124,7 @@ function transformDatabaseCurriculum(dbCurriculum: {
 
 export default function CurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const isMobile = useIsMobile()
   const [curriculumId, setCurriculumId] = useState<number | null>(null)
   const { curriculum, loading, error } = useCachedCurriculum(curriculumId || 0)
   const [curriculumData, setCurriculumData] = useState<{ curriculum: ReturnType<typeof transformDatabaseCurriculum> } | null>(null)
@@ -211,7 +213,7 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
     <AppLayout 
       activeCurriculumId={curriculum?.id}
       rightSidebar={
-        curriculumData && currentModule && (
+        !isMobile && curriculumData && currentModule && (
           <div className="p-4 space-y-4">
             {/* Primary Resource - Featured at top */}
             <div className="space-y-3">
@@ -403,6 +405,77 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
           </div>
         ) : curriculumData ? (
           <div className="flex-1 overflow-auto">
+            {/* Mobile-specific content */}
+            {isMobile && (
+              <div className="p-4 space-y-4 border-b bg-background/50">
+                {/* Primary Resource Card for Mobile */}
+                <div className="flex gap-3 p-3 rounded-lg border bg-background">
+                  <BookCover 
+                    isbn={curriculumData.curriculum.primary_resource.isbn}
+                    title={curriculumData.curriculum.primary_resource.title}
+                    className="h-16 w-12 flex-shrink-0"
+                  />
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <h4 className="font-medium text-sm leading-tight">{curriculumData.curriculum.primary_resource.title}</h4>
+                    <p className="text-xs text-muted-foreground">{curriculumData.curriculum.primary_resource.author}</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-xs h-7 mt-2"
+                      onClick={() => {
+                        if (curriculumData.curriculum.primary_resource.isbn && curriculumData.curriculum.primary_resource.isbn !== 'N/A') {
+                          const title = encodeURIComponent(curriculumData.curriculum.primary_resource.title || "");
+                          const author = encodeURIComponent(curriculumData.curriculum.primary_resource.author || "");
+                          const url = `https://www.amazon.com/s?k=${title}+${author}`;
+                          window.open(url, '_blank', 'noopener,noreferrer')
+                        }
+                      }}
+                    >
+                      Find Book
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.open('/experts', '_blank')}
+                    className="text-xs"
+                  >
+                    <Users className="h-3 w-3 mr-1" />
+                    Get Help
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="text-xs text-destructive hover:text-destructive">
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete &quot;{curriculumData.curriculum.title}&quot;? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDeleteCurriculum}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            )}
+            
             <CurriculumContent 
               curriculum={curriculumData.curriculum}
               currentDay={currentDay}

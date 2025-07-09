@@ -1,30 +1,25 @@
 "use client"
 
-import { useState } from "react"
 import { useUser } from "@stackframe/stack"
+import { useState } from "react"
 import { AppLayout } from "@/components/app-layout"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { 
-  MessageSquare, 
   Search, 
-  ArrowUp, 
-  ArrowDown, 
-  Share, 
-  Bookmark,
-  MoreHorizontal,
-  Clock,
-  Eye,
+  MessageSquare,
+  ArrowUp,
+  Eye, 
+  User,
   Plus,
-  TrendingUp,
-  Award,
-  CheckCircle
+  CheckCircle,
+  Bookmark,
+  Share
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Link from "next/link"
 
 interface User {
   id: string
@@ -248,49 +243,8 @@ const mockQuestions: Question[] = [
         user: mockUsers[2], // Feynman
         content: "I learned to play bongos while studying physics - it kept my mind fresh! Don't just study - play with the concepts. Build silly projects, explain things to your rubber duck, take tangents when something interests you. The goal isn't just to complete the curriculum, but to become the kind of person who loves learning. That intrinsic motivation sustains you forever.",
         upvotes: 41,
-        downvotes: 3,
-        timeAgo: "12 hours ago",
-        hasUpvoted: false
-      }
-    ]
-  },
-  {
-    id: "4",
-    title: "Best practices for collaborative learning in STEM subjects?",
-    content: "I'm organizing a study group for advanced calculus. What are the most effective formats and approaches for group learning in mathematics? How can we ensure everyone contributes and benefits?",
-    author: {
-      id: "student4",
-      name: "Emma Rodriguez",
-      title: "Mathematics Major",
-      avatar: "/api/placeholder/40/40",
-      verified: false,
-      reputation: 67,
-      specialties: ["Mathematics Student"]
-    },
-    timeAgo: "3 days ago",
-    views: 189,
-    upvotes: 15,
-    hasUpvoted: false,
-    hasBookmarked: false,
-    tags: ["collaborative-learning", "mathematics", "study-groups", "calculus"],
-    answers: [
-      {
-        id: "4a",
-        user: mockUsers[4], // Katherine Johnson
-        content: "Assign rotating roles: presenter, questioner, note-taker, devil's advocate. Each person explains one concept per session. Set ground rules: no question is too basic, mistakes are learning opportunities. Work problems together on a board - the act of writing helps everyone follow the logic. Schedule regular check-ins to ensure balanced participation.",
-        upvotes: 32,
-        downvotes: 1,
-        timeAgo: "2 days ago",
-        isAccepted: true,
-        hasUpvoted: true
-      },
-      {
-        id: "4b",
-        user: mockUsers[1], // Einstein
-        content: "The most beautiful thing about group learning is that explaining forces you to truly understand. Create an environment where teaching each other is the primary goal. When someone struggles, others should guide them to the answer rather than giving it directly. This way, both the teacher and student benefit from the interaction.",
-        upvotes: 26,
         downvotes: 0,
-        timeAgo: "1 day ago",
+        timeAgo: "16 hours ago",
         hasUpvoted: false
       }
     ]
@@ -299,318 +253,411 @@ const mockQuestions: Question[] = [
 
 export default function ExpertsPage() {
   useUser({ or: "redirect" })
-  const [searchTerm, setSearchTerm] = useState("")
+  const [questions] = useState<Question[]>(mockQuestions)
+  const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("recent")
-  const [filterTag, setFilterTag] = useState("all")
-
-  // Get all unique tags
-  const allTags = Array.from(new Set(mockQuestions.flatMap(q => q.tags)))
-
-  // Filter and sort questions
-  const filteredQuestions = mockQuestions
-    .filter(question => {
-      const matchesSearch = question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           question.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           question.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      
-      const matchesTag = filterTag === "all" || question.tags.includes(filterTag)
-      
-      return matchesSearch && matchesTag
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "recent":
-          return 0 // Keep original order (most recent first)
-        case "popular":
-          return b.upvotes - a.upvotes
-        case "answers":
-          return b.answers.length - a.answers.length
-        default:
-          return 0
-      }
-    })
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null)
+  const isMobile = useIsMobile()
 
   const handleVote = (questionId: string, isUpvote: boolean) => {
-    // In a real app, this would make an API call
-    console.log(`${isUpvote ? 'Upvoted' : 'Downvoted'} question ${questionId}`)
+    // Handle voting logic
+    console.log(`Vote on question ${questionId}: ${isUpvote ? 'upvote' : 'downvote'}`)
   }
-
-
 
   const handleBookmark = (questionId: string) => {
-    // In a real app, this would make an API call
-    console.log(`Bookmarked question ${questionId}`)
+    // Handle bookmark logic
+    console.log(`Bookmark question ${questionId}`)
   }
 
-  return (
-    <AppLayout
-      rightSidebar={
-        <div className="p-4">
-          {/* Top Contributors */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center">
-              <Award className="h-4 w-4 mr-2" />
-              Top Contributors
-            </h3>
-            <div className="space-y-3">
-              {mockUsers.slice(0, 5).map((user) => (
-                <div key={user.id} className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="text-xs">
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1">
-                      <p className="text-xs font-medium truncate">{user.name}</p>
-                      {user.verified && <CheckCircle className="h-3 w-3 text-blue-500 flex-shrink-0" />}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{user.reputation.toLocaleString()} rep</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+  const filteredQuestions = questions.filter(question =>
+    searchQuery === "" ||
+    question.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    question.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
-          {/* Popular Tags */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Popular Tags
-            </h3>
-            <div className="flex flex-wrap gap-1">
-              {allTags.slice(0, 8).map((tag) => (
-                <Badge 
-                  key={tag} 
-                  variant="secondary" 
-                  className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                  onClick={() => setFilterTag(tag)}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
+  const sortedQuestions = filteredQuestions.sort((a, b) => {
+    switch (sortBy) {
+      case "popular":
+        return b.upvotes - a.upvotes
+      case "views":
+        return b.views - a.views
+      case "answers":
+        return b.answers.length - a.answers.length
+      default: // recent
+        return new Date(b.timeAgo).getTime() - new Date(a.timeAgo).getTime()
+    }
+  })
 
-          {/* Quick Stats */}
-          <div className="space-y-3">
-            <div className="p-3 rounded bg-background/50 border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium">Questions Asked</span>
-                <span className="text-xs">{mockQuestions.length}</span>
-              </div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium">Total Answers</span>
-                <span className="text-xs">{mockQuestions.reduce((acc, q) => acc + q.answers.length, 0)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">Active Experts</span>
-                <span className="text-xs">{mockUsers.length}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <div className="h-full overflow-auto">
-        {/* Header */}
-        <div className="border-b">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
+  if (isMobile) {
+    return (
+      <AppLayout>
+        <div className="p-4 space-y-4">
+          {/* Mobile Header */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">Expert Forum</h1>
-                <p className="text-muted-foreground">
-                  Ask questions, share knowledge, and learn from world-class experts
+                <h1 className="text-xl font-bold">Expert Q&A</h1>
+                <p className="text-sm text-muted-foreground">
+                  {filteredQuestions.length} questions
                 </p>
               </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Ask Question
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Ask
               </Button>
             </div>
 
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
+            {/* Search and Filter */}
+            <div className="space-y-3">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search questions, answers, or tags..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search questions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Most Recent</SelectItem>
-                  <SelectItem value="popular">Most Popular</SelectItem>
-                  <SelectItem value="answers">Most Answers</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterTag} onValueChange={setFilterTag}>
-                <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="All Tags" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tags</SelectItem>
-                  {allTags.map(tag => (
-                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              <div className="flex gap-2">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Recent</SelectItem>
+                    <SelectItem value="popular">Popular</SelectItem>
+                    <SelectItem value="views">Most Viewed</SelectItem>
+                    <SelectItem value="answers">Most Answers</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Questions List */}
-        <div className="p-6">
-          <div className="space-y-6">
-            {filteredQuestions.map((question) => (
-              <div key={question.id} className="border-b pb-6 last:border-b-0">
+          {/* Questions List */}
+          <div className="space-y-3">
+            {sortedQuestions.map((question) => (
+              <div
+                key={question.id}
+                className="p-4 rounded-lg border bg-background space-y-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => setSelectedQuestion(selectedQuestion === question.id ? null : question.id)}
+              >
                 {/* Question Header */}
-                <div className="flex items-start gap-4">
-                  <div className="flex flex-col items-center gap-1 mt-1">
-                    <button 
-                      onClick={() => handleVote(question.id, true)}
-                      className={cn(
-                        "p-1 rounded hover:bg-muted transition-colors",
-                        question.hasUpvoted && "bg-blue-100 text-blue-600"
-                      )}
-                    >
-                      <ArrowUp className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm font-medium">{question.upvotes}</span>
-                    <button 
-                      onClick={() => handleVote(question.id, false)}
-                      className="p-1 rounded hover:bg-muted transition-colors"
-                    >
-                      <ArrowDown className="h-4 w-4" />
-                    </button>
+                <div className="space-y-2">
+                  <h3 className="font-medium text-sm leading-tight line-clamp-2">
+                    {question.title}
+                  </h3>
+                  
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <ArrowUp className="h-3 w-3" />
+                        {question.upvotes}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {question.answers.length}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {question.views}
+                      </span>
+                    </div>
+                    <span>{question.timeAgo}</span>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <Link 
-                      href={`/experts/question/${question.id}`}
-                      className="block hover:bg-muted/30 -m-2 p-2 rounded transition-colors"
-                    >
-                      <h3 className="font-semibold text-lg mb-2 hover:text-primary">
-                        {question.title}
-                      </h3>
-                      <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
-                        {question.content}
-                      </p>
-                    </Link>
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1">
+                    {question.tags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {question.tags.length > 3 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{question.tags.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
 
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {question.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    {/* Question Meta */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Avatar className="h-5 w-5">
-                            <AvatarImage src={question.author.avatar} alt={question.author.name} />
-                            <AvatarFallback className="text-xs">
-                              {question.author.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{question.author.name}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{question.timeAgo}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          <span>{question.views} views</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          <span>{question.answers.length} answers</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleBookmark(question.id)}
-                          className={cn(
-                            "p-1 rounded hover:bg-muted transition-colors",
-                            question.hasBookmarked && "bg-yellow-100 text-yellow-600"
-                          )}
-                        >
-                          <Bookmark className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 rounded hover:bg-muted transition-colors">
-                          <Share className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 rounded hover:bg-muted transition-colors">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Featured Answer Preview */}
+                {/* Expanded Content */}
+                {selectedQuestion === question.id && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {question.content}
+                    </p>
+                    
+                    {/* Top Answer Preview */}
                     {question.answers.length > 0 && (
-                      <div className="mt-4 pl-4 border-l-2 border-muted">
-                        <div className="flex items-center gap-2 mb-2">
+                      <div className="p-3 rounded bg-muted/50">
+                        <div className="flex items-start gap-2 mb-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={question.answers[0].user.avatar} alt={question.answers[0].user.name} />
+                            <AvatarImage src={question.answers[0].user.avatar} />
                             <AvatarFallback className="text-xs">
-                              {question.answers[0].user.name.split(' ').map(n => n[0]).join('')}
+                              {question.answers[0].user.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm font-medium">{question.answers[0].user.name}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-medium">
+                                {question.answers[0].user.name}
+                              </span>
+                              {question.answers[0].user.verified && (
+                                <CheckCircle className="h-3 w-3 text-blue-500" />
+                              )}
+                            </div>
+                          </div>
+                          {question.answers[0].isAccepted && (
+                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                              ✓ Accepted
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {question.answers[0].content}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleVote(question.id, true)
+                          }}
+                          className="h-8 px-2"
+                        >
+                          <ArrowUp className="h-3 w-3 mr-1" />
+                          {question.upvotes}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleBookmark(question.id)
+                          }}
+                          className="h-8 px-2"
+                        >
+                          <Bookmark className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Button variant="outline" size="sm" className="h-8">
+                        <MessageSquare className="h-3 w-3 mr-1" />
+                        Answer
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {filteredQuestions.length === 0 && (
+            <div className="text-center py-12">
+              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No questions found</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Try adjusting your search terms or browse all questions
+              </p>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Ask a Question
+              </Button>
+            </div>
+          )}
+        </div>
+      </AppLayout>
+    )
+  }
+
+  // Desktop layout (simplified from original)
+  return (
+    <AppLayout>
+      <div className="h-full p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Expert Q&A</h1>
+              <p className="text-muted-foreground">
+                Get answers from renowned experts and educators
+              </p>
+            </div>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Ask Question
+            </Button>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search questions, topics, or experts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Most Recent</SelectItem>
+                <SelectItem value="popular">Most Popular</SelectItem>
+                <SelectItem value="views">Most Viewed</SelectItem>
+                <SelectItem value="answers">Most Answers</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Questions Grid */}
+          <div className="grid grid-cols-1 gap-6">
+            {sortedQuestions.map((question) => (
+              <div key={question.id} className="p-6 rounded-lg border bg-background">
+                {/* Question Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-2 leading-tight">
+                      {question.title}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                      <span className="flex items-center gap-1">
+                        <ArrowUp className="h-4 w-4" />
+                        {question.upvotes} votes
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-4 w-4" />
+                        {question.answers.length} answers
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-4 w-4" />
+                        {question.views} views
+                      </span>
+                      <span>Asked {question.timeAgo}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleVote(question.id, true)}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleBookmark(question.id)}
+                    >
+                      <Bookmark className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Question Content */}
+                <p className="text-muted-foreground mb-4 line-clamp-3">
+                  {question.content}
+                </p>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {question.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+
+                {/* Top Answer Preview */}
+                {question.answers.length > 0 && (
+                  <div className="p-4 rounded-lg bg-muted/20 border">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Avatar>
+                        <AvatarImage src={question.answers[0].user.avatar} />
+                        <AvatarFallback>
+                          {question.answers[0].user.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">
+                            {question.answers[0].user.name}
+                          </span>
                           {question.answers[0].user.verified && (
                             <CheckCircle className="h-4 w-4 text-blue-500" />
                           )}
                           {question.answers[0].isAccepted && (
-                            <Badge variant="default" className="text-xs bg-green-600">
-                              Accepted
+                            <Badge variant="secondary" className="bg-green-100 text-green-700">
+                              ✓ Accepted Answer
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {question.answers[0].content}
+                        <p className="text-sm text-muted-foreground">
+                          {question.answers[0].user.title}
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>{question.answers[0].upvotes} upvotes</span>
-                          <span>{question.answers[0].timeAgo}</span>
-                          <Link 
-                            href={`/experts/question/${question.id}`}
-                            className="text-primary hover:underline"
-                          >
-                            View all {question.answers.length} answers
-                          </Link>
-                        </div>
                       </div>
-                    )}
+                    </div>
+                    <p className="text-sm line-clamp-3">
+                      {question.answers[0].content}
+                    </p>
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <ArrowUp className="h-3 w-3" />
+                          {question.answers[0].upvotes}
+                        </span>
+                        <span>{question.answers[0].timeAgo}</span>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        View All Answers ({question.answers.length})
+                      </Button>
+                    </div>
                   </div>
+                )}
+
+                {/* Action Bar */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Answer Question
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <Share className="h-4 w-4 mr-2" />
+                      Share
+                    </Button>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    by {question.author.name}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
 
+          {/* Empty State */}
           {filteredQuestions.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No questions found</p>
-                <p className="text-sm">Try adjusting your search or filters, or ask the first question!</p>
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ask Question
-                </Button>
-              </div>
+              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No questions found</h3>
+              <p className="text-muted-foreground mb-6">
+                Try adjusting your search terms or browse all questions
+              </p>
+              <Button size="lg">
+                <Plus className="h-5 w-5 mr-2" />
+                Ask a Question
+              </Button>
             </div>
           )}
         </div>

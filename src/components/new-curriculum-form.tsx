@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useUser } from "@stackframe/stack"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +27,7 @@ interface NewCurriculumFormProps {
 
 export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProps) {
   const user = useUser()
+  const isMobile = useIsMobile()
   const [isAdvanced, setIsAdvanced] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [startDate, setStartDate] = useState<Date>()
@@ -208,42 +210,42 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-6 py-6 max-w-7xl">
+      <div className={`container mx-auto max-w-7xl ${isMobile ? 'px-4 py-4' : 'px-6 py-6'}`}>
         {/* Header Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+        <div className={`text-center ${isMobile ? 'mb-6' : 'mb-8'}`}>
+          <h1 className={`font-bold mb-2 ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
             Create New Curriculum
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className={`text-muted-foreground max-w-2xl mx-auto ${isMobile ? 'text-base' : 'text-lg'}`}>
             Design a personalized learning curriculum tailored to your needs
           </p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className={isMobile ? "space-y-6" : "grid grid-cols-1 xl:grid-cols-4 gap-6"}>
           {/* Main Form */}
-          <div className="xl:col-span-3">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className={isMobile ? "w-full" : "xl:col-span-3"}>
+            <form onSubmit={handleSubmit} className={isMobile ? "space-y-4" : "space-y-6"}>
               {/* Mode Toggle Section */}
-              <div className="flex items-center justify-between p-4 rounded border bg-card/50">
+              <div className={`rounded border bg-card/50 ${isMobile ? 'p-3 space-y-2' : 'flex items-center justify-between p-4'}`}>
                 <div className="flex items-center space-x-3">
                   <Switch
                     id="mode-toggle"
                     checked={isAdvanced}
                     onCheckedChange={setIsAdvanced}
                   />
-                  <Label htmlFor="mode-toggle" className="text-lg font-medium">
+                  <Label htmlFor="mode-toggle" className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>
                     {isAdvanced ? "Advanced Mode" : "Basic Mode"}
                   </Label>
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className={`text-muted-foreground ${isMobile ? 'text-xs pl-8' : 'text-sm'}`}>
                   {isAdvanced ? "Full control over all parameters" : "Simplified with intelligent defaults"}
                 </div>
               </div>
 
               {/* Basic Information Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
-                  <Label htmlFor="topic" className="text-base font-medium">Topic</Label>
+              <div className={isMobile ? "space-y-4" : "grid grid-cols-1 lg:grid-cols-3 gap-4"}>
+                <div className={isMobile ? "w-full" : "lg:col-span-2"}>
+                  <Label htmlFor="topic" className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Topic</Label>
                   <Input
                     id="topic"
                     placeholder="e.g., Chaos Magick, Machine Learning, Ancient History..."
@@ -255,7 +257,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                 </div>
 
                 <div>
-                  <Label className="text-base font-medium">Start Date</Label>
+                  <Label className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Start Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -266,7 +268,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                        {startDate ? format(startDate, isMobile ? "MMM d, yyyy" : "PPP") : <span>Pick a date</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -282,29 +284,29 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
               </div>
 
               <div>
-                <Label htmlFor="preliminaries" className="text-base font-medium">Preliminaries (Optional)</Label>
+                <Label htmlFor="preliminaries" className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Preliminaries (Optional)</Label>
                 <Textarea
                   id="preliminaries"
                   placeholder="Any prerequisites or background information..."
                   value={formData.preliminaries}
                   onChange={(e) => setFormData(prev => ({ ...prev, preliminaries: e.target.value }))}
-                  className="mt-2 min-h-[80px]"
+                  className={`mt-2 ${isMobile ? 'min-h-[60px]' : 'min-h-[80px]'}`}
                 />
               </div>
 
               {/* Basic Mode - 3 Sliders with Intelligent Layout */}
               {!isAdvanced && (
-                <div className="space-y-6">
+                <div className={isMobile ? "space-y-4" : "space-y-6"}>
                   <div className="text-center">
-                    <h3 className="text-xl font-semibold mb-2">Customize Your Learning Experience</h3>
-                    <p className="text-muted-foreground">Use these sliders to set your preferences</p>
+                    <h3 className={`font-semibold mb-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>Customize Your Learning Experience</h3>
+                    <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>Use these sliders to set your preferences</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <Card className="p-4">
+                  <div className={isMobile ? "space-y-4" : "grid grid-cols-1 lg:grid-cols-3 gap-4"}>
+                    <Card className={isMobile ? "p-3" : "p-4"}>
                       <div className="text-center mb-3">
-                        <div className="text-2xl font-bold text-primary">{depth[0]}</div>
-                        <Label className="text-base font-medium">Study Depth</Label>
+                        <div className={`font-bold text-primary ${isMobile ? 'text-xl' : 'text-2xl'}`}>{depth[0]}</div>
+                        <Label className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Study Depth</Label>
                       </div>
                       <Slider
                         value={depth}
@@ -325,10 +327,10 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                       </div>
                     </Card>
 
-                    <Card className="p-4">
+                    <Card className={isMobile ? "p-3" : "p-4"}>
                       <div className="text-center mb-3">
-                        <div className="text-2xl font-bold text-primary">{lengthOfStudy[0]}</div>
-                        <Label className="text-base font-medium">Days of Study</Label>
+                        <div className={`font-bold text-primary ${isMobile ? 'text-xl' : 'text-2xl'}`}>{lengthOfStudy[0]}</div>
+                        <Label className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Days of Study</Label>
                       </div>
                       <Slider
                         value={lengthOfStudy}
@@ -347,10 +349,10 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                       </div>
                     </Card>
 
-                    <Card className="p-4">
+                    <Card className={isMobile ? "p-3" : "p-4"}>
                       <div className="text-center mb-3">
-                        <div className="text-2xl font-bold text-primary">{educationLevel[0]}</div>
-                        <Label className="text-base font-medium">Education Level</Label>
+                        <div className={`font-bold text-primary ${isMobile ? 'text-xl' : 'text-2xl'}`}>{educationLevel[0]}</div>
+                        <Label className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Education Level</Label>
                       </div>
                       <Slider
                         value={educationLevel}
@@ -376,22 +378,35 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
               {/* Advanced Mode - Compact Tabs */}
               {isAdvanced && (
-                <div className="space-y-6">
+                <div className={isMobile ? "space-y-4" : "space-y-6"}>
                   <div className="text-center">
-                    <h3 className="text-xl font-semibold mb-2">Advanced Configuration</h3>
-                    <p className="text-muted-foreground">Fine-tune every aspect of your curriculum</p>
+                    <h3 className={`font-semibold mb-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>Advanced Configuration</h3>
+                    <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>Fine-tune every aspect of your curriculum</p>
                   </div>
                   
                   <Tabs defaultValue="course" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="course">Course</TabsTrigger>
-                      <TabsTrigger value="learner">Learner</TabsTrigger>
-                      <TabsTrigger value="preferences">Preferences</TabsTrigger>
-                      <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                    </TabsList>
+                    {isMobile ? (
+                      <div className="space-y-2">
+                        <TabsList className="grid w-full grid-cols-2 text-xs h-8">
+                          <TabsTrigger value="course" className="text-xs">Course</TabsTrigger>
+                          <TabsTrigger value="learner" className="text-xs">Learner</TabsTrigger>
+                        </TabsList>
+                        <TabsList className="grid w-full grid-cols-2 text-xs h-8">
+                          <TabsTrigger value="preferences" className="text-xs">Preferences</TabsTrigger>
+                          <TabsTrigger value="schedule" className="text-xs">Schedule</TabsTrigger>
+                        </TabsList>
+                      </div>
+                    ) : (
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="course">Course</TabsTrigger>
+                        <TabsTrigger value="learner">Learner</TabsTrigger>
+                        <TabsTrigger value="preferences">Preferences</TabsTrigger>
+                        <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                      </TabsList>
+                    )}
 
                     <TabsContent value="course" className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
                         <div>
                           <Label className="text-sm font-medium">Length of Study (days)</Label>
                           <Input
@@ -475,7 +490,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                     </TabsContent>
 
                     <TabsContent value="learner" className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className={isMobile ? "space-y-4" : "grid grid-cols-3 gap-4"}>
                         <div>
                           <Label className="text-sm font-medium">Education Level</Label>
                           <Select
@@ -559,7 +574,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                     <TabsContent value="preferences" className="space-y-4">
                       <div>
                         <Label className="text-sm font-medium mb-2 block">Focus Areas</Label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className={isMobile ? "grid grid-cols-2 gap-2" : "grid grid-cols-3 gap-2"}>
                           {focusAreaOptions.map((area) => (
                             <div key={area} className="flex items-center space-x-2">
                               <Checkbox
@@ -573,7 +588,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className={isMobile ? "space-y-4" : "grid grid-cols-2 gap-4"}>
                         <div>
                           <Label className="text-sm font-medium">
                             Supplementary Material: {formData.curriculum_preferences.supplementary_material_ratio.toFixed(1)}
@@ -627,7 +642,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                     <TabsContent value="schedule" className="space-y-4">
                       <div>
                         <Label className="text-sm font-medium mb-2 block">Study Days</Label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className={isMobile ? "grid grid-cols-3 gap-2" : "grid grid-cols-4 gap-2"}>
                           {weekDays.map((day) => (
                             <div key={day} className="flex items-center space-x-2">
                               <Checkbox
@@ -668,155 +683,227 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
             </form>
           </div>
 
-          {/* Sidebar with Live Preview/Summary */}
-          <div className="xl:col-span-1">
-            <div className="sticky top-6 space-y-4">
-              <Card className="p-4">
-                <h3 className="font-semibold mb-3">Curriculum Preview</h3>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Topic:</span>
-                    <div className="font-medium">{formData.topic || "Not specified"}</div>
+          {/* Mobile Summary - Only visible on mobile */}
+          {isMobile && formData.topic && (
+            <div className="bg-muted/30 p-4 rounded-lg">
+              <h3 className="font-semibold mb-3 text-sm">Curriculum Preview</h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Topic:</span>
+                  <span className="font-medium text-right">{formData.topic}</span>
+                </div>
+                
+                {startDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Start:</span>
+                    <span className="font-medium">{format(startDate, "MMM d")}</span>
                   </div>
-                  
-                  {startDate && (
-                    <div>
-                      <span className="text-muted-foreground">Start Date:</span>
-                      <div className="font-medium">{format(startDate, "PPP")}</div>
+                )}
+
+                {!isAdvanced && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Duration:</span>
+                      <span className="font-medium">{lengthOfStudy[0]} days</span>
                     </div>
-                  )}
+                    
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Daily Time:</span>
+                      <span className="font-medium">
+                        {(() => {
+                          const advanced = getAdvancedFromBasic()
+                          return advanced.course_parameters.daily_time_commitment
+                        })()} hours
+                      </span>
+                    </div>
 
-                  {!isAdvanced && (
-                    <>
-                      <div>
-                        <span className="text-muted-foreground">Duration:</span>
-                        <div className="font-medium">{lengthOfStudy[0]} days</div>
-                      </div>
-                      
-                      <div>
-                        <span className="text-muted-foreground">Depth Level:</span>
-                        <div className="font-medium">
-                          {depth[0]}/10 - {depth[0] <= 3 ? "Overview" : depth[0] <= 7 ? "Detailed" : "Expert"}
-                        </div>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Hours:</span>
+                      <span className="font-medium">
+                        {(() => {
+                          const advanced = getAdvancedFromBasic()
+                          return Math.round(lengthOfStudy[0] * advanced.course_parameters.daily_time_commitment)
+                        })()} hours
+                      </span>
+                    </div>
+                  </>
+                )}
 
-                      <div>
-                        <span className="text-muted-foreground">Education Level:</span>
-                        <div className="font-medium">
-                          {educationLevel[0]}/10 - {
-                            educationLevel[0] <= 2 ? "Novice" : 
-                            educationLevel[0] <= 5 ? "Undergraduate" : 
-                            educationLevel[0] <= 8 ? "Graduate" : "Professional"
-                          }
-                        </div>
-                      </div>
+                {isAdvanced && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Duration:</span>
+                      <span className="font-medium">{formData.course_parameters.length_of_study} days</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Daily Time:</span>
+                      <span className="font-medium">{formData.course_parameters.daily_time_commitment}h</span>
+                    </div>
 
-                      <div>
-                        <span className="text-muted-foreground">Est. Daily Time:</span>
-                        <div className="font-medium">
-                          {(() => {
-                            const advanced = getAdvancedFromBasic()
-                            return advanced.course_parameters.daily_time_commitment
-                          })()} hours
-                        </div>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Hours:</span>
+                      <span className="font-medium">
+                        {(formData.course_parameters.length_of_study * formData.course_parameters.daily_time_commitment).toFixed(0)}h
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
+          {/* Sidebar with Live Preview/Summary - Desktop only */}
+          {!isMobile && (
+            <div className="xl:col-span-1">
+              <div className="sticky top-6 space-y-4">
+                <Card className="p-4">
+                  <h3 className="font-semibold mb-3">Curriculum Preview</h3>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Topic:</span>
+                      <div className="font-medium">{formData.topic || "Not specified"}</div>
+                    </div>
+                    
+                    {startDate && (
                       <div>
-                        <span className="text-muted-foreground">Pace:</span>
-                        <div className="font-medium capitalize">
-                          {(() => {
-                            const advanced = getAdvancedFromBasic()
-                            return advanced.course_parameters.pace
-                          })()}
-                        </div>
+                        <span className="text-muted-foreground">Start Date:</span>
+                        <div className="font-medium">{format(startDate, "PPP")}</div>
                       </div>
+                    )}
 
-                      <div>
-                        <span className="text-muted-foreground">Focus Areas:</span>
-                        <div className="font-medium">
-                          {(() => {
-                            const advanced = getAdvancedFromBasic()
-                            return advanced.curriculum_preferences.focus_areas
-                              .map(area => area.charAt(0).toUpperCase() + area.slice(1))
-                              .join(", ")
-                          })()}
-                        </div>
-                      </div>
-
-                      <div>
-                        <span className="text-muted-foreground">Total Hours:</span>
-                        <div className="font-medium">
-                          {(() => {
-                            const advanced = getAdvancedFromBasic()
-                            return Math.round(lengthOfStudy[0] * advanced.course_parameters.daily_time_commitment)
-                          })()} hours
-                        </div>
-                      </div>
-
-                      {startDate && (
+                    {!isAdvanced && (
+                      <>
                         <div>
-                          <span className="text-muted-foreground">Est. Completion:</span>
+                          <span className="text-muted-foreground">Duration:</span>
+                          <div className="font-medium">{lengthOfStudy[0]} days</div>
+                        </div>
+                        
+                        <div>
+                          <span className="text-muted-foreground">Depth Level:</span>
                           <div className="font-medium">
-                            {format(new Date(startDate.getTime() + lengthOfStudy[0] * 24 * 60 * 60 * 1000), "PPP")}
+                            {depth[0]}/10 - {depth[0] <= 3 ? "Overview" : depth[0] <= 7 ? "Detailed" : "Expert"}
                           </div>
                         </div>
-                      )}
-                    </>
-                  )}
 
-                  {isAdvanced && (
-                    <>
-                      <div>
-                        <span className="text-muted-foreground">Duration:</span>
-                        <div className="font-medium">{formData.course_parameters.length_of_study} days</div>
-                      </div>
-                      
-                      <div>
-                        <span className="text-muted-foreground">Daily Time:</span>
-                        <div className="font-medium">{formData.course_parameters.daily_time_commitment}h</div>
-                      </div>
-
-                      <div>
-                        <span className="text-muted-foreground">Total Hours:</span>
-                        <div className="font-medium">
-                          {(formData.course_parameters.length_of_study * formData.course_parameters.daily_time_commitment).toFixed(0)}h
+                        <div>
+                          <span className="text-muted-foreground">Education Level:</span>
+                          <div className="font-medium">
+                            {educationLevel[0]}/10 - {
+                              educationLevel[0] <= 2 ? "Novice" : 
+                              educationLevel[0] <= 5 ? "Undergraduate" : 
+                              educationLevel[0] <= 8 ? "Graduate" : "Professional"
+                            }
+                          </div>
                         </div>
-                      </div>
 
-                      <div>
-                        <span className="text-muted-foreground">Pace:</span>
-                        <div className="font-medium capitalize">{formData.course_parameters.pace}</div>
-                      </div>
+                        <div>
+                          <span className="text-muted-foreground">Est. Daily Time:</span>
+                          <div className="font-medium">
+                            {(() => {
+                              const advanced = getAdvancedFromBasic()
+                              return advanced.course_parameters.daily_time_commitment
+                            })()} hours
+                          </div>
+                        </div>
 
-                      <div>
-                        <span className="text-muted-foreground">Education Level:</span>
-                        <div className="font-medium capitalize">{formData.learner_profile.education_level}</div>
-                      </div>
+                        <div>
+                          <span className="text-muted-foreground">Pace:</span>
+                          <div className="font-medium capitalize">
+                            {(() => {
+                              const advanced = getAdvancedFromBasic()
+                              return advanced.course_parameters.pace
+                            })()}
+                          </div>
+                        </div>
 
-                      {formData.curriculum_preferences.focus_areas.length > 0 && (
                         <div>
                           <span className="text-muted-foreground">Focus Areas:</span>
                           <div className="font-medium">
-                            {formData.curriculum_preferences.focus_areas.map(area => area.charAt(0).toUpperCase() + area.slice(1)).join(", ")}
+                            {(() => {
+                              const advanced = getAdvancedFromBasic()
+                              return advanced.curriculum_preferences.focus_areas
+                                .map(area => area.charAt(0).toUpperCase() + area.slice(1))
+                                .join(", ")
+                            })()}
                           </div>
                         </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </Card>
 
-              <Card className="p-4">
-                <h3 className="font-semibold mb-3">Quick Tips</h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>• Higher depth levels include more theoretical content</p>
-                  <p>• Longer durations allow for better retention</p>
-                  <p>• Advanced mode gives you full control over all parameters</p>
-                  <p>• Preview updates as you make changes</p>
-                </div>
-              </Card>
+                        <div>
+                          <span className="text-muted-foreground">Total Hours:</span>
+                          <div className="font-medium">
+                            {(() => {
+                              const advanced = getAdvancedFromBasic()
+                              return Math.round(lengthOfStudy[0] * advanced.course_parameters.daily_time_commitment)
+                            })()} hours
+                          </div>
+                        </div>
+
+                        {startDate && (
+                          <div>
+                            <span className="text-muted-foreground">Est. Completion:</span>
+                            <div className="font-medium">
+                              {format(new Date(startDate.getTime() + lengthOfStudy[0] * 24 * 60 * 60 * 1000), "PPP")}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {isAdvanced && (
+                      <>
+                        <div>
+                          <span className="text-muted-foreground">Duration:</span>
+                          <div className="font-medium">{formData.course_parameters.length_of_study} days</div>
+                        </div>
+                        
+                        <div>
+                          <span className="text-muted-foreground">Daily Time:</span>
+                          <div className="font-medium">{formData.course_parameters.daily_time_commitment}h</div>
+                        </div>
+
+                        <div>
+                          <span className="text-muted-foreground">Total Hours:</span>
+                          <div className="font-medium">
+                            {(formData.course_parameters.length_of_study * formData.course_parameters.daily_time_commitment).toFixed(0)}h
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-muted-foreground">Pace:</span>
+                          <div className="font-medium capitalize">{formData.course_parameters.pace}</div>
+                        </div>
+
+                        <div>
+                          <span className="text-muted-foreground">Education Level:</span>
+                          <div className="font-medium capitalize">{formData.learner_profile.education_level}</div>
+                        </div>
+
+                        {formData.curriculum_preferences.focus_areas.length > 0 && (
+                          <div>
+                            <span className="text-muted-foreground">Focus Areas:</span>
+                            <div className="font-medium">
+                              {formData.curriculum_preferences.focus_areas.map(area => area.charAt(0).toUpperCase() + area.slice(1)).join(", ")}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </Card>
+
+                <Card className="p-4">
+                  <h3 className="font-semibold mb-3">Quick Tips</h3>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Higher depth levels include more theoretical content</p>
+                    <p>• Longer durations allow for better retention</p>
+                    <p>• Advanced mode gives you full control over all parameters</p>
+                    <p>• Preview updates as you make changes</p>
+                  </div>
+                </Card>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

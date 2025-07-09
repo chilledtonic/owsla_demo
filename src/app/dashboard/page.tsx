@@ -2,15 +2,18 @@
 
 import { AppLayout } from "@/components/app-layout"
 import { LearningCalendar } from "@/components/ui/learning-calendar"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { BookOpen, Plus, TrendingUp, Clock, Calendar, Target } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { BookOpen, Plus, TrendingUp, Clock, Calendar, Target, ChevronRight } from "lucide-react"
 import { useState, useEffect } from "react"
 import { DailyModule } from "@/lib/actions"
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
 export default function DashboardPage() {
   const router = useRouter()
+  const isMobile = useIsMobile()
   const [modules, setModules] = useState<DailyModule[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -61,21 +64,144 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="h-full p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-muted rounded w-1/3"></div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 h-96 bg-muted rounded"></div>
-                <div className="h-96 bg-muted rounded"></div>
-              </div>
-            </div>
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-sm text-muted-foreground">Loading dashboard...</p>
           </div>
         </div>
       </AppLayout>
     )
   }
 
+  const todayModules = modules.filter(module => {
+    const moduleDate = new Date(module.date)
+    const today = new Date()
+    moduleDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+    return moduleDate.getTime() === today.getTime()
+  })
+
+  const upcomingModules = modules.filter(module => {
+    const moduleDate = new Date(module.date)
+    const today = new Date()
+    moduleDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+    return moduleDate > today
+  }).slice(0, 3)
+
+  const totalStudyTime = modules.reduce((acc, module) => {
+    const time = parseInt(module.totalTime.replace(/\D/g, '')) || 60
+    return acc + time
+  }, 0)
+
+  if (isMobile) {
+    return (
+      <AppLayout>
+        <div className="p-4 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold">Learning Overview</h1>
+              <p className="text-sm text-muted-foreground">Track your progress</p>
+            </div>
+            <Button size="sm" asChild>
+              <Link href="/new-curriculum">
+                <Plus className="h-4 w-4 mr-1" />
+                New
+              </Link>
+            </Button>
+          </div>
+
+          {modules.length > 0 ? (
+            <div className="space-y-6">
+              {/* Quick Stats */}
+              <div className="grid grid-cols-3 gap-3 py-4 border-y">
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{todayModules.length}</div>
+                  <div className="text-xs text-muted-foreground">Today</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{upcomingModules.length}</div>
+                  <div className="text-xs text-muted-foreground">Upcoming</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{Math.round(totalStudyTime / 60)}h</div>
+                  <div className="text-xs text-muted-foreground">Total</div>
+                </div>
+              </div>
+
+              {/* Today's Schedule */}
+              {todayModules.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-lg font-semibold">Today&apos;s Schedule</h2>
+                  <div className="space-y-2">
+                    {todayModules.map((module) => (
+                      <div key={`${module.curriculumId}-${module.day}`} className="p-3 rounded-lg border bg-primary/5">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm leading-tight">{module.title}</h3>
+                            <p className="text-xs text-muted-foreground mt-1">{module.curriculumTitle}</p>
+                          </div>
+                          <Badge variant="secondary" className="text-xs ml-2">{module.totalTime}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar */}
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">Calendar View</h2>
+                <LearningCalendar modules={modules} />
+              </div>
+
+              {/* Quick Actions */}
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">Quick Actions</h2>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-between" asChild>
+                    <Link href="/library">
+                      <div className="flex items-center">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Browse Library
+                      </div>
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-between" asChild>
+                    <Link href="/new-curriculum">
+                      <div className="flex items-center">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Curriculum
+                      </div>
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Welcome state when no modules exist
+            <div className="text-center py-12">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-lg font-semibold mb-2">Welcome to Your Dashboard</h2>
+              <p className="text-sm text-muted-foreground mb-6">Create your first curriculum to get started</p>
+              <Button size="lg" asChild>
+                <Link href="/new-curriculum">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Curriculum
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      </AppLayout>
+    )
+  }
+
+  // Desktop layout
   return (
     <AppLayout>
       <div className="h-full p-6">
@@ -107,109 +233,84 @@ export default function DashboardPage() {
             // Welcome state when no modules exist
             <div className="space-y-8">
               {/* Welcome Banner */}
-              <Card className="text-center py-12">
-                <CardHeader>
-                  <div className="mx-auto mb-4 p-3 bg-primary/10 rounded w-fit">
-                    <Calendar className="h-8 w-8 text-primary" />
-                  </div>
-                  <CardTitle className="text-2xl">Welcome to Your Learning Dashboard</CardTitle>
-                  <CardDescription className="text-lg">
-                    Start your learning journey by creating your first curriculum
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    size="lg" 
-                    onClick={() => router.push("/new-curriculum")}
-                    className="px-8"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Create Your First Curriculum
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="text-center py-12 rounded-lg border">
+                <Calendar className="h-12 w-12 text-primary mx-auto mb-4" />
+                <h2 className="text-2xl font-semibold mb-2">Welcome to Your Learning Dashboard</h2>
+                <p className="text-muted-foreground text-lg mb-6">
+                  Start your learning journey by creating your first curriculum
+                </p>
+                <Button 
+                  size="lg" 
+                  onClick={() => router.push("/new-curriculum")}
+                  className="px-8"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Your First Curriculum
+                </Button>
+              </div>
 
               {/* Feature Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 p-3 bg-blue-100 rounded w-fit">
-                      <BookOpen className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <CardTitle>Personalized Content</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center">
-                      AI-generated curricula adapted to your knowledge level, learning style, and available time
-                    </CardDescription>
-                  </CardContent>
-                </Card>
+                <div className="text-center p-6 rounded-lg border">
+                  <div className="mx-auto mb-4 p-3 bg-blue-100 rounded w-fit">
+                    <BookOpen className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Personalized Content</h3>
+                  <p className="text-sm text-muted-foreground">
+                    AI-generated curricula adapted to your knowledge level, learning style, and available time
+                  </p>
+                </div>
 
-                <Card>
-                  <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 p-3 bg-green-100 rounded w-fit">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
-                    </div>
-                    <CardTitle>Track Progress</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center">
-                      Monitor your learning journey with detailed progress tracking and milestone achievements
-                    </CardDescription>
-                  </CardContent>
-                </Card>
+                <div className="text-center p-6 rounded-lg border">
+                  <div className="mx-auto mb-4 p-3 bg-green-100 rounded w-fit">
+                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Track Progress</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Monitor your learning journey with detailed progress tracking and milestone achievements
+                  </p>
+                </div>
 
-                <Card>
-                  <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 p-3 bg-purple-100 rounded w-fit">
-                      <Clock className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <CardTitle>Flexible Scheduling</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center">
-                      Study at your own pace with schedules that adapt to your daily routine and commitments
-                    </CardDescription>
-                  </CardContent>
-                </Card>
+                <div className="text-center p-6 rounded-lg border">
+                  <div className="mx-auto mb-4 p-3 bg-purple-100 rounded w-fit">
+                    <Clock className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Flexible Scheduling</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Study at your own pace with schedules that adapt to your daily routine and commitments
+                  </p>
+                </div>
               </div>
 
               {/* Quick Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Get Started
-                  </CardTitle>
-                  <CardDescription>
-                    Here are some ways to begin your learning journey
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button 
-                      variant="outline" 
-                      className="h-auto p-4 justify-start"
-                      onClick={() => router.push("/new-curriculum")}
-                    >
-                      <div className="text-left">
-                        <div className="font-medium">Create a Curriculum</div>
-                        <div className="text-sm text-muted-foreground">Start with a new learning path</div>
-                      </div>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="h-auto p-4 justify-start"
-                      onClick={() => router.push("/library")}
-                    >
-                      <div className="text-left">
-                        <div className="font-medium">Browse Library</div>
-                        <div className="text-sm text-muted-foreground">Explore existing curricula</div>
-                      </div>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="p-6 rounded-lg border">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Get Started
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 justify-start"
+                    onClick={() => router.push("/new-curriculum")}
+                  >
+                    <div className="text-left">
+                      <div className="font-medium">Create a Curriculum</div>
+                      <div className="text-sm text-muted-foreground">Start with a new learning path</div>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 justify-start"
+                    onClick={() => router.push("/library")}
+                  >
+                    <div className="text-left">
+                      <div className="font-medium">Browse Library</div>
+                      <div className="text-sm text-muted-foreground">Explore existing curricula</div>
+                    </div>
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </div>

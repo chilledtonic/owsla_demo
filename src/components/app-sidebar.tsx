@@ -35,6 +35,7 @@ import { JobQueue } from "./job-queue"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
 import logoImage from "@/images/logo.png"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface AppSidebarProps {
   activeCurriculumId?: number
@@ -45,6 +46,7 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const { setTheme } = useTheme()
   const pathname = usePathname()
   const { state } = useSidebar()
+  const isMobile = useIsMobile()
 
   const navigation = [
     {
@@ -67,6 +69,122 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
     }
   ]
 
+  // Mobile-specific sidebar content
+  if (isMobile) {
+    return (
+      <Sidebar collapsible="offcanvas" className="border-r">
+        <SidebarHeader className="border-b p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Image 
+                src={logoImage} 
+                alt="Owsla Logo" 
+                width={28} 
+                height={28}
+                className="size-7"
+              />
+            </div>
+            <div className="grid flex-1 text-left">
+              <span className="font-semibold text-lg">Owsla</span>
+              <span className="text-sm text-muted-foreground">Learning Platform</span>
+            </div>
+          </div>
+        </SidebarHeader>
+
+        <SidebarContent className="px-4">
+          {/* User Profile Section */}
+          {user && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Account</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage 
+                      src={user.profileImageUrl || ""} 
+                      alt={user.displayName || ""} 
+                    />
+                    <AvatarFallback>
+                      {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.primaryEmail?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left">
+                    <span className="font-medium">
+                      {user.displayName || "User"}
+                    </span>
+                    <span className="text-sm text-muted-foreground truncate">
+                      {user.primaryEmail}
+                    </span>
+                  </div>
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
+
+          {/* Settings Section */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Settings</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/handler/account-settings">
+                      <Settings className="size-4" />
+                      <span>Account Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          {/* Theme Section */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Theme</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={() => setTheme("light")}>
+                    <Sun className="size-4" />
+                    <span>Light</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={() => setTheme("dark")}>
+                    <Moon className="size-4" />
+                    <span>Dark</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={() => setTheme("system")}>
+                    <Monitor className="size-4" />
+                    <span>System</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        
+        <SidebarFooter className="border-t p-4">
+          {user && (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => user.signOut()}
+                  className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="size-4" />
+                  <span>Sign Out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
+        </SidebarFooter>
+      </Sidebar>
+    )
+  }
+
+  // Desktop sidebar (existing functionality)
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="border-b">
