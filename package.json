@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "clean": "rm -rf .next node_modules/.cache",
+    "clean:all": "rm -rf .next node_modules bun.lockb && bun install",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "pages:build": "bunx @cloudflare/next-on-pages",
     "pages:deploy": "bunx wrangler pages deploy .vercel/output/static",

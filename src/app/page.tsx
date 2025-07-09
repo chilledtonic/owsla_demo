@@ -11,8 +11,33 @@ import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
 import { useState, useCallback, useMemo, useEffect } from "react"
+import dynamic from "next/dynamic"
 
-import { TodaysFocus, UpcomingSchedule, DashboardCurriculaOverview } from "@/components/dashboard"
+// Dynamically import dashboard components to prevent hydration issues
+const TodaysFocus = dynamic(
+  () => import("@/components/dashboard").then(mod => ({ default: mod.TodaysFocus })),
+  { 
+    ssr: true,
+    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />
+  }
+)
+
+const UpcomingSchedule = dynamic(
+  () => import("@/components/dashboard").then(mod => ({ default: mod.UpcomingSchedule })),
+  { 
+    ssr: true,
+    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />
+  }
+)
+
+const DashboardCurriculaOverview = dynamic(
+  () => import("@/components/dashboard").then(mod => ({ default: mod.DashboardCurriculaOverview })),
+  { 
+    ssr: true,
+    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />
+  }
+)
+
 import { 
   BookOpen, 
   Clock, 
@@ -23,7 +48,48 @@ import {
   RefreshCw
 } from "lucide-react"
 
-export default function Dashboard() {
+// Error boundary wrapper for the dashboard
+class DashboardErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Dashboard error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <AppLayout>
+          <div className="flex items-center justify-center h-full p-6">
+            <div className="text-center max-w-md">
+              <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Please refresh the page to try again
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </div>
+        </AppLayout>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+function DashboardContent() {
   const user = useUser({ or: "redirect" })
   const { dashboardData, loading, error, refresh } = useCachedDashboardData()
   const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
@@ -66,7 +132,7 @@ export default function Dashboard() {
     })
   }, [])
 
-  // Memoize expensive calculations
+  // Memoize expensive calculations with stable dependencies
   const calculatedData = useMemo(() => {
     if (!dashboardData) return null
 
@@ -85,24 +151,46 @@ export default function Dashboard() {
       return moduleDate > today
     }).slice(0, 20)
 
+    return {
+      todayModules,
+      upcomingModules,
+      today
+    }
+  }, [dashboardData])
+
+  // Split grouping calculation to reduce complexity
+  const groupedUpcomingData = useMemo(() => {
+    if (!calculatedData) return null
+
     // Group upcoming modules by date
-    const groupedUpcomingModules = upcomingModules.reduce((acc, module) => {
+    const groupedUpcomingModules = calculatedData.upcomingModules.reduce((acc, module) => {
       const dateKey = new Date(module.date).toDateString()
       if (!acc[dateKey]) {
         acc[dateKey] = []
       }
       acc[dateKey].push(module)
       return acc
-    }, {} as Record<string, typeof upcomingModules>)
+    }, {} as Record<string, typeof calculatedData.upcomingModules>)
 
     const sortedDates = Object.keys(groupedUpcomingModules).sort((a, b) => 
       new Date(a).getTime() - new Date(b).getTime()
     )
 
+    return {
+      groupedUpcomingModules,
+      sortedDates,
+      nextDay: sortedDates[0]
+    }
+  }, [calculatedData])
+
+  // Split stats calculation to reduce complexity
+  const statsData = useMemo(() => {
+    if (!dashboardData || !calculatedData) return null
+
     const recentModules = dashboardData.dailyModules.filter(module => {
       const moduleDate = new Date(module.date)
       moduleDate.setHours(0, 0, 0, 0)
-      const daysDiff = (today.getTime() - moduleDate.getTime()) / (1000 * 60 * 60 * 24)
+      const daysDiff = (calculatedData.today.getTime() - moduleDate.getTime()) / (1000 * 60 * 60 * 24)
       return daysDiff > 0 && daysDiff <= 7
     }).slice(0, 5)
 
@@ -114,16 +202,11 @@ export default function Dashboard() {
     const uniqueBookCount = deduplicateBooks(dashboardData.bookResources).length
 
     return {
-      todayModules,
-      upcomingModules,
-      groupedUpcomingModules,
-      sortedDates,
       recentModules,
       totalStudyTime,
-      uniqueBookCount,
-      nextDay: sortedDates[0]
+      uniqueBookCount
     }
-  }, [dashboardData])
+  }, [dashboardData, calculatedData])
 
   const totalCompletedToday = useMemo(() => {
     if (!calculatedData || !isHydrated) return 0
@@ -182,7 +265,7 @@ export default function Dashboard() {
     )
   }
 
-  if (!dashboardData || !calculatedData) {
+  if (!dashboardData || !calculatedData || !groupedUpcomingData || !statsData) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-full p-6">
@@ -202,7 +285,9 @@ export default function Dashboard() {
     )
   }
 
-  const { todayModules, sortedDates, groupedUpcomingModules, recentModules, totalStudyTime, uniqueBookCount, nextDay } = calculatedData
+  const { todayModules } = calculatedData
+  const { groupedUpcomingModules, sortedDates, nextDay } = groupedUpcomingData
+  const { recentModules, totalStudyTime, uniqueBookCount } = statsData
 
   // Mobile-optimized layout
   if (isMobile) {
@@ -466,4 +551,10 @@ export default function Dashboard() {
   )
 }
 
-
+export default function Dashboard() {
+  return (
+    <DashboardErrorBoundary>
+      <DashboardContent />
+    </DashboardErrorBoundary>
+  )
+}

@@ -78,8 +78,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
     const otherResources: OtherResource[] = []
 
     curricula.forEach(curriculum => {
-      // Add primary book resource if available
-      if (curriculum.primary_resource_title) {
+      // Add primary book resource if available (only for text curricula)
+      if (curriculum.curriculum_type === 'text' && curriculum.primary_resource_title) {
         bookResources.push({
           curriculumId: curriculum.id,
           curriculumTitle: curriculum.title,
@@ -99,8 +99,13 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
           title: string
           time_allocation?: {
             total?: string
+            // Text curriculum fields
             primary_text?: string
             supplementary_materials?: string
+            // Video curriculum fields
+            video_viewing?: string
+            preparation?: string
+            synthesis?: string
           }
           supplementary_readings?: Array<{
             title: string
@@ -113,16 +118,32 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
             reading_time?: string
           }>
         }) => {
-          // Add daily module
+          // Determine the correct time allocation fields based on curriculum type
+          let primaryTime = '42 minutes'
+          let supplementaryTime = '18 minutes'
+          
+          if (curriculum.curriculum_type === 'video') {
+            // For video curricula, use video-specific time allocations
+            primaryTime = module.time_allocation?.video_viewing || '25 minutes'
+            supplementaryTime = (module.time_allocation?.preparation || '20 minutes') + ' + ' + 
+                              (module.time_allocation?.synthesis || '30 minutes')
+          } else {
+            // For text curricula, use traditional book-based time allocations
+            primaryTime = module.time_allocation?.primary_text || '42 minutes'
+            supplementaryTime = module.time_allocation?.supplementary_materials || '18 minutes'
+          }
+
+          // Add daily module with curriculum type information
           dailyModules.push({
             curriculumId: curriculum.id,
             curriculumTitle: curriculum.title,
+            curriculumType: curriculum.curriculum_type, // Add curriculum type
             day: module.day,
             date: module.date,
             title: module.title,
             totalTime: module.time_allocation?.total || '60 minutes',
-            primaryReadingTime: module.time_allocation?.primary_text || '42 minutes',
-            supplementaryTime: module.time_allocation?.supplementary_materials || '18 minutes'
+            primaryReadingTime: primaryTime,
+            supplementaryTime: supplementaryTime
           })
 
           // Add supplementary resources

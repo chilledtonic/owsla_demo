@@ -123,33 +123,40 @@ const UpcomingDay = React.memo(function UpcomingDay({
       
       <CollapsibleContent className="mt-2">
         <div className={cn("ml-5 space-y-2", isMobile && "ml-3")}>
-          {modules.map((module) => (
-            <Link key={`${module.curriculumId}-${module.day}`} href={`/curriculum/${module.curriculumId}`}>
-              <div 
-                className={cn(
-                  "flex items-center justify-between p-2 rounded border-l-2 border-muted bg-muted/20 hover:bg-muted/30 transition-colors cursor-pointer",
-                  isMobile && "p-1.5"
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className={cn(
-                    "font-medium text-sm truncate",
-                    isMobile && "text-xs"
-                  )}>
-                    {module.title}
+          {modules.map((module) => {
+            // Route to the correct curriculum page based on curriculum type
+            const curriculumPath = module.curriculumType === 'video' 
+              ? `/video-curriculum/${module.curriculumId}` 
+              : `/curriculum/${module.curriculumId}`
+              
+            return (
+              <Link key={`${module.curriculumId}-${module.day}`} href={curriculumPath}>
+                <div 
+                  className={cn(
+                    "flex items-center justify-between p-2 rounded border-l-2 border-muted bg-muted/20 hover:bg-muted/30 transition-colors cursor-pointer",
+                    isMobile && "p-1.5"
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className={cn(
+                      "font-medium text-sm truncate",
+                      isMobile && "text-xs"
+                    )}>
+                      {module.title}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {module.curriculumTitle} • {module.totalTime}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {module.curriculumTitle} • {module.totalTime}
-                  </div>
+                  {!isMobile && (
+                    <Badge variant="secondary" className="text-xs ml-2">
+                      Day {module.day}
+                    </Badge>
+                  )}
                 </div>
-                {!isMobile && (
-                  <Badge variant="secondary" className="text-xs ml-2">
-                    Day {module.day}
-                  </Badge>
-                )}
-              </div>
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </div>
       </CollapsibleContent>
     </Collapsible>

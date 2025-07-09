@@ -17,15 +17,38 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  // Force immediate activation
+  self.skipWaiting();
 });
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip caching for Next.js specific resources
+  if (
+    url.pathname.startsWith('/_next/') ||
+    url.pathname.includes('/api/') ||
+    url.pathname.includes('.hot-update.') ||
+    request.headers.get('x-nextjs-data')
+  ) {
+    // Always fetch these from network
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // For other requests, use cache-first strategy
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
         // Return cached version or fetch from network
-        return response || fetch(event.request);
+        return response || fetch(request).catch(() => {
+          // If offline and not cached, return offline page if available
+          if (request.destination === 'document') {
+            return caches.match('/');
+          }
+        });
       })
   );
 });
@@ -42,6 +65,9 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => {
+      // Claim all clients immediately
+      return self.clients.claim();
     })
   );
 });

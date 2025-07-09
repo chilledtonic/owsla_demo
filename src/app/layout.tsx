@@ -15,13 +15,13 @@ export const metadata: Metadata = {
   description: "Learn Anything at Lightspeed",
   icons: {
     icon: [
-      { url: '/favicon.ico' },
+      { url: '/favicon.png' },
       { url: '/icon.png', type: 'image/png', sizes: '32x32' },
     ],
     apple: [
       { url: '/apple-icon.png', type: 'image/png', sizes: '180x180' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/favicon.png',
   },
   manifest: '/manifest.json',
   appleWebApp: {

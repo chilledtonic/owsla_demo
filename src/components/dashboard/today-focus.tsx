@@ -97,10 +97,10 @@ const TodayModule = React.memo(function TodayModule({
   const isMobile = useIsMobile()
   const moduleKey = `${module.curriculumId}-${module.day}`
 
-  // Need to determine curriculum type to route correctly
-  // Since module doesn't have curriculum type, we'll default to /curriculum
-  // but this should be enhanced with actual curriculum data
-  const curriculumPath = `/curriculum/${module.curriculumId}`
+  // Route to the correct curriculum page based on curriculum type
+  const curriculumPath = module.curriculumType === 'video' 
+    ? `/video-curriculum/${module.curriculumId}` 
+    : `/curriculum/${module.curriculumId}`
 
   return (
     <Link href={curriculumPath}>
