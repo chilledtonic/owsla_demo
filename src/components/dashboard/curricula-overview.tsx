@@ -17,6 +17,7 @@ import {
   Plus,
   Play
 } from "lucide-react"
+import { useState, useEffect } from "react"
 
 interface DashboardCurriculaOverviewProps {
   curricula: CurriculumData[]
@@ -81,8 +82,14 @@ const DashboardCurriculumCard = React.memo(function DashboardCurriculumCard({
   dailyModules
 }: DashboardCurriculumCardProps) {
   const isMobile = useIsMobile()
+  const [isHydrated, setIsHydrated] = useState(false)
   const curriculumModules = dailyModules.filter(m => m.curriculumId === curriculum.id)
   const { currentDay } = calculateCurrentCurriculumDay(curriculumModules)
+  
+  // Handle hydration to prevent SSR/client mismatch
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   
   // Calculate progress status based on current day
   const totalDays = curriculumModules.length
@@ -106,8 +113,11 @@ const DashboardCurriculumCard = React.memo(function DashboardCurriculumCard({
     'overdue': 'Behind Schedule'
   }[progressStatus] || 'Unknown'
 
+  // Simplified video curriculum detection - prioritize curriculum_type
+  const isVideoCurriculum = curriculum.curriculum_type === 'video'
+
   // Determine the correct link path based on curriculum type
-  const curriculumPath = curriculum.curriculum_type === 'video' 
+  const curriculumPath = isVideoCurriculum 
     ? `/video-curriculum/${curriculum.id}` 
     : `/curriculum/${curriculum.id}`
 
@@ -128,6 +138,20 @@ const DashboardCurriculumCard = React.memo(function DashboardCurriculumCard({
     return null
   }
 
+  // Get video ID for thumbnail (only if hydrated to prevent SSR mismatch)
+  const getVideoId = (): string | null => {
+    if (!isHydrated || !isVideoCurriculum) return null
+    
+    // Get video data from either top-level fields or nested full_curriculum_data
+    const videoUrl = curriculum.primary_video_url || curriculum.full_curriculum_data?.primary_video?.url
+    const videoId = curriculum.primary_video_id || curriculum.full_curriculum_data?.primary_video?.video_id
+    const extractedId = videoUrl ? extractYouTubeVideoId(videoUrl) : null
+    
+    return extractedId || videoId || null
+  }
+
+  const videoId = getVideoId()
+
   return (
     <Link href={curriculumPath}>
       <div className={cn(
@@ -136,74 +160,51 @@ const DashboardCurriculumCard = React.memo(function DashboardCurriculumCard({
       )}>
         {/* Primary Resource Cover or Video Thumbnail */}
         <div className="flex gap-3 mb-3">
-          {(() => {
-            // Enhanced video detection: check both curriculum_type and presence of video data
-            const hasVideoData = !!(
-              curriculum.primary_video_url || 
-              curriculum.primary_video_id || 
-              curriculum.full_curriculum_data?.primary_video?.url || 
-              curriculum.full_curriculum_data?.primary_video?.video_id
-            )
-            
-            const isVideoCurriculum = curriculum.curriculum_type === 'video' || hasVideoData
-            
-            if (isVideoCurriculum) {
-              // Video thumbnail for video curricula
-              return (
-                <div className={cn("flex-shrink-0 relative", isMobile ? "h-16 w-20" : "h-20 w-26")}>
-                  {(() => {
-                    // Get video data from either top-level fields or nested full_curriculum_data
-                    const videoUrl = curriculum.primary_video_url || curriculum.full_curriculum_data?.primary_video?.url
-                    const videoId = curriculum.primary_video_id || curriculum.full_curriculum_data?.primary_video?.video_id
-                    const extractedId = videoUrl ? extractYouTubeVideoId(videoUrl) : null
-                    const finalVideoId = extractedId || videoId
-                    
-                    return finalVideoId ? (
-                      <>
-                        <Image 
-                          src={`https://img.youtube.com/vi/${finalVideoId}/hqdefault.jpg`}
-                          alt="Video thumbnail"
-                          width={isMobile ? 80 : 104}
-                          height={isMobile ? 50 : 65}
-                          className="w-full h-full object-cover rounded"
-                          onError={(e) => {
-                            console.error('Thumbnail failed to load for video ID:', finalVideoId)
-                            // Fallback to a different quality
-                            const target = e.target as HTMLImageElement
-                            if (target.src.includes('hqdefault')) {
-                              target.src = `https://img.youtube.com/vi/${finalVideoId}/mqdefault.jpg`
-                            } else if (target.src.includes('mqdefault')) {
-                              target.src = `https://img.youtube.com/vi/${finalVideoId}/default.jpg`
-                            }
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-black/60 rounded-full p-2">
-                            <Play className="h-4 w-4 text-white" />
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-muted rounded flex items-center justify-center">
-                        <Play className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )
-                  })()}
+          {isVideoCurriculum ? (
+            // Video thumbnail for video curricula
+            <div className={cn("flex-shrink-0 relative", isMobile ? "h-16 w-20" : "h-20 w-26")}>
+              {videoId && isHydrated ? (
+                <>
+                  <Image 
+                    src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                    alt="Video thumbnail"
+                    width={isMobile ? 80 : 104}
+                    height={isMobile ? 50 : 65}
+                    className="w-full h-full object-cover rounded"
+                    onError={(e) => {
+                      console.error('Thumbnail failed to load for video ID:', videoId)
+                      // Fallback to a different quality
+                      const target = e.target as HTMLImageElement
+                      if (target.src.includes('hqdefault')) {
+                        target.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+                      } else if (target.src.includes('mqdefault')) {
+                        target.src = `https://img.youtube.com/vi/${videoId}/default.jpg`
+                      }
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-black/60 rounded-full p-2">
+                      <Play className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="w-full h-full bg-muted rounded flex items-center justify-center">
+                  <Play className="h-6 w-6 text-muted-foreground" />
                 </div>
-              )
-            } else {
-              // Book cover for text curricula
-              return (
-                <BookCover 
-                  isbn={curriculum.primary_resource_isbn || undefined}
-                  title={curriculum.primary_resource_title || undefined}
-                  author={curriculum.primary_resource_author || undefined}
-                  year={curriculum.primary_resource_year || undefined}
-                  className={cn("flex-shrink-0", isMobile ? "h-16 w-12" : "h-20 w-14")}
-                />
-              )
-            }
-          })()}
+              )}
+            </div>
+          ) : (
+            // Book cover for text curricula
+            <BookCover 
+              isbn={curriculum.primary_resource_isbn || undefined}
+              title={curriculum.primary_resource_title || undefined}
+              author={curriculum.primary_resource_author || undefined}
+              year={curriculum.primary_resource_year || undefined}
+              className={cn("flex-shrink-0", isMobile ? "h-16 w-12" : "h-20 w-14")}
+            />
+          )}
+          
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <h3 className={cn(
@@ -216,7 +217,7 @@ const DashboardCurriculumCard = React.memo(function DashboardCurriculumCard({
                 <Badge variant="secondary" className={cn(statusColor, "text-xs")}>
                   {statusLabel}
                 </Badge>
-                {curriculum.curriculum_type === 'video' && (
+                {isVideoCurriculum && (
                   <Badge variant="outline" className="text-xs">
                     Video
                   </Badge>

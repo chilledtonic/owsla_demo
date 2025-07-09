@@ -8,12 +8,14 @@ interface CachedCurriculumData {
   data: CurriculumData[]
   timestamp: number
   loading: boolean
+  isOfflineData?: boolean
 }
 
 interface CachedIndividualCurriculum {
   data: CurriculumData
   timestamp: number
   loading: boolean
+  isOfflineData?: boolean
 }
 
 interface CachedDashboardData {
@@ -23,6 +25,7 @@ interface CachedDashboardData {
   otherResources: OtherResource[]
   timestamp: number
   loading: boolean
+  isOfflineData?: boolean
 }
 
 interface CurriculumCacheContextType {
@@ -34,6 +37,7 @@ interface CurriculumCacheContextType {
     dailyModules: DailyModule[]
     bookResources: BookResource[]
     otherResources: OtherResource[]
+    isOfflineData?: boolean
   }>
   
   // Cache management
@@ -45,6 +49,10 @@ interface CurriculumCacheContextType {
   isLoadingUserCurricula: (userId: string) => boolean
   isLoadingCurriculum: (id: number) => boolean
   isLoadingDashboardData: (userId: string) => boolean
+  
+  // Online/offline state
+  isOnline: boolean
+  lastSyncTime: number | null
 }
 
 const CurriculumCacheContext = createContext<CurriculumCacheContextType | undefined>(undefined)
@@ -62,9 +70,76 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   const individualCurriculumCache = useRef<Map<number, CachedIndividualCurriculum>>(new Map())
   const dashboardDataCache = useRef<Map<string, CachedDashboardData>>(new Map())
   
+  // Online/offline state
+  const [isOnline, setIsOnline] = useState(true)
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null)
+  
   // Force re-render when cache updates
   const [, forceUpdate] = useState({})
   const triggerUpdate = useCallback(() => forceUpdate({}), [])
+
+  // Service worker communication
+  const sendMessageToSW = useCallback((message: Record<string, unknown>) => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage(message);
+    }
+  }, [])
+
+  // Cache invalidation function
+  const invalidateAllCaches = useCallback(() => {
+    userCurriculaCache.current.clear()
+    individualCurriculumCache.current.clear()
+    dashboardDataCache.current.clear()
+    
+    // Tell service worker to invalidate all caches
+    sendMessageToSW({
+      type: 'CACHE_INVALIDATE',
+      cacheKey: 'all'
+    })
+    
+    triggerUpdate()
+  }, [triggerUpdate, sendMessageToSW])
+
+  // Setup online/offline detection and service worker communication
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      // Trigger sync when coming back online
+      if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+        navigator.serviceWorker.ready.then(registration => {
+          return (registration as ServiceWorkerRegistration & { sync?: { register: (tag: string) => Promise<void> } }).sync?.register('curriculum-sync');
+        }).catch(err => console.log('Sync registration failed:', err));
+      }
+    }
+
+    const handleOffline = () => setIsOnline(false)
+
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SYNC_CURRICULUM_DATA') {
+        // Service worker is requesting data sync
+        // Force refresh all cached data
+        invalidateAllCaches()
+      }
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSWMessage)
+    }
+
+    // Initial online state
+    setIsOnline(navigator.onLine)
+
+    return () => {
+      window.removeEventListener('online', handleOffline)
+      window.removeEventListener('offline', handleOffline)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage)
+      }
+    }
+  }, [invalidateAllCaches])
 
   // Helper function to check if cache is valid
   const isCacheValid = (timestamp: number): boolean => {
@@ -72,7 +147,7 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   }
 
   // Helper function to process dashboard data from curricula
-  const processDashboardData = useCallback((curricula: CurriculumData[]) => {
+  const processDashboardData = useCallback((curricula: CurriculumData[], isOfflineData = false) => {
     const dailyModules: DailyModule[] = []
     const bookResources: BookResource[] = []
     const otherResources: OtherResource[] = []
@@ -198,7 +273,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       curricula,
       dailyModules,
       bookResources,
-      otherResources
+      otherResources,
+      isOfflineData
     }
   }, [])
 
@@ -215,11 +291,17 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       return cached.data || []
     }
 
+    // If offline and we have cached data, use it regardless of TTL
+    if (!isOnline && cached?.data) {
+      return cached.data
+    }
+
     // Set loading state
     userCurriculaCache.current.set(userId, {
       data: cached?.data || [],
       timestamp: cached?.timestamp || 0,
-      loading: true
+      loading: true,
+      isOfflineData: cached?.isOfflineData
     })
     triggerUpdate()
 
@@ -229,14 +311,16 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         const newCacheEntry: CachedCurriculumData = {
           data: result.data,
           timestamp: Date.now(),
-          loading: false
+          loading: false,
+          isOfflineData: false
         }
         userCurriculaCache.current.set(userId, newCacheEntry)
+        setLastSyncTime(Date.now())
         
         // Also update dashboard cache if it exists
         const dashboardCached = dashboardDataCache.current.get(userId)
         if (dashboardCached) {
-          const dashboardData = processDashboardData(result.data)
+          const dashboardData = processDashboardData(result.data, false)
           dashboardDataCache.current.set(userId, {
             ...dashboardData,
             timestamp: Date.now(),
@@ -247,26 +331,50 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         triggerUpdate()
         return result.data
       } else {
+        // If we have cached data on error, use it
+        if (cached?.data) {
+          userCurriculaCache.current.set(userId, {
+            ...cached,
+            loading: false,
+            isOfflineData: true
+          })
+          triggerUpdate()
+          return cached.data
+        }
+        
         // Clear loading state on error
         userCurriculaCache.current.set(userId, {
-          data: cached?.data || [],
-          timestamp: cached?.timestamp || 0,
-          loading: false
+          data: [],
+          timestamp: 0,
+          loading: false,
+          isOfflineData: false
         })
         triggerUpdate()
         throw new Error(result.error || 'Failed to fetch curricula')
       }
     } catch (error) {
+      // If we have cached data on network error, use it
+      if (cached?.data) {
+        userCurriculaCache.current.set(userId, {
+          ...cached,
+          loading: false,
+          isOfflineData: true
+        })
+        triggerUpdate()
+        return cached.data
+      }
+      
       // Clear loading state on error
       userCurriculaCache.current.set(userId, {
-        data: cached?.data || [],
-        timestamp: cached?.timestamp || 0,
-        loading: false
+        data: [],
+        timestamp: 0,
+        loading: false,
+        isOfflineData: false
       })
       triggerUpdate()
       throw error
     }
-  }, [processDashboardData, triggerUpdate])
+  }, [processDashboardData, triggerUpdate, isOnline])
 
   const getCachedCurriculum = useCallback(async (id: number, forceRefresh = false): Promise<CurriculumData | null> => {
     const cached = individualCurriculumCache.current.get(id)
@@ -281,11 +389,17 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       return cached.data || null
     }
 
+    // If offline and we have cached data, use it regardless of TTL
+    if (!isOnline && cached?.data) {
+      return cached.data
+    }
+
     // Set loading state
     individualCurriculumCache.current.set(id, {
       data: cached?.data as CurriculumData,
       timestamp: cached?.timestamp || 0,
-      loading: true
+      loading: true,
+      isOfflineData: cached?.isOfflineData
     })
     triggerUpdate()
 
@@ -295,38 +409,48 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         const newCacheEntry: CachedIndividualCurriculum = {
           data: result.data,
           timestamp: Date.now(),
-          loading: false
+          loading: false,
+          isOfflineData: false
         }
         individualCurriculumCache.current.set(id, newCacheEntry)
+        setLastSyncTime(Date.now())
         triggerUpdate()
         return result.data
       } else {
-        // Clear loading state on error
-        if (cached) {
+        // If we have cached data on error, use it
+        if (cached?.data) {
           individualCurriculumCache.current.set(id, {
             ...cached,
-            loading: false
+            loading: false,
+            isOfflineData: true
           })
-        } else {
-          individualCurriculumCache.current.delete(id)
+          triggerUpdate()
+          return cached.data
         }
+        
+        // Clear loading state on error
+        individualCurriculumCache.current.delete(id)
         triggerUpdate()
         return null
       }
     } catch (error) {
-      // Clear loading state on error
-      if (cached) {
+      // If we have cached data on network error, use it
+      if (cached?.data) {
         individualCurriculumCache.current.set(id, {
           ...cached,
-          loading: false
+          loading: false,
+          isOfflineData: true
         })
-      } else {
-        individualCurriculumCache.current.delete(id)
+        triggerUpdate()
+        return cached.data
       }
+      
+      // Clear loading state on error
+      individualCurriculumCache.current.delete(id)
       triggerUpdate()
       throw error
     }
-  }, [triggerUpdate])
+  }, [triggerUpdate, isOnline])
 
   const getCachedDashboardData = useCallback(async (userId: string, forceRefresh = false) => {
     const cached = dashboardDataCache.current.get(userId)
@@ -337,7 +461,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         curricula: cached.curricula,
         dailyModules: cached.dailyModules,
         bookResources: cached.bookResources,
-        otherResources: cached.otherResources
+        otherResources: cached.otherResources,
+        isOfflineData: cached.isOfflineData
       }
     }
 
@@ -347,7 +472,19 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         curricula: cached.curricula || [],
         dailyModules: cached.dailyModules || [],
         bookResources: cached.bookResources || [],
-        otherResources: cached.otherResources || []
+        otherResources: cached.otherResources || [],
+        isOfflineData: cached.isOfflineData
+      }
+    }
+
+    // If offline and we have cached data, use it regardless of TTL
+    if (!isOnline && cached) {
+      return {
+        curricula: cached.curricula || [],
+        dailyModules: cached.dailyModules || [],
+        bookResources: cached.bookResources || [],
+        otherResources: cached.otherResources || [],
+        isOfflineData: true
       }
     }
 
@@ -358,14 +495,15 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       bookResources: cached?.bookResources || [],
       otherResources: cached?.otherResources || [],
       timestamp: cached?.timestamp || 0,
-      loading: true
+      loading: true,
+      isOfflineData: cached?.isOfflineData
     })
     triggerUpdate()
 
     try {
       // Get curricula data (this will use the user curricula cache)
       const curricula = await getCachedUserCurricula(userId, forceRefresh)
-      const dashboardData = processDashboardData(curricula)
+      const dashboardData = processDashboardData(curricula, false)
       
       const newCacheEntry: CachedDashboardData = {
         ...dashboardData,
@@ -373,44 +511,73 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         loading: false
       }
       dashboardDataCache.current.set(userId, newCacheEntry)
+      setLastSyncTime(Date.now())
       triggerUpdate()
       
       return dashboardData
     } catch (error) {
+      // If we have cached data on error, use it
+      if (cached) {
+        const offlineData = {
+          curricula: cached.curricula || [],
+          dailyModules: cached.dailyModules || [],
+          bookResources: cached.bookResources || [],
+          otherResources: cached.otherResources || [],
+          isOfflineData: true
+        }
+        
+        dashboardDataCache.current.set(userId, {
+          ...offlineData,
+          timestamp: cached.timestamp || 0,
+          loading: false
+        })
+        triggerUpdate()
+        return offlineData
+      }
+      
       // Clear loading state on error
       dashboardDataCache.current.set(userId, {
-        curricula: cached?.curricula || [],
-        dailyModules: cached?.dailyModules || [],
-        bookResources: cached?.bookResources || [],
-        otherResources: cached?.otherResources || [],
-        timestamp: cached?.timestamp || 0,
-        loading: false
+        curricula: [],
+        dailyModules: [],
+        bookResources: [],
+        otherResources: [],
+        timestamp: 0,
+        loading: false,
+        isOfflineData: false
       })
       triggerUpdate()
       throw error
     }
-  }, [getCachedUserCurricula, processDashboardData, triggerUpdate])
+  }, [getCachedUserCurricula, processDashboardData, triggerUpdate, isOnline])
 
   const invalidateUserCurricula = useCallback((userId: string) => {
     userCurriculaCache.current.delete(userId)
     dashboardDataCache.current.delete(userId)
+    
+    // Tell service worker to invalidate related cache
+    sendMessageToSW({
+      type: 'CACHE_INVALIDATE',
+      cacheKey: 'user-curricula',
+      userId: userId
+    })
+    
     triggerUpdate()
-  }, [triggerUpdate])
+  }, [triggerUpdate, sendMessageToSW])
 
   const invalidateCurriculum = useCallback((id: number) => {
     individualCurriculumCache.current.delete(id)
     // Also invalidate user curricula caches since they contain this curriculum
     userCurriculaCache.current.clear()
     dashboardDataCache.current.clear()
+    
+    // Tell service worker to invalidate all caches
+    sendMessageToSW({
+      type: 'CACHE_INVALIDATE',
+      cacheKey: 'all'
+    })
+    
     triggerUpdate()
-  }, [triggerUpdate])
-
-  const invalidateAllCaches = useCallback(() => {
-    userCurriculaCache.current.clear()
-    individualCurriculumCache.current.clear()
-    dashboardDataCache.current.clear()
-    triggerUpdate()
-  }, [triggerUpdate])
+  }, [triggerUpdate, sendMessageToSW])
 
   const isLoadingUserCurricula = useCallback((userId: string): boolean => {
     return userCurriculaCache.current.get(userId)?.loading || false
@@ -463,7 +630,9 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
     invalidateAllCaches,
     isLoadingUserCurricula,
     isLoadingCurriculum,
-    isLoadingDashboardData
+    isLoadingDashboardData,
+    isOnline,
+    lastSyncTime
   }
 
   return (
