@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import * as React from "react"
 import { handleResourceClick } from "@/lib/utils"
+import { useEffect } from "react"
 
 interface DailyModule {
   day: number
@@ -64,6 +65,54 @@ export function RightSidebar({
   const [isTimerRunning, setIsTimerRunning] = React.useState(false)
   const [completedConcepts, setCompletedConcepts] = React.useState<Set<number>>(new Set())
   const [completedBenchmarks, setCompletedBenchmarks] = React.useState<Set<string>>(new Set())
+
+  // Helper to get localStorage keys
+  const getConceptsKey = () => currentModule ? `concepts-completion-${currentModule.day}` : ''
+  const getBenchmarksKey = () => currentModule ? `benchmarks-completion-${currentModule.day}` : ''
+
+  // Load completed concepts/benchmarks from localStorage on mount or when module changes
+  useEffect(() => {
+    if (!currentModule) return
+    if (typeof window !== "undefined") {
+      const cKey = getConceptsKey()
+      const bKey = getBenchmarksKey()
+      if (cKey) {
+        const storedConcepts = localStorage.getItem(cKey)
+        if (storedConcepts) {
+          try {
+            setCompletedConcepts(new Set(JSON.parse(storedConcepts)))
+          } catch {}
+        } else {
+          setCompletedConcepts(new Set())
+        }
+      }
+      if (bKey) {
+        const storedBenchmarks = localStorage.getItem(bKey)
+        if (storedBenchmarks) {
+          try {
+            setCompletedBenchmarks(new Set(JSON.parse(storedBenchmarks)))
+          } catch {}
+        } else {
+          setCompletedBenchmarks(new Set())
+        }
+      }
+    }
+  }, [currentModule])
+
+  // Save completed concepts/benchmarks to localStorage whenever they change
+  useEffect(() => {
+    if (!currentModule) return
+    if (typeof window !== "undefined") {
+      const cKey = getConceptsKey()
+      const bKey = getBenchmarksKey()
+      if (cKey) {
+        localStorage.setItem(cKey, JSON.stringify(Array.from(completedConcepts)))
+      }
+      if (bKey) {
+        localStorage.setItem(bKey, JSON.stringify(Array.from(completedBenchmarks)))
+      }
+    }
+  }, [completedConcepts, completedBenchmarks, currentModule])
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout

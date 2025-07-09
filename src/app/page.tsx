@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { useUser } from "@stackframe/stack"
 import { useCachedDashboardData } from "@/hooks/use-curriculum-data"
 import { deduplicateBooks, calculateCurrentCurriculumDay } from "@/lib/utils"
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
-import React, { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { CurriculumData } from "@/lib/database"
 import { DailyModule } from "@/lib/actions"
 import { cn } from "@/lib/utils"
@@ -39,6 +40,26 @@ export default function Dashboard() {
   const { dashboardData, loading, error, refresh } = useCachedDashboardData()
   const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
   const isMobile = useIsMobile()
+
+  // Load completed modules from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("module-completion")
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          setCompletedModules(new Set(parsed))
+        } catch {}
+      }
+    }
+  }, [])
+
+  // Save completed modules to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("module-completion", JSON.stringify(Array.from(completedModules)))
+    }
+  }, [completedModules])
 
   const toggleModuleCompletion = useCallback((moduleKey: string) => {
     setCompletedModules(prev => {
