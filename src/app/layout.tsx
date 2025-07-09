@@ -10,7 +10,7 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Owsla",
-  description: "Academic curriculum management system",
+  description: "Learn Anything at Lightspeed",
   icons: {
     icon: [
       { url: '/favicon.ico' },
