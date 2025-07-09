@@ -2,10 +2,12 @@
 
 import { BookOpen, Plus, Trash2 } from "lucide-react"
 import { useUser } from "@stackframe/stack"
-import { useEffect, useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { fetchUserCurricula, deleteCurriculum } from "@/lib/actions"
-import { CurriculumData } from "@/lib/database"
+import Link from "next/link"
+import React from "react"
+import { deleteCurriculum } from "@/lib/actions"
+import { useCachedUserCurricula } from "@/hooks/use-curriculum-data"
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -28,57 +30,33 @@ interface CurriculaListProps {
   activeCurriculumId?: number
 }
 
-export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
-  const user = useUser()
+export const CurriculaList = React.memo(function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
+  useUser()
   const router = useRouter()
-  const [curricula, setCurricula] = useState<CurriculumData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { curricula, loading, error, invalidate } = useCachedUserCurricula()
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  async function handleDeleteCurriculum(curriculumId: number) {
+  const handleDeleteCurriculum = useCallback(async (curriculumId: number) => {
     try {
       const result = await deleteCurriculum(curriculumId)
       if (result.success) {
-        // Remove the deleted curriculum from the local state
-        setCurricula(prev => prev.filter(c => c.id !== curriculumId))
+        // Invalidate the cache to refresh the curricula list
+        invalidate()
         
         // If the deleted curriculum was active, redirect to homepage
         if (activeCurriculumId === curriculumId) {
           router.push('/')
         }
       } else {
-        setError(result.error || 'Failed to delete curriculum')
+        setDeleteError(result.error || 'Failed to delete curriculum')
       }
     } catch (error) {
       console.error('Error deleting curriculum:', error)
-      setError('Failed to delete curriculum')
+      setDeleteError('Failed to delete curriculum')
     }
-  }
+  }, [invalidate, activeCurriculumId, router])
 
-  useEffect(() => {
-    async function loadCurricula() {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
 
-      try {
-        const result = await fetchUserCurricula(user.id)
-        if (result.success && result.data) {
-          setCurricula(result.data)
-        } else {
-          setError(result.error || 'Unknown error occurred')
-        }
-      } catch (err) {
-        setError('Failed to load curricula')
-        console.error('Error loading curricula:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadCurricula()
-  }, [user?.id])
 
   if (loading) {
     return (
@@ -92,12 +70,12 @@ export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
     )
   }
 
-  if (error) {
+  if (error || deleteError) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-red-500">
-            Error: {error}
+            Error: {error || deleteError}
           </div>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -116,10 +94,12 @@ export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
               variant="outline" 
               size="sm" 
               className="w-full"
-              onClick={() => router.push("/new-curriculum")}
+              asChild
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Curriculum
+              <Link href="/new-curriculum">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Curriculum
+              </Link>
             </Button>
           </div>
         </SidebarMenuItem>
@@ -130,57 +110,12 @@ export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
   return (
     <SidebarMenu>
       {curricula.map((curriculum) => (
-        <SidebarMenuItem key={curriculum.id}>
-          <div className="flex items-center w-full">
-            <SidebarMenuButton 
-              isActive={activeCurriculumId === curriculum.id}
-              onClick={() => router.push(`/curriculum/${curriculum.id}`)}
-              className="flex-1"
-            >
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                <div className="flex flex-col text-left">
-                  <span className="text-sm font-medium truncate">
-                    {curriculum.title}
-                  </span>
-                  <span className="text-xs text-muted-foreground truncate">
-                    {curriculum.topic}
-                  </span>
-                </div>
-              </div>
-            </SidebarMenuButton>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-8 p-0 ml-1 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete &quot;{curriculum.title}&quot;? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={() => handleDeleteCurriculum(curriculum.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </SidebarMenuItem>
+        <CurriculumItem 
+          key={curriculum.id}
+          curriculum={curriculum}
+          isActive={activeCurriculumId === curriculum.id}
+          onDelete={handleDeleteCurriculum}
+        />
       ))}
       
       <SidebarMenuItem>
@@ -188,12 +123,86 @@ export function CurriculaList({ activeCurriculumId }: CurriculaListProps) {
           variant="outline" 
           size="sm" 
           className="w-full"
-          onClick={() => router.push("/new-curriculum")}
+          asChild
         >
-          <Plus className="h-4 w-4 mr-2" />
-          Create New
+          <Link href="/new-curriculum">
+            <Plus className="h-4 w-4 mr-2" />
+            Create New
+          </Link>
         </Button>
       </SidebarMenuItem>
     </SidebarMenu>
   )
-} 
+})
+
+interface CurriculumItemProps {
+  curriculum: { id: number; title: string; topic: string }
+  isActive: boolean
+  onDelete: (id: number) => void
+}
+
+const CurriculumItem = React.memo(function CurriculumItem({ 
+  curriculum, 
+  isActive, 
+  onDelete 
+}: CurriculumItemProps) {
+  const handleDelete = useCallback(() => {
+    onDelete(curriculum.id)
+  }, [onDelete, curriculum.id])
+
+  return (
+    <SidebarMenuItem>
+      <div className="flex items-center w-full">
+        <SidebarMenuButton 
+          isActive={isActive}
+          className="flex-1"
+          asChild
+        >
+          <Link href={`/curriculum/${curriculum.id}`} prefetch={true}>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-medium truncate">
+                  {curriculum.title}
+                </span>
+                <span className="text-xs text-muted-foreground truncate">
+                  {curriculum.topic}
+                </span>
+              </div>
+            </div>
+          </Link>
+        </SidebarMenuButton>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 ml-1 text-muted-foreground hover:text-destructive"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete &quot;{curriculum.title}&quot;? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </SidebarMenuItem>
+  )
+}) 

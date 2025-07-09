@@ -1,53 +1,21 @@
 "use client"
 
 import { useUser } from "@stackframe/stack"
-import { useEffect, useState } from "react"
-import { fetchDashboardData, BookResource, OtherResource } from "@/lib/actions"
+import { useState } from "react"
+import { useCachedDashboardData } from "@/hooks/use-curriculum-data"
 import { AppLayout } from "@/components/app-layout"
 import { BookCarousel } from "@/components/ui/book-carousel"
 import { ResourcesTable } from "@/components/ui/resources-table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { BookOpen, FileText, ExternalLink } from "lucide-react"
-
-interface LibraryData {
-  bookResources: BookResource[]
-  otherResources: OtherResource[]
-}
+import { Button } from "@/components/ui/button"
+import { BookOpen, FileText, ExternalLink, RefreshCw } from "lucide-react"
 
 export default function LibraryPage() {
-  const user = useUser({ or: "redirect" })
-  const [libraryData, setLibraryData] = useState<LibraryData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  useUser({ or: "redirect" })
+  const { dashboardData, loading, error, refresh } = useCachedDashboardData()
   const [deduplicatedBookCount, setDeduplicatedBookCount] = useState<number>(0)
 
-  useEffect(() => {
-    async function loadLibraryData() {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
 
-      try {
-        const result = await fetchDashboardData(user.id)
-        if (result.success && result.data) {
-          setLibraryData({
-            bookResources: result.data.bookResources,
-            otherResources: result.data.otherResources
-          })
-        } else {
-          setError(result.error || 'Failed to load library data')
-        }
-      } catch (err) {
-        setError('Failed to load library data')
-        console.error('Error loading library data:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadLibraryData()
-  }, [user?.id])
 
   if (loading) {
     return (
@@ -66,6 +34,15 @@ export default function LibraryPage() {
           <Alert>
             <AlertDescription>
               Error loading library: {error}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refresh}
+                className="ml-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Retry
+              </Button>
             </AlertDescription>
           </Alert>
         </div>
@@ -73,7 +50,7 @@ export default function LibraryPage() {
     )
   }
 
-  if (!libraryData) {
+  if (!dashboardData) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-full">
@@ -86,7 +63,7 @@ export default function LibraryPage() {
     )
   }
 
-  const totalResources = deduplicatedBookCount + libraryData.otherResources.length
+  const totalResources = deduplicatedBookCount + dashboardData.otherResources.length
 
   return (
     <AppLayout>
@@ -104,7 +81,7 @@ export default function LibraryPage() {
               <div className="text-muted-foreground text-xs">Books</div>
             </div>
             <div className="text-center">
-              <div className="font-medium">{libraryData.otherResources.length}</div>
+              <div className="font-medium">{dashboardData.otherResources.length}</div>
               <div className="text-muted-foreground text-xs">Papers</div>
             </div>
             <div className="text-center">
@@ -132,7 +109,7 @@ export default function LibraryPage() {
               </div>
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">{libraryData.otherResources.length}</span>
+                <span className="font-medium">{dashboardData.otherResources.length}</span>
                 <span className="text-muted-foreground">Papers</span>
               </div>
               <div className="flex items-center gap-2">
@@ -147,7 +124,7 @@ export default function LibraryPage() {
         {/* Main Content */}
         <div className="p-4 lg:p-6 space-y-6">
           {/* Required Books Section */}
-          {libraryData.bookResources.length > 0 && (
+          {dashboardData.bookResources.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen className="h-5 w-5 text-primary" />
@@ -156,22 +133,22 @@ export default function LibraryPage() {
               </div>
               
               <BookCarousel 
-                books={libraryData.bookResources} 
+                books={dashboardData.bookResources} 
                 onDeduplicatedCountChange={setDeduplicatedBookCount}
               />
             </div>
           )}
 
           {/* Academic Papers Section */}
-          {libraryData.otherResources.length > 0 && (
+          {dashboardData.otherResources.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="h-5 w-5 text-blue-600" />
                 <h2 className="text-lg lg:text-xl font-semibold">Academic Papers & Resources</h2>
-                <span className="text-sm text-muted-foreground">({libraryData.otherResources.length})</span>
+                <span className="text-sm text-muted-foreground">({dashboardData.otherResources.length})</span>
               </div>
               
-              <ResourcesTable resources={libraryData.otherResources} />
+              <ResourcesTable resources={dashboardData.otherResources} />
             </div>
           )}
 

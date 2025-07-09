@@ -3,6 +3,7 @@ import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackServerApp } from "../stack";
 import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
+import { CurriculumCacheProvider } from "@/lib/curriculum-cache"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -26,7 +27,9 @@ export default function RootLayout({
         >
           <StackProvider app={stackServerApp}>
             <StackTheme>
-              {children}
+              <CurriculumCacheProvider>
+                {children}
+              </CurriculumCacheProvider>
             </StackTheme>
           </StackProvider>
         </ThemeProvider>

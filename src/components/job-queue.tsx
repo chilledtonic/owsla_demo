@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import React from "react"
 import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react"
 import { fetchActiveJobs } from "@/lib/actions"
 import { ActiveJobData } from "@/lib/database"
@@ -11,33 +12,80 @@ interface JobQueueProps {
   userId: string
 }
 
-export function JobQueue({ userId }: JobQueueProps) {
+export const JobQueue = React.memo(function JobQueue({ userId }: JobQueueProps) {
   const [jobs, setJobs] = useState<ActiveJobData[]>([])
   const [loading, setLoading] = useState(true)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const mountedRef = useRef(true)
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const result = await fetchActiveJobs(userId)
-        if (result.success) {
-          setJobs(result.data || [])
+  const fetchJobs = useCallback(async () => {
+    if (!mountedRef.current) return
+    
+    try {
+      const result = await fetchActiveJobs(userId)
+      if (result.success && mountedRef.current) {
+        const jobData = result.data || []
+        setJobs(jobData)
+        
+        // If no jobs are running or pending, stop polling
+        const hasActiveJobs = jobData.some(job => 
+          job.status === "true" || job.status === "pending"
+        )
+        
+        if (!hasActiveJobs && intervalRef.current) {
+          clearInterval(intervalRef.current)
+          intervalRef.current = null
         }
-      } catch (error) {
+      }
+    } catch (error) {
+      if (mountedRef.current) {
         console.error('Error fetching jobs:', error)
-      } finally {
+      }
+    } finally {
+      if (mountedRef.current) {
         setLoading(false)
       }
     }
-
-    fetchJobs()
-    
-    // Refresh jobs every 10 seconds
-    const interval = setInterval(fetchJobs, 10000)
-    
-    return () => clearInterval(interval)
   }, [userId])
 
-  const getStatusIcon = (status: string | null) => {
+  const startPolling = useCallback(() => {
+    // Don't start multiple intervals
+    if (intervalRef.current) return
+    
+    // Only poll if there are active jobs or we're initially loading
+    const hasActiveJobs = jobs.some(job => 
+      job.status === "true" || job.status === "pending"
+    )
+    
+    if (hasActiveJobs || loading) {
+      intervalRef.current = setInterval(fetchJobs, 15000) // Reduced from 10s to 15s
+    }
+  }, [fetchJobs, jobs, loading])
+
+  useEffect(() => {
+    mountedRef.current = true
+    fetchJobs()
+    
+    return () => {
+      mountedRef.current = false
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [fetchJobs])
+
+  useEffect(() => {
+    startPolling()
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [startPolling])
+
+  const getStatusIcon = useCallback((status: string | null) => {
     switch (status) {
       case "true":
         return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
@@ -49,9 +97,9 @@ export function JobQueue({ userId }: JobQueueProps) {
       default:
         return <XCircle className="h-3 w-3 text-red-500" />
     }
-  }
+  }, [])
 
-  const getStatusText = (status: string | null) => {
+  const getStatusText = useCallback((status: string | null) => {
     switch (status) {
       case "true":
         return "Running"
@@ -63,9 +111,9 @@ export function JobQueue({ userId }: JobQueueProps) {
       default:
         return "Unknown"
     }
-  }
+  }, [])
 
-  const getStatusVariant = (status: string | null): "default" | "secondary" | "destructive" | "outline" => {
+  const getStatusVariant = useCallback((status: string | null): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case "true":
         return "default"
@@ -77,7 +125,7 @@ export function JobQueue({ userId }: JobQueueProps) {
       default:
         return "destructive"
     }
-  }
+  }, [])
 
   if (loading) {
     return (
@@ -137,4 +185,4 @@ export function JobQueue({ userId }: JobQueueProps) {
       ))}
     </div>
   )
-} 
+}) 

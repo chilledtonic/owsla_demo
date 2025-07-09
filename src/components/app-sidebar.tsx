@@ -3,6 +3,7 @@
 import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor, Plus } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { useTheme } from "next-themes"
+import Link from "next/link"
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +32,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
 import { JobQueue } from "./job-queue"
-import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
 import logoImage from "@/images/logo.png"
@@ -43,7 +43,6 @@ interface AppSidebarProps {
 export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
   const { setTheme } = useTheme()
-  const router = useRouter()
   const pathname = usePathname()
   const { state } = useSidebar()
 
@@ -76,21 +75,23 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             <SidebarMenuButton 
               size="lg" 
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              onClick={() => router.push("/")}
+              asChild
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Image 
-                  src={logoImage} 
-                  alt="Owsla Logo" 
-                  width={24} 
-                  height={24}
-                  className="size-6"
-                />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Owsla</span>
-                <span className="truncate text-xs">Learning Platform</span>
-              </div>
+              <Link href="/" prefetch={true}>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Image 
+                    src={logoImage} 
+                    alt="Owsla Logo" 
+                    width={24} 
+                    height={24}
+                    className="size-6"
+                  />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Owsla</span>
+                  <span className="truncate text-xs">Learning Platform</span>
+                </div>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -106,10 +107,12 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                   <SidebarMenuButton 
                     isActive={item.isActive}
                     tooltip={item.title}
-                    onClick={() => router.push(item.href)}
+                    asChild
                   >
-                    <item.icon className="size-4" />
-                    <span>{item.title}</span>
+                    <Link href={item.href} prefetch={true}>
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -123,11 +126,13 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
-                  onClick={() => router.push("/new-curriculum")}
                   tooltip="Create New Curriculum"
+                  asChild
                 >
-                  <Plus className="size-4" />
-                  <span>New Curriculum</span>
+                  <Link href="/new-curriculum" prefetch={true}>
+                    <Plus className="size-4" />
+                    <span>New Curriculum</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -205,9 +210,11 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/handler/account-settings")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Account Settings
+                  <DropdownMenuItem asChild>
+                    <Link href="/handler/account-settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Account Settings
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
@@ -245,11 +252,13 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
-                onClick={() => router.push("/sign-in")}
                 tooltip="Sign In"
+                asChild
               >
-                <User className="size-4" />
-                <span>Sign In</span>
+                <Link href="/sign-in">
+                  <User className="size-4" />
+                  <span>Sign In</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

@@ -2,13 +2,14 @@
 
 import { AppLayout } from "@/components/app-layout"
 import { CurriculumContent } from "@/components/curriculum-content"
-import { fetchCurriculumById, deleteCurriculum } from "@/lib/actions"
+import { deleteCurriculum } from "@/lib/actions"
+import { useCachedCurriculum } from "@/hooks/use-curriculum-data"
 import { CurriculumData } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Calendar, Clock, BookOpen, ChevronLeft, ChevronRight, Timer, Users } from "lucide-react"
+import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -121,57 +122,32 @@ function transformDatabaseCurriculum(dbCurriculum: {
 
 export default function CurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const [curriculum, setCurriculum] = useState<CurriculumData | null>(null)
+  const [curriculumId, setCurriculumId] = useState<number | null>(null)
+  const { curriculum, loading, error } = useCachedCurriculum(curriculumId || 0)
   const [curriculumData, setCurriculumData] = useState<{ curriculum: ReturnType<typeof transformDatabaseCurriculum> } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [currentDay, setCurrentDay] = useState(1)
   const [actualDay, setActualDay] = useState(1) // User's actual progress day
-  const [curriculumId, setCurriculumId] = useState<string | null>(null)
 
   useEffect(() => {
     async function initParams() {
       const resolvedParams = await params
-      setCurriculumId(resolvedParams.id)
+      const id = parseInt(resolvedParams.id)
+      if (!isNaN(id)) {
+        setCurriculumId(id)
+      }
     }
     initParams()
   }, [params])
 
   useEffect(() => {
-    if (!curriculumId) return
-
-    async function loadCurriculum() {
-      try {
-        setLoading(true)
-        if (!curriculumId) return
-        
-        const id = parseInt(curriculumId)
-        if (isNaN(id)) {
-          setError("Invalid curriculum ID")
-          return
-        }
-        
-        const result = await fetchCurriculumById(id)
-        if (result.success && result.data?.full_curriculum_data) {
-          setCurriculum(result.data)
-          setCurriculumData({
-            curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data, result.data)
-          })
-          // Set initial actual day - could be loaded from user progress in the future
-          setActualDay(1)
-        } else {
-          setError("Curriculum not found")
-        }
-      } catch (error) {
-        console.error('Error loading curriculum:', error)
-        setError("Failed to load curriculum")
-      } finally {
-        setLoading(false)
-      }
+    if (curriculum?.full_curriculum_data) {
+      setCurriculumData({
+        curriculum: transformDatabaseCurriculum(curriculum.full_curriculum_data, curriculum)
+      })
+      // Set initial actual day - could be loaded from user progress in the future
+      setActualDay(1)
     }
-
-    loadCurriculum()
-  }, [curriculumId])
+  }, [curriculum])
 
   const handlePreviousDay = () => {
     setCurrentDay(prev => Math.max(1, prev - 1))
@@ -198,11 +174,10 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
       if (result.success) {
         router.push('/')
       } else {
-        setError(result.error || 'Failed to delete curriculum')
+        console.error('Failed to delete curriculum:', result.error)
       }
     } catch (error) {
       console.error('Error deleting curriculum:', error)
-      setError('Failed to delete curriculum')
     }
   }
 
