@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor } from "lucide-react"
+import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor, Plus } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { useTheme } from "next-themes"
 import {
@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CurriculaList } from "./curricula-list"
 import { JobQueue } from "./job-queue"
 import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import Image from "next/image"
 import logoImage from "@/images/logo.png"
 
@@ -42,73 +44,93 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
   const user = useUser()
   const { setTheme } = useTheme()
   const router = useRouter()
+  const pathname = usePathname()
+  const { state } = useSidebar()
+
+  const navigation = [
+    {
+      title: "Dashboard",
+      icon: LayoutDashboard,
+      href: "/",
+      isActive: pathname === "/"
+    },
+    {
+      title: "Library", 
+      icon: BookOpen,
+      href: "/library",
+      isActive: pathname === "/library"
+    },
+    {
+      title: "Experts",
+      icon: Users, 
+      href: "/experts",
+      isActive: pathname === "/experts"
+    }
+  ]
 
   return (
-    <Sidebar className="w-64">
-      <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">
-          <button type="button" onClick={() => router.push("/")}>
-            <div className="flex items-center gap-2">
-              <Image 
-                src={logoImage} 
-                alt="Owsla Logo" 
-                width={32} 
-                height={32}
-                className="w-8 h-8"
-              />
-              <span>Owsla</span>
-            </div>
-          </button>
-        </h2>
+    <Sidebar collapsible="icon" className="border-r">
+      <SidebarHeader className="border-b">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              size="lg" 
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              onClick={() => router.push("/")}
+            >
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Image 
+                  src={logoImage} 
+                  alt="Owsla Logo" 
+                  width={24} 
+                  height={24}
+                  className="size-6"
+                />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Owsla</span>
+                <span className="truncate text-xs">Learning Platform</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2"
-                    onClick={() => router.push("/")}
+              {navigation.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton 
+                    isActive={item.isActive}
+                    tooltip={item.title}
+                    onClick={() => router.push(item.href)}
                   >
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span className="text-sm">Dashboard</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2"
-                    onClick={() => router.push("/library")}
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    <span className="text-sm">Library</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2"
-                    onClick={() => router.push("/experts")}
-                  >
-                    <Users className="h-4 w-4" />
-                    <span className="text-sm">Experts</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                    <item.icon className="size-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Your Curricula</SidebarGroupLabel>
+          <SidebarGroupLabel>Curricula</SidebarGroupLabel>
           <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => router.push("/new-curriculum")}
+                  tooltip="Create New Curriculum"
+                >
+                  <Plus className="size-4" />
+                  <span>New Curriculum</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
             <CurriculaList 
               activeCurriculumId={activeCurriculumId}
             />
@@ -116,8 +138,8 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
         </SidebarGroup>
 
         {user && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Job Queue</SidebarGroupLabel>
+          <SidebarGroup className="mt-auto">
+            <SidebarGroupLabel>Status</SidebarGroupLabel>
             <SidebarGroupContent>
               <JobQueue userId={user.id} />
             </SidebarGroupContent>
@@ -126,85 +148,111 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
 
       </SidebarContent>
       
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="border-t">
         {user ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton className="w-full justify-start">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.profileImageUrl || ""} alt={user.displayName || ""} />
-                  <AvatarFallback>
-                    {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.primaryEmail?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start text-left">
-                  <span className="text-sm font-medium">
-                    {user.displayName || "User"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {user.primaryEmail}
-                  </span>
-                </div>
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <button
-                  type="button"
-                  onClick={() => router.push("/handler/account-settings")}
-                  className="flex items-center w-full"
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  >
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage 
+                        src={user.profileImageUrl || ""} 
+                        alt={user.displayName || ""} 
+                      />
+                      <AvatarFallback className="rounded-lg">
+                        {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.primaryEmail?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {user.displayName || "User"}
+                      </span>
+                      <span className="truncate text-xs">
+                        {user.primaryEmail}
+                      </span>
+                    </div>
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                  side={state === "collapsed" ? "right" : "bottom"}
+                  align="end"
+                  sideOffset={4}
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </button>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Monitor className="mr-2 h-4 w-4" />
-                  <span>Theme</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={() => setTheme("light")}>
-                      <Sun className="mr-2 h-4 w-4" />
-                      <span>Light</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      <Moon className="mr-2 h-4 w-4" />
-                      <span>Dark</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage 
+                          src={user.profileImageUrl || ""} 
+                          alt={user.displayName || ""} 
+                        />
+                        <AvatarFallback className="rounded-lg">
+                          {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.primaryEmail?.charAt(0).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold">
+                          {user.displayName || "User"}
+                        </span>
+                        <span className="truncate text-xs">
+                          {user.primaryEmail}
+                        </span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/handler/account-settings")}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
                       <Monitor className="mr-2 h-4 w-4" />
-                      <span>System</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => user.signOut()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                      Theme
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={() => setTheme("light")}>
+                          <Sun className="mr-2 h-4 w-4" />
+                          Light
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("dark")}>
+                          <Moon className="mr-2 h-4 w-4" />
+                          Dark
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme("system")}>
+                          <Monitor className="mr-2 h-4 w-4" />
+                          System
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => user.signOut()}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
         ) : (
-          <SidebarMenuButton asChild>
-            <button
-              type="button"
-              className="flex items-center gap-2"
-              onClick={() => router.push("/sign-in")}
-            >
-              <User className="h-4 w-4" />
-              <span className="text-sm">Sign In</span>
-            </button>
-          </SidebarMenuButton>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => router.push("/sign-in")}
+                tooltip="Sign In"
+              >
+                <User className="size-4" />
+                <span>Sign In</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         )}
       </SidebarFooter>
     </Sidebar>

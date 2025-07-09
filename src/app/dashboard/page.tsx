@@ -109,7 +109,7 @@ export default function DashboardPage() {
               {/* Welcome Banner */}
               <Card className="text-center py-12">
                 <CardHeader>
-                  <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+                  <div className="mx-auto mb-4 p-3 bg-primary/10 rounded w-fit">
                     <Calendar className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="text-2xl">Welcome to Your Learning Dashboard</CardTitle>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
+                    <div className="mx-auto mb-4 p-3 bg-blue-100 rounded w-fit">
                       <BookOpen className="h-6 w-6 text-blue-600" />
                     </div>
                     <CardTitle>Personalized Content</CardTitle>
@@ -147,7 +147,7 @@ export default function DashboardPage() {
 
                 <Card>
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
+                    <div className="mx-auto mb-4 p-3 bg-green-100 rounded w-fit">
                       <TrendingUp className="h-6 w-6 text-green-600" />
                     </div>
                     <CardTitle>Track Progress</CardTitle>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
 
                 <Card>
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 p-3 bg-purple-100 rounded-full w-fit">
+                    <div className="mx-auto mb-4 p-3 bg-purple-100 rounded w-fit">
                       <Clock className="h-6 w-6 text-purple-600" />
                     </div>
                     <CardTitle>Flexible Scheduling</CardTitle>

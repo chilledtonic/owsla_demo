@@ -2,13 +2,13 @@
 
 import { AppLayout } from "@/components/app-layout"
 import { CurriculumContent } from "@/components/curriculum-content"
-import { RightSidebar } from "@/components/right-sidebar"
 import { fetchCurriculumById, deleteCurriculum } from "@/lib/actions"
 import { CurriculumData } from "@/lib/database"
 import { useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Trash2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Trash2, Calendar, Clock, BookOpen, ChevronLeft, ChevronRight, Timer, Users } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { BookCover } from "@/components/ui/book-cover"
 
 // Transform database curriculum to display format
 function transformDatabaseCurriculum(dbCurriculum: {
@@ -125,6 +126,7 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentDay, setCurrentDay] = useState(1)
+  const [actualDay, setActualDay] = useState(1) // User's actual progress day
   const [curriculumId, setCurriculumId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -155,6 +157,8 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
           setCurriculumData({
             curriculum: transformDatabaseCurriculum(result.data.full_curriculum_data, result.data)
           })
+          // Set initial actual day - could be loaded from user progress in the future
+          setActualDay(1)
         } else {
           setError("Curriculum not found")
         }
@@ -176,6 +180,13 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
   const handleNextDay = () => {
     if (curriculumData) {
       setCurrentDay(prev => Math.min(curriculumData.curriculum.daily_modules.length, prev + 1))
+    }
+  }
+
+  // Function to advance actual progress (could be called when user completes a day)
+  const handleCompleteDay = () => {
+    if (curriculumData && actualDay < curriculumData.curriculum.daily_modules.length) {
+      setActualDay(prev => prev + 1)
     }
   }
 
@@ -208,64 +219,210 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
     )
   }
 
+  const currentModule = curriculumData?.curriculum.daily_modules[currentDay - 1]
+  const nextModules = curriculumData?.curriculum.daily_modules.slice(currentDay).slice(0, 5) || []
+
   return (
     <AppLayout 
       activeCurriculumId={curriculum?.id}
       rightSidebar={
-        curriculumData && (
-          <RightSidebar 
-            currentModule={curriculumData.curriculum.daily_modules[currentDay - 1]}
-            totalDays={curriculumData.curriculum.daily_modules.length}
-            currentDay={currentDay}
-            nextModules={curriculumData.curriculum.daily_modules.slice(currentDay)}
-          />
+        curriculumData && currentModule && (
+          <div className="p-4 space-y-4">
+            {/* Primary Resource - Featured at top */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Primary Resource</h3>
+              <div 
+                className="cursor-pointer hover:bg-muted/30 p-3 rounded-lg transition-colors border"
+                onClick={() => {
+                  if (curriculumData.curriculum.primary_resource.isbn && curriculumData.curriculum.primary_resource.isbn !== 'N/A') {
+                    const url = `https://www.amazon.com/dp/${curriculumData.curriculum.primary_resource.isbn}`
+                    window.open(url, '_blank', 'noopener,noreferrer')
+                  }
+                }}
+              >
+                <div className="flex gap-3">
+                  <BookCover 
+                    isbn={curriculumData.curriculum.primary_resource.isbn}
+                    title={curriculumData.curriculum.primary_resource.title}
+                    className="h-24 w-18 flex-shrink-0"
+                  />
+                  <div className="space-y-1 min-w-0">
+                    <h4 className="font-medium text-sm leading-tight">{curriculumData.curriculum.primary_resource.title}</h4>
+                    <p className="text-xs text-muted-foreground">{curriculumData.curriculum.primary_resource.author}</p>
+                    <div className="pt-1">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {currentModule.primary_reading_focus}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Study Timer */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Timer className="h-4 w-4" />
+                Study Session
+              </h3>
+              <div className="p-3 border rounded-lg space-y-3">
+                <div className="text-center">
+                  <div className="text-xl font-mono font-bold">
+                    00:00
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Today&apos;s Study Time
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1">
+                    <Timer className="h-3 w-3 mr-1" />
+                    Start
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    Reset
+                  </Button>
+                </div>
+                <div className="text-xs text-muted-foreground text-center">
+                  Target: {currentModule.time_allocation.total}
+                </div>
+              </div>
+            </div>
+
+            {/* Current Module Info */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Current Module
+              </h3>
+              <div className="p-3 rounded-lg border space-y-2">
+                <p className="font-medium text-sm">{currentModule.title}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Day {currentDay}</span>
+                  <span>•</span>
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {currentModule.time_allocation.total}
+                  </span>
+                </div>
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Primary:</span>
+                    <span>{currentModule.time_allocation.primary_text}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Supplementary:</span>
+                    <span>{currentModule.time_allocation.supplementary_materials}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Expert Recommendation */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Get Expert Help</h3>
+              <div className="p-3 border rounded-lg space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                    <Users className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium">Expert Available</p>
+                    <p className="text-xs text-muted-foreground">Get help with {curriculumData.curriculum.title}</p>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => window.open('/experts', '_blank')}
+                >
+                  Find Expert
+                </Button>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Navigation</h3>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handlePreviousDay}
+                  disabled={currentDay <= 1}
+                  className="flex-1"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleNextDay}
+                  disabled={currentDay >= curriculumData.curriculum.daily_modules.length}
+                  className="flex-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold">Actions</h3>
+              <div className="space-y-2">
+                <Badge variant="secondary" className="text-xs w-full justify-center">
+                  Active Curriculum
+                </Badge>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Curriculum
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete &quot;{curriculumData.curriculum.title}&quot;? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDeleteCurriculum}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          </div>
         )
       }
     >
       <Suspense fallback={<div className="flex items-center justify-center h-full">Loading curriculum...</div>}>
         {loading ? (
-          <div className="flex items-center justify-center h-full">Loading curriculum...</div>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-sm text-muted-foreground">Loading curriculum...</p>
+            </div>
+          </div>
         ) : curriculumData ? (
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <h1 className="text-2xl font-bold">{curriculumData.curriculum.title}</h1>
-                <p className="text-muted-foreground">Day {currentDay} of {curriculumData.curriculum.daily_modules.length}</p>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Curriculum
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete &quot;{curriculumData.curriculum.title}&quot;? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDeleteCurriculum}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-            <div className="flex-1">
-              <CurriculumContent 
-                curriculum={curriculumData.curriculum}
-                currentDay={currentDay}
-                onPreviousDay={handlePreviousDay}
-                onNextDay={handleNextDay}
-              />
-            </div>
+          <div className="flex-1 overflow-auto">
+            <CurriculumContent 
+              curriculum={curriculumData.curriculum}
+              currentDay={currentDay}
+              onPreviousDay={handlePreviousDay}
+              onNextDay={handleNextDay}
+              actualDay={actualDay}
+            />
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">

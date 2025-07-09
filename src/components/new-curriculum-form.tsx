@@ -224,7 +224,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
           <div className="xl:col-span-3">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Mode Toggle Section */}
-              <div className="flex items-center justify-between p-4 rounded-lg border bg-card/50">
+              <div className="flex items-center justify-between p-4 rounded border bg-card/50">
                 <div className="flex items-center space-x-3">
                   <Switch
                     id="mode-toggle"

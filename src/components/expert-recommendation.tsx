@@ -196,7 +196,7 @@ export function ExpertRecommendation({
               </AvatarFallback>
             </Avatar>
             <div className={cn(
-              "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white",
+              "absolute -bottom-1 -right-1 w-3 h-3 rounded border-2 border-white",
               getAvailabilityColor(recommendedExpert.availability)
             )} />
           </div>
@@ -267,7 +267,7 @@ export function ExpertRecommendation({
         </div>
         
         {recommendedExpert.availability === "offline" && (
-          <div className="mt-3 p-2 bg-muted rounded-md">
+          <div className="mt-3 p-2 bg-muted rounded">
             <p className="text-xs text-muted-foreground">
               This expert is currently offline. Check our other available experts.
             </p>

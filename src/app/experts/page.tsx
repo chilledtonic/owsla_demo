@@ -244,7 +244,7 @@ export default function ExpertsPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className={cn(
-                          "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white",
+                          "absolute -bottom-1 -right-1 w-4 h-4 rounded border-2 border-white",
                           getAvailabilityColor(expert.availability)
                         )} />
                       </div>
