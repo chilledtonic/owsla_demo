@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/app-layout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { BookCover } from "@/components/ui/book-cover"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
 import React, { useState, useCallback, useMemo } from "react"
@@ -180,16 +181,72 @@ export default function Dashboard() {
     return (
       <AppLayout>
         <div className="p-4 space-y-6">
-          {/* Today's Progress Header */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold">Today&apos;s Focus</h1>
-              <Badge variant="secondary" className="text-xs">
-                {totalCompletedToday}/{todayModules.length}
-              </Badge>
+          {/* Header with buttons */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold">Learning Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Welcome back, Y Combinator! Here&apos;s your study overview.</p>
             </div>
-            
-            {todayModules.length > 0 && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={refresh}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/new-curriculum">
+                  <Plus className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Condensed Stats as Taglines */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center p-3 rounded-lg border">
+              <div className="flex items-center justify-center mb-1">
+                <Circle className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="text-lg font-semibold">{dashboardData.curricula.length}</div>
+              <div className="text-xs text-muted-foreground">Active Curricula</div>
+            </div>
+            <div className="text-center p-3 rounded-lg border">
+              <div className="flex items-center justify-center mb-1">
+                <Target className="h-4 w-4 text-green-600" />
+              </div>
+              <div className="text-lg font-semibold">{todayModules.length}</div>
+              <div className="text-xs text-muted-foreground">Today&apos;s Focus</div>
+            </div>
+            <div className="text-center p-3 rounded-lg border">
+              <div className="flex items-center justify-center mb-1">
+                <BookOpen className="h-4 w-4 text-purple-600" />
+              </div>
+              <div className="text-lg font-semibold">{uniqueBookCount}</div>
+              <div className="text-xs text-muted-foreground">Resources</div>
+            </div>
+            <div className="text-center p-3 rounded-lg border">
+              <div className="flex items-center justify-center mb-1">
+                <Clock className="h-4 w-4 text-orange-600" />
+              </div>
+              <div className="text-lg font-semibold">{Math.round(totalStudyTime / 60)}h</div>
+              <div className="text-xs text-muted-foreground">Study Time</div>
+            </div>
+          </div>
+
+          {/* Curricula Overview */}
+          <CurriculaOverview 
+            curricula={dashboardData.curricula}
+            dailyModules={dashboardData.dailyModules}
+          />
+
+          {/* Today's Progress */}
+          {todayModules.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Today&apos;s Focus</h2>
+                <Badge variant="secondary" className="text-xs">
+                  {totalCompletedToday}/{todayModules.length}
+                </Badge>
+              </div>
+              
               <div className="w-full bg-muted rounded-full h-2">
                 <div 
                   className="bg-primary h-2 rounded-full transition-all duration-300"
@@ -198,31 +255,15 @@ export default function Dashboard() {
                   }}
                 />
               </div>
-            )}
-          </div>
 
-          {/* Today's Modules */}
-          <TodaysFocus 
-            modules={todayModules} 
-            completedModules={completedModules}
-            onToggleCompletion={toggleModuleCompletion}
-          />
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3 py-4 border-y">
-            <div className="text-center">
-              <div className="text-lg font-semibold">{dashboardData.curricula.length}</div>
-              <div className="text-xs text-muted-foreground">Active</div>
+              {/* Today's Modules */}
+              <TodaysFocus 
+                modules={todayModules} 
+                completedModules={completedModules}
+                onToggleCompletion={toggleModuleCompletion}
+              />
             </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold">{Math.round(totalStudyTime / 60)}h</div>
-              <div className="text-xs text-muted-foreground">Study Time</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-semibold">{uniqueBookCount}</div>
-              <div className="text-xs text-muted-foreground">Books</div>
-            </div>
-          </div>
+          )}
 
           {/* Upcoming Preview */}
           <div className="space-y-3">
@@ -231,23 +272,6 @@ export default function Dashboard() {
               sortedDates={sortedDates.slice(0, 3)} 
               groupedModules={groupedUpcomingModules}
               nextDay={nextDay}
-            />
-          </div>
-
-          {/* Curricula Overview */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">My Curricula</h2>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/new-curriculum">
-                  <Plus className="h-4 w-4 mr-1" />
-                  New
-                </Link>
-              </Button>
-            </div>
-            <CurriculaOverview 
-              curricula={dashboardData.curricula}
-              dailyModules={dashboardData.dailyModules}
             />
           </div>
         </div>
@@ -332,24 +356,54 @@ export default function Dashboard() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold">Today&apos;s Focus</h1>
+                <h1 className="text-2xl font-bold">Learning Dashboard</h1>
                 <p className="text-sm text-muted-foreground">
-                  {todayModules.length > 0 
-                    ? `${todayModules.length} modules to complete today`
-                    : "No modules scheduled for today"
-                  }
+                  Welcome back, Y Combinator! Here&apos;s your study overview.
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{totalCompletedToday}/{todayModules.length}</div>
-                  <div className="text-xs text-muted-foreground">Completed</div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" onClick={refresh}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+                <Button asChild>
+                  <Link href="/new-curriculum">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Curriculum
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Condensed Stats as Taglines */}
+            <div className="grid grid-cols-4 gap-6">
+              <div className="text-center p-4 rounded-lg border">
+                <div className="flex items-center justify-center mb-2">
+                  <Circle className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                  <div className="text-xs font-medium">
-                    {todayModules.length > 0 ? Math.round((totalCompletedToday / todayModules.length) * 100) : 0}%
-                  </div>
+                <div className="text-2xl font-bold">{dashboardData.curricula.length}</div>
+                <div className="text-sm text-muted-foreground">Active Curricula</div>
+              </div>
+              <div className="text-center p-4 rounded-lg border">
+                <div className="flex items-center justify-center mb-2">
+                  <Target className="h-5 w-5 text-green-600" />
                 </div>
+                <div className="text-2xl font-bold">{todayModules.length}</div>
+                                 <div className="text-sm text-muted-foreground">Today&apos;s Focus</div>
+              </div>
+              <div className="text-center p-4 rounded-lg border">
+                <div className="flex items-center justify-center mb-2">
+                  <BookOpen className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="text-2xl font-bold">{uniqueBookCount}</div>
+                <div className="text-sm text-muted-foreground">Resources</div>
+              </div>
+              <div className="text-center p-4 rounded-lg border">
+                <div className="flex items-center justify-center mb-2">
+                  <Clock className="h-5 w-5 text-orange-600" />
+                </div>
+                <div className="text-2xl font-bold">{Math.round(totalStudyTime / 60)}h</div>
+                <div className="text-sm text-muted-foreground">Study Time</div>
               </div>
             </div>
           </div>
@@ -357,6 +411,12 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <div className="p-6 space-y-8">
+          {/* Curricula Overview */}
+          <CurriculaOverview 
+            curricula={dashboardData.curricula}
+            dailyModules={dashboardData.dailyModules}
+          />
+
           {/* Today's Focus */}
           <TodaysFocus 
             modules={todayModules} 
@@ -369,12 +429,6 @@ export default function Dashboard() {
             sortedDates={sortedDates.slice(0, 5)} 
             groupedModules={groupedUpcomingModules}
             nextDay={nextDay}
-          />
-
-          {/* Curricula Overview */}
-          <CurriculaOverview 
-            curricula={dashboardData.curricula}
-            dailyModules={dashboardData.dailyModules}
           />
         </div>
       </div>
@@ -443,76 +497,82 @@ const TodayModule = React.memo(function TodayModule({
   const moduleKey = `${module.curriculumId}-${module.day}`
 
   return (
-    <div 
-      className={cn(
-        "flex items-start gap-3 p-4 rounded-lg border transition-all duration-200",
-        isCompleted 
-          ? "bg-primary/5 border-primary/20" 
-          : "bg-background hover:bg-muted/50",
-        isMobile && "p-3 gap-2"
-      )}
-    >
-      <button
-        onClick={() => onToggleCompletion(moduleKey)}
-        className="mt-1 flex-shrink-0"
+    <Link href={`/curriculum/${module.curriculumId}`}>
+      <div 
+        className={cn(
+          "flex items-start gap-3 p-4 rounded-lg border transition-all duration-200 hover:bg-muted/50 cursor-pointer",
+          isCompleted 
+            ? "bg-primary/5 border-primary/20" 
+            : "bg-background",
+          isMobile && "p-3 gap-2"
+        )}
       >
-        {isCompleted ? (
-          <CheckCircle className="h-5 w-5 text-primary" />
-        ) : (
-          <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
-        )}
-      </button>
-      
-      <div className="flex-1 min-w-0">
-        <div className={cn("flex items-start gap-2 mb-2", isMobile && "flex-col gap-1")}>
-          <h3 className={cn(
-            "font-medium leading-tight",
-            isCompleted && "line-through text-muted-foreground",
-            isMobile && "text-sm"
-          )}>
-            {module.title}
-          </h3>
-          {!isMobile && (
-            <Badge variant="secondary" className="text-xs flex-shrink-0">
-              {module.curriculumTitle}
-            </Badge>
-          )}
-        </div>
-        
-        {isMobile && (
-          <div className="text-xs text-muted-foreground mb-2">
-            {module.curriculumTitle}
-          </div>
-        )}
-        
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>{module.totalTime}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>Day {module.day}</span>
-          </div>
-        </div>
-      </div>
-      
-      {!isMobile && (
-        <div className="flex-shrink-0">
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onToggleCompletion(moduleKey)
+          }}
+          className="mt-1 flex-shrink-0"
+        >
           {isCompleted ? (
-            <Button variant="ghost" size="sm" className="text-primary">
-              <Pause className="h-4 w-4 mr-1" />
-              Completed
-            </Button>
+            <CheckCircle className="h-5 w-5 text-primary" />
           ) : (
-            <Button variant="outline" size="sm">
-              <Play className="h-4 w-4 mr-1" />
-              Start
-            </Button>
+            <Circle className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
           )}
+        </button>
+        
+        <div className="flex-1 min-w-0">
+          <div className={cn("flex items-start gap-2 mb-2", isMobile && "flex-col gap-1")}>
+            <h3 className={cn(
+              "font-medium leading-tight",
+              isCompleted && "line-through text-muted-foreground",
+              isMobile && "text-sm"
+            )}>
+              {module.title}
+            </h3>
+            {!isMobile && (
+              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                {module.curriculumTitle}
+              </Badge>
+            )}
+          </div>
+          
+          {isMobile && (
+            <div className="text-xs text-muted-foreground mb-2">
+              {module.curriculumTitle}
+            </div>
+          )}
+          
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{module.totalTime}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span>Day {module.day}</span>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+        
+        {!isMobile && (
+          <div className="flex-shrink-0">
+            {isCompleted ? (
+              <Button variant="ghost" size="sm" className="text-primary">
+                <Pause className="h-4 w-4 mr-1" />
+                Completed
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm">
+                <Play className="h-4 w-4 mr-1" />
+                Start
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </Link>
   )
 })
 
@@ -623,30 +683,31 @@ const UpcomingDay = React.memo(function UpcomingDay({
       <CollapsibleContent className="mt-2">
         <div className={cn("ml-5 space-y-2", isMobile && "ml-3")}>
           {modules.map((module) => (
-            <div 
-              key={`${module.curriculumId}-${module.day}`}
-              className={cn(
-                "flex items-center justify-between p-2 rounded border-l-2 border-muted bg-muted/20",
-                isMobile && "p-1.5"
-              )}
-            >
-              <div className="min-w-0 flex-1">
-                <div className={cn(
-                  "font-medium text-sm truncate",
-                  isMobile && "text-xs"
-                )}>
-                  {module.title}
+            <Link key={`${module.curriculumId}-${module.day}`} href={`/curriculum/${module.curriculumId}`}>
+              <div 
+                className={cn(
+                  "flex items-center justify-between p-2 rounded border-l-2 border-muted bg-muted/20 hover:bg-muted/30 transition-colors cursor-pointer",
+                  isMobile && "p-1.5"
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className={cn(
+                    "font-medium text-sm truncate",
+                    isMobile && "text-xs"
+                  )}>
+                    {module.title}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {module.curriculumTitle} • {module.totalTime}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {module.curriculumTitle} • {module.totalTime}
-                </div>
+                {!isMobile && (
+                  <Badge variant="secondary" className="text-xs ml-2">
+                    Day {module.day}
+                  </Badge>
+                )}
               </div>
-              {!isMobile && (
-                <Badge variant="secondary" className="text-xs ml-2">
-                  Day {module.day}
-                </Badge>
-              )}
-            </div>
+            </Link>
           ))}
         </div>
       </CollapsibleContent>
@@ -683,13 +744,11 @@ const CurriculaOverview = React.memo(function CurriculaOverview({
 
   return (
     <div className="space-y-3">
-      {!isMobile && (
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-green-600" />
-          <h2 className="text-xl font-semibold">Your Curricula</h2>
-          <Badge variant="outline">{curricula.length} active</Badge>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <TrendingUp className="h-5 w-5 text-green-600" />
+        <h2 className={cn("font-semibold", isMobile ? "text-lg" : "text-xl")}>Your Curricula</h2>
+        <Badge variant="outline">{curricula.length} active</Badge>
+      </div>
       
       <div className={cn(
         "grid gap-4",
@@ -746,37 +805,51 @@ const CurriculumCard = React.memo(function CurriculumCard({
         "p-4 rounded-lg border hover:bg-muted/50 transition-colors",
         isMobile && "p-3"
       )}>
-        <div className="flex items-start justify-between mb-3">
-          <h3 className={cn(
-            "font-medium leading-tight",
-            isMobile && "text-sm"
-          )}>
-            {curriculum.title}
-          </h3>
-          <Badge variant="secondary" className={cn(statusColor, "text-xs")}>
-            {statusLabel}
-          </Badge>
+        {/* Primary Resource Cover */}
+        <div className="flex gap-3 mb-3">
+          <BookCover 
+            isbn={curriculum.primary_resource_isbn || undefined}
+            title={curriculum.primary_resource_title || undefined}
+            author={curriculum.primary_resource_author || undefined}
+            year={curriculum.primary_resource_year || undefined}
+            className={cn("flex-shrink-0", isMobile ? "h-16 w-12" : "h-20 w-14")}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className={cn(
+                "font-medium leading-tight line-clamp-2",
+                isMobile && "text-sm"
+              )}>
+                {curriculum.title}
+              </h3>
+              <Badge variant="secondary" className={cn(statusColor, "text-xs ml-2 flex-shrink-0")}>
+                {statusLabel}
+              </Badge>
+            </div>
+            
+            {curriculumModules.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Day {currentDay} of {curriculumModules.length}</span>
+                  <span>{progressPercentage}%</span>
+                </div>
+                
+                <div className="w-full bg-muted rounded-full h-1.5">
+                  <div 
+                    className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Day {currentDay} of {curriculumModules.length}</span>
-            <span>{Math.round((currentDay / curriculumModules.length) * 100)}%</span>
-          </div>
-          
-                     <div className="w-full bg-muted rounded-full h-1.5">
-             <div 
-               className="bg-primary h-1.5 rounded-full transition-all duration-300"
-               style={{ width: `${progressPercentage}%` }}
-             />
-           </div>
-           
-           {!isMobile && curriculum.topic && (
-             <p className="text-xs text-muted-foreground line-clamp-2 mt-2">
-               {curriculum.topic}
-             </p>
-           )}
-        </div>
+        {!isMobile && curriculum.topic && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {curriculum.topic}
+          </p>
+        )}
       </div>
     </Link>
   )

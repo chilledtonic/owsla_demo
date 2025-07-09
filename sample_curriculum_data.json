@@ -1,551 +1,417 @@
 {
-  "title": "Elementary Geometry Fundamentals: A 10-Day Journey from Visual Recognition to Logical Reasoning",
+  "title": "Symbolic Logic for Machine Code: A 7-Day Foundational Journey",
   "daily_modules": [
     {
       "day": 1,
-      "date": "2025-06-29",
-      "title": "Geometric Foundations and Visual Recognition",
+      "date": "2025-07-08",
+      "title": "Foundations of Propositional Logic",
       "key_insights": [
-        "Geometry bridges abstract mathematical thinking with concrete spatial experience",
-        "Visual recognition is the foundation for all geometric learning",
-        "Mathematical precision builds upon natural spatial intuition"
+        "Propositional logic provides the mathematical foundation for all computer reasoning",
+        "Boolean satisfiability is central to automated verification",
+        "Logical formulas can represent complex computational properties"
       ],
       "core_concepts": [
-        "What geometry studies: shapes, space, and relationships",
-        "Visual recognition vs. mathematical definition",
-        "Geometry in nature and human-made objects",
-        "Spatial thinking and geometric intuition"
+        "Boolean variables and truth values",
+        "Logical connectives (AND, OR, NOT, IMPLIES)",
+        "Formula construction and syntax",
+        "Truth tables and semantic evaluation",
+        "Satisfiability and validity concepts"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "105 minutes",
+        "supplementary_materials": "75 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Mathematical geometry to real-world spatial experiences",
-        "explain": "How geometry connects to everyday objects and spatial relationships",
-        "awareness": "Geometry as both abstract mathematical concepts and practical spatial knowledge",
-        "recognize": "Basic geometric shapes and their visual characteristics",
-        "understand": "Distinguish between geometric and non-geometric objects in the physical world"
+        "connect": "Boolean logic to computational decision-making",
+        "explain": "Truth tables, logical connectives, and formula evaluation",
+        "awareness": "Logic as foundation for formal verification",
+        "recognize": "Satisfiable versus unsatisfiable formulas",
+        "understand": "Boolean algebra fundamentals and propositional formulas"
       },
-      "practical_connections": "Observe and catalog geometric shapes in your immediate environment, noting how mathematical concepts appear in architecture, nature, and everyday objects. Practice distinguishing between approximate visual similarity and exact mathematical relationships.",
-      "primary_reading_focus": "Introduction to geometry as a mathematical discipline, basic geometric vocabulary, and the role of visualization in mathematical thinking",
+      "practical_connections": "Boolean logic directly corresponds to digital circuit design and binary decision-making in processors",
+      "primary_reading_focus": "Propositional logic fundamentals, Boolean satisfiability basics, and logical formula construction",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780130309631",
-          "year": "2001",
-          "focus": "Hands-on exploration of spatial concepts and geometric intuition development",
-          "title": "Experiencing Geometry - Introduction to Geometric Thinking",
-          "author": "David W. Henderson",
-          "journal": "Book Chapter",
-          "publisher": "Prentice Hall",
-          "reading_time": "18 minutes"
+          "doi": "10.1017/CBO9780511811616",
+          "isbn": "978-0521543101",
+          "year": "2000",
+          "focus": "Propositional logic foundations and natural deduction",
+          "title": "Logic in Computer Science: Modelling and Reasoning about Systems",
+          "author": "Michael Huth and Mark Ryan",
+          "journal": "Cambridge University Press",
+          "publisher": "Cambridge University Press",
+          "reading_time": "75 minutes"
         }
       ]
     },
     {
       "day": 2,
-      "date": "2025-06-30",
-      "title": "Points, Lines, and Planes: The Building Blocks",
+      "date": "2025-07-09",
+      "title": "First-Order Logic and Predicate Reasoning",
       "key_insights": [
-        "Geometric objects are idealizations that allow precise mathematical reasoning",
-        "Notation and terminology provide the language for geometric communication",
-        "Postulates establish the logical foundation for all geometric conclusions"
+        "First-order logic enables reasoning about objects and their relationships",
+        "Quantifiers provide powerful mechanisms for expressing program properties",
+        "Decidability becomes a critical concern in automated verification"
       ],
       "core_concepts": [
-        "Points as locations without dimension",
-        "Lines as infinite one-dimensional objects",
-        "Planes as infinite two-dimensional surfaces",
-        "Rays, segments, and their directed nature",
-        "Intersections and geometric relationships"
+        "Predicates and relations",
+        "Universal and existential quantifiers",
+        "Variable binding and scope",
+        "First-order formula construction",
+        "Herbrand domains and interpretations"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "100 minutes",
+        "supplementary_materials": "80 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Abstract geometric concepts to physical representations and models",
-        "explain": "How these basic elements combine to form all geometric figures",
-        "awareness": "The role of undefined terms and postulates in building geometric knowledge",
-        "recognize": "Different types of lines, rays, segments, and their relationships",
-        "understand": "Points, lines, and planes as fundamental geometric objects with specific mathematical properties"
+        "connect": "First-order logic to program specification and verification",
+        "explain": "Universal and existential quantification in formal systems",
+        "awareness": "Decidability limitations in predicate logic",
+        "recognize": "Well-formed formulas and scope of quantifiers",
+        "understand": "Quantifiers, predicates, and first-order formula structure"
       },
-      "practical_connections": "Create physical models using string for lines, paper for planes, and dots for points. Practice geometric notation by labeling objects in your environment and describing their relationships using mathematical language.",
-      "primary_reading_focus": "Fundamental geometric objects, notation systems, postulates about points and lines, and the axiomatic foundation of geometry",
+      "practical_connections": "Predicate logic forms the foundation for program specifications, invariants, and correctness conditions",
+      "primary_reading_focus": "First-order logic syntax and semantics, quantifier reasoning, and decidability boundaries",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780977985203",
-          "year": "2006",
-          "focus": "Classical presentation of geometric fundamentals with rigorous logical development",
-          "title": "Kiselev's Geometry - Basic Concepts and Definitions",
-          "author": "A. P. Kiselev",
-          "journal": "Book Chapter",
-          "publisher": "Sumizdat",
-          "reading_time": "18 minutes"
+          "doi": "10.1017/CBO9780511811616",
+          "isbn": "978-0521543101",
+          "year": "2000",
+          "focus": "Predicate logic and formal reasoning systems",
+          "title": "Logic in Computer Science: Modelling and Reasoning about Systems",
+          "author": "Michael Huth and Mark Ryan",
+          "journal": "Cambridge University Press",
+          "publisher": "Cambridge University Press",
+          "reading_time": "80 minutes"
         }
       ]
     },
     {
       "day": 3,
-      "date": "2025-07-01",
-      "title": "Angles: Formation, Measurement, and Relationships",
+      "date": "2025-07-10",
+      "title": "Computer Architecture and Machine Code Foundations",
       "key_insights": [
-        "Angles quantify the amount of rotation or turn between two directions",
-        "Angle relationships provide tools for solving geometric problems",
-        "Precise measurement enables mathematical analysis of geometric figures"
+        "Machine code verification requires understanding underlying hardware execution",
+        "The gap between high-level specifications and machine behavior creates verification challenges",
+        "Processor complexity makes formal reasoning about machine code non-trivial"
       ],
       "core_concepts": [
-        "Angle formation by intersecting rays",
-        "Angle measurement in degrees",
-        "Acute, obtuse, right, and straight angles",
-        "Complementary and supplementary angle pairs",
-        "Vertical angles and linear pairs"
+        "CPU architecture and instruction sets",
+        "Register management and memory hierarchy",
+        "Assembly language and machine code translation",
+        "Program execution models",
+        "Hardware-software interface challenges"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "90 minutes",
+        "supplementary_materials": "90 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Angle concepts to rotation, direction, and spatial orientation",
-        "explain": "Different types of angles and their measurement using degrees",
-        "awareness": "The importance of angle measurement in describing geometric relationships",
-        "recognize": "Angle relationships including complementary, supplementary, and vertical angles",
-        "understand": "Angles as geometric figures formed by two rays sharing a common endpoint"
+        "connect": "Hardware organization to software verification challenges",
+        "explain": "Machine code structure and processor operation",
+        "awareness": "Complexity of reasoning about low-level code behavior",
+        "recognize": "How high-level programs translate to machine instructions",
+        "understand": "Computer architecture basics and instruction execution"
       },
-      "practical_connections": "Use a protractor to measure angles in your environment. Create angle pairs with your hands, books, or other objects to explore complementary and supplementary relationships. Practice estimating angle measures before measuring them.",
-      "primary_reading_focus": "Angle definition, classification systems, measurement techniques, and fundamental angle relationships in geometric figures",
+      "practical_connections": "Understanding machine architecture is essential for effective verification of low-level software and embedded systems",
+      "primary_reading_focus": "Computational models underlying verification, machine representations, and execution semantics",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780130309631",
-          "year": "2001",
-          "focus": "Hands-on activities for understanding angle formation and measurement",
-          "title": "Experiencing Geometry - Angle Exploration Activities",
-          "author": "David W. Henderson",
-          "journal": "Book Chapter",
-          "publisher": "Prentice Hall",
-          "reading_time": "18 minutes"
+          "doi": "10.1016/B978-0-12-407726-3.00001-8",
+          "isbn": "978-0124077263",
+          "year": "2013",
+          "focus": "Computer architecture, instruction sets, and machine code execution",
+          "title": "Computer Organization and Design: The Hardware/Software Interface",
+          "author": "David A. Patterson and John L. Hennessy",
+          "journal": "Morgan Kaufmann",
+          "publisher": "Morgan Kaufmann",
+          "reading_time": "90 minutes"
         }
       ]
     },
     {
       "day": 4,
-      "date": "2025-07-02",
-      "title": "Triangles: Properties and Classification",
+      "date": "2025-07-11",
+      "title": "SAT Solving and Boolean Satisfiability",
       "key_insights": [
-        "Triangles serve as fundamental building blocks for understanding all polygons",
-        "Classification systems help organize and analyze geometric properties",
-        "The triangle angle sum theorem provides a powerful tool for geometric reasoning"
+        "SAT solving provides a practical foundation for automated reasoning",
+        "Modern heuristics make SAT solving surprisingly efficient for many real problems",
+        "Boolean satisfiability underlies many verification and analysis techniques"
       ],
       "core_concepts": [
-        "Triangle definition and basic properties",
-        "Classification by side lengths: equilateral, isosceles, scalene",
-        "Classification by angles: acute, obtuse, right triangles",
-        "Angle sum property of triangles",
-        "Triangle inequality principle"
+        "Boolean satisfiability problem (SAT)",
+        "Conjunctive Normal Form (CNF)",
+        "DPLL algorithm and backtracking",
+        "Conflict analysis and clause learning",
+        "Modern SAT solver architecture"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "95 minutes",
+        "supplementary_materials": "85 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Triangle properties to real-world applications and other geometric concepts",
-        "explain": "Different triangle classification systems based on sides and angles",
-        "awareness": "The fundamental role of triangles in geometric reasoning and measurement",
-        "recognize": "Isosceles, equilateral, scalene, acute, obtuse, and right triangles",
-        "understand": "Triangles as three-sided polygons with specific angle and side relationships"
+        "connect": "SAT solving to practical verification applications",
+        "explain": "DPLL algorithm and conflict-driven clause learning",
+        "awareness": "Computational complexity and solving efficiency",
+        "recognize": "CNF transformation and resolution techniques",
+        "understand": "SAT problem formulation and solving strategies"
       },
-      "practical_connections": "Identify different types of triangles in architectural elements, art, and nature. Practice measuring triangle angles to verify the angle sum property. Create triangles using straws or sticks to explore the triangle inequality.",
-      "primary_reading_focus": "Triangle definitions, classification systems, fundamental properties including angle sum theorem, and geometric reasoning with triangular figures",
+      "practical_connections": "SAT solvers are embedded in compilers, verification tools, and automated reasoning systems throughout computer science",
+      "primary_reading_focus": "Decision procedures for propositional logic, SAT solving algorithms, and practical satisfiability checking",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780395470923",
-          "year": "1991",
-          "focus": "Problem-solving approaches to triangle properties and applications",
-          "title": "Geometry for Enjoyment and Challenge - Triangle Explorations",
-          "author": "Richard Rhoad, George Milauskas, and Robert Whipple",
-          "journal": "Book Chapter",
-          "publisher": "McDougal Littell",
-          "reading_time": "18 minutes"
+          "doi": "10.1109/TC.2010.211",
+          "isbn": "978-1586039295",
+          "year": "2010",
+          "focus": "SAT solver techniques and applications to verification",
+          "title": "Handbook of Satisfiability",
+          "author": "A. Biere, M. Heule, H. van Maaren, and T. Walsh",
+          "journal": "IEEE Transactions on Computers",
+          "publisher": "IEEE",
+          "reading_time": "85 minutes"
         }
       ]
     },
     {
       "day": 5,
-      "date": "2025-07-03",
-      "title": "Polygons and Quadrilaterals: Shape Families",
+      "date": "2025-07-12",
+      "title": "SMT Solvers and Theory Integration",
       "key_insights": [
-        "Polygon families are organized by increasingly specific geometric properties",
-        "Understanding relationships between quadrilaterals reveals the logical structure of geometry",
-        "Special properties of regular polygons make them particularly useful in applications"
+        "SMT solvers enable reasoning about rich mathematical theories beyond Boolean logic",
+        "Theory combination allows solving complex verification conditions",
+        "Machine code verification often requires bit-vector and arithmetic reasoning"
       ],
       "core_concepts": [
-        "Polygon definition and classification by number of sides",
-        "Regular vs. irregular polygons",
-        "Quadrilateral family: parallelograms, rectangles, rhombuses, squares",
-        "Special quadrilateral properties: parallel sides, equal sides, right angles",
-        "Diagonal relationships in quadrilaterals"
+        "Satisfiability Modulo Theories (SMT)",
+        "Theory combination and Nelson-Oppen method",
+        "Arithmetic decision procedures",
+        "Bit-vector and array theories",
+        "DPLL(T) architecture"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "105 minutes",
+        "supplementary_materials": "75 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Polygon classification to practical applications in design and construction",
-        "explain": "Quadrilateral family relationships including parallelograms, rectangles, rhombuses, and squares",
-        "awareness": "How geometric properties determine the relationships between different polygon types",
-        "recognize": "Regular vs. irregular polygons and special quadrilateral properties",
-        "understand": "Polygons as closed figures formed by line segments, with specific properties based on the number of sides"
+        "connect": "SMT solving to machine code verification scenarios",
+        "explain": "How SMT extends SAT with domain-specific theories",
+        "awareness": "Decidability and completeness in combined theories",
+        "recognize": "Theory solvers for arithmetic, arrays, and bit-vectors",
+        "understand": "SMT framework and theory combinations"
       },
-      "practical_connections": "Explore polygon shapes in floor tiles, window designs, and architectural features. Use geometric tools to verify properties of quadrilaterals such as parallel sides and right angles. Create a family tree showing relationships between different quadrilaterals.",
-      "primary_reading_focus": "Polygon classification systems, quadrilateral family relationships, properties of special quadrilaterals, and geometric reasoning with multi-sided figures",
+      "practical_connections": "SMT solvers power modern verification tools for software, hardware, and security applications",
+      "primary_reading_focus": "SMT framework, theory solvers, and applications to program verification with emphasis on machine code analysis",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780977985203",
-          "year": "2006",
-          "focus": "Classical treatment of polygon properties with emphasis on logical relationships",
-          "title": "Kiselev's Geometry - Polygons and Quadrilaterals",
-          "author": "A. P. Kiselev",
-          "journal": "Book Chapter",
-          "publisher": "Sumizdat",
-          "reading_time": "18 minutes"
+          "doi": "10.1145/1536616.1536622",
+          "isbn": "978-1450302692",
+          "year": "2009",
+          "focus": "SMT solver implementation and verification applications",
+          "title": "Z3: An efficient SMT solver",
+          "author": "L. de Moura and N. Bjørner",
+          "journal": "ACM Transactions on Programming Languages and Systems",
+          "publisher": "ACM",
+          "reading_time": "75 minutes"
         }
       ]
     },
     {
       "day": 6,
-      "date": "2025-07-04",
-      "title": "Circles: Curved Geometry and Central Concepts",
+      "date": "2025-07-15",
+      "title": "Formal Languages and Computational Foundations",
       "key_insights": [
-        "Circles represent perfect symmetry and have unique geometric properties",
-        "Understanding radius-diameter relationships provides tools for circle calculations",
-        "Circle concepts connect geometry to measurement and real-world applications"
+        "Formal language theory provides mathematical foundations for understanding computation",
+        "Decidability theory reveals fundamental limits of automated verification",
+        "Automata-based techniques support program analysis and model checking"
       ],
       "core_concepts": [
-        "Circle definition based on equidistant points",
-        "Radius, diameter, and their relationship",
-        "Chords, arcs, and central angles",
-        "Circumference and its relationship to diameter",
-        "Tangent lines and secant lines"
+        "Formal languages and grammars",
+        "Finite automata and regular expressions",
+        "Context-free languages and pushdown automata",
+        "Decidability and computational complexity",
+        "Applications to program analysis"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "85 minutes",
+        "supplementary_materials": "95 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Circle concepts to rotational motion, periodic phenomena, and design applications",
-        "explain": "Circle terminology including radius, diameter, chord, arc, and circumference",
-        "awareness": "The unique properties that distinguish circles from polygonal figures",
-        "recognize": "Relationships between circle parts and their geometric properties",
-        "understand": "Circles as the set of all points equidistant from a central point"
+        "connect": "Formal language theory to program analysis",
+        "explain": "Relationship between languages, machines, and verification",
+        "awareness": "Computational limits in verification and automated reasoning",
+        "recognize": "Regular languages, context-free languages, and decidability",
+        "understand": "Formal languages, automata, and computation theory"
       },
-      "practical_connections": "Use a compass to construct circles and explore the relationship between radius and circumference. Identify circular objects in your environment and measure their dimensions to verify geometric relationships. Practice using circle terminology to describe curved objects.",
-      "primary_reading_focus": "Circle definitions, fundamental terminology, relationships between circle elements, and basic properties of circular geometry",
+      "practical_connections": "Formal language concepts underlie compiler construction, program analysis tools, and verification algorithms",
+      "primary_reading_focus": "Theoretical foundations underlying verification techniques, computational models, and decidability results",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780130309631",
-          "year": "2001",
-          "focus": "Hands-on exploration of circle properties through construction and measurement activities",
-          "title": "Experiencing Geometry - Exploring Circles",
-          "author": "David W. Henderson",
-          "journal": "Book Chapter",
-          "publisher": "Prentice Hall",
-          "reading_time": "18 minutes"
+          "doi": "10.1097/00004770-199806000-00014",
+          "isbn": "978-1284077247",
+          "year": "2016",
+          "focus": "Formal languages, automata theory, and computational foundations",
+          "title": "An Introduction to Formal Languages and Automata",
+          "author": "Peter Linz",
+          "journal": "Jones & Bartlett Learning",
+          "publisher": "Jones & Bartlett Learning",
+          "reading_time": "95 minutes"
         }
       ]
     },
     {
       "day": 7,
-      "date": "2025-07-05",
-      "title": "Spatial Relationships and Coordinate Thinking",
+      "date": "2025-07-16",
+      "title": "Integrated Verification Frameworks and Applications",
       "key_insights": [
-        "Coordinate systems provide precise methods for describing spatial relationships",
-        "Parallel and perpendicular relationships are fundamental to geometric analysis",
-        "Transformations help understand how geometric objects relate to each other"
+        "Comprehensive verification requires integration of multiple logical techniques",
+        "Real-world applications demand practical trade-offs between completeness and efficiency",
+        "Machine code verification remains an active area with significant challenges and opportunities"
       ],
       "core_concepts": [
-        "Distance between points and geometric objects",
-        "Parallel and perpendicular line relationships",
-        "Introduction to coordinate systems",
-        "Relative position and direction",
-        "Geometric transformations: translation, rotation, reflection"
+        "Translation validation techniques",
+        "Compiler verification and certified code",
+        "Automated proof generation",
+        "Verification framework integration",
+        "Industrial verification applications"
       ],
       "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
+        "total": "3 hours",
+        "primary_text": "50 minutes",
+        "supplementary_materials": "130 minutes"
       },
       "knowledge_benchmark": {
-        "connect": "Abstract spatial relationships to navigation, mapping, and practical applications",
-        "explain": "Basic coordinate systems for describing location and spatial relationships",
-        "awareness": "The importance of reference systems in describing geometric relationships",
-        "recognize": "Parallel and perpendicular relationships, distance concepts, and relative positioning",
-        "understand": "How geometric objects relate to each other in space through distance, position, and direction"
+        "connect": "All course concepts in comprehensive verification scenarios",
+        "explain": "Translation validation and correctness proofs",
+        "awareness": "Current research frontiers and practical limitations",
+        "recognize": "Real-world verification challenges and solutions",
+        "understand": "Complete verification frameworks for machine code"
       },
-      "practical_connections": "Practice describing locations using coordinate ideas like grid references. Use graph paper to plot points and explore distance relationships. Identify parallel and perpendicular elements in architectural structures and everyday objects.",
-      "primary_reading_focus": "Spatial relationship concepts, distance and position measurement, parallel and perpendicular relationships, and introduction to coordinate geometry",
+      "practical_connections": "Modern verification tools combine all studied techniques to provide practical solutions for safety-critical software development",
+      "primary_reading_focus": "Comprehensive verification methodologies, practical applications, and integration of decision procedures in real-world contexts",
       "supplementary_readings": [
         {
-          "doi": "N/A",
-          "isbn": "9780395470923",
-          "year": "1991",
-          "focus": "Problem-solving activities that develop spatial reasoning and coordinate thinking",
-          "title": "Geometry for Enjoyment and Challenge - Spatial Reasoning Problems",
-          "author": "Richard Rhoad, George Milauskas, and Robert Whipple",
-          "journal": "Book Chapter",
-          "publisher": "McDougal Littell",
-          "reading_time": "18 minutes"
-        }
-      ]
-    },
-    {
-      "day": 8,
-      "date": "2025-07-06",
-      "title": "Congruence: Understanding Shape Equality",
-      "key_insights": [
-        "Congruence provides a precise mathematical definition for \"same size and shape\"",
-        "Transformations help visualize and understand congruence relationships",
-        "Congruence criteria offer systematic methods for proving geometric relationships"
-      ],
-      "core_concepts": [
-        "Definition of congruent geometric figures",
-        "Corresponding parts of congruent figures",
-        "Congruence transformations: reflection, rotation, translation",
-        "Triangle congruence postulates: SSS, SAS, ASA",
-        "Congruence notation and symbolic representation"
-      ],
-      "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
-      },
-      "knowledge_benchmark": {
-        "connect": "Congruence concepts to practical applications in manufacturing, construction, and design",
-        "explain": "Methods for determining when two geometric figures are congruent",
-        "awareness": "The difference between visual similarity and mathematical congruence",
-        "recognize": "Corresponding parts of congruent figures and congruence notation",
-        "understand": "Congruence as geometric figures having the same size and shape"
-      },
-      "practical_connections": "Compare identical objects to understand congruence in real applications. Use tracing paper to explore congruence transformations. Practice identifying corresponding parts in congruent figures from everyday examples.",
-      "primary_reading_focus": "Congruence definitions, identification of congruent figures, transformation concepts, and basic triangle congruence criteria",
-      "supplementary_readings": [
+          "doi": "10.1145/1066100.1066102",
+          "isbn": "978-1595930286",
+          "year": "2005",
+          "focus": "Compiler correctness verification and translation validation",
+          "title": "Translation validation for an optimizing compiler",
+          "author": "G. C. Necula",
+          "journal": "ACM Transactions on Programming Languages and Systems",
+          "publisher": "ACM",
+          "reading_time": "70 minutes"
+        },
         {
-          "doi": "N/A",
-          "isbn": "9780977985203",
-          "year": "2006",
-          "focus": "Classical treatment of congruence with emphasis on logical reasoning and proof concepts",
-          "title": "Kiselev's Geometry - Congruence and Equality",
-          "author": "A. P. Kiselev",
-          "journal": "Book Chapter",
-          "publisher": "Sumizdat",
-          "reading_time": "18 minutes"
-        }
-      ]
-    },
-    {
-      "day": 9,
-      "date": "2025-07-07",
-      "title": "Area and Perimeter: Quantifying Geometric Properties",
-      "key_insights": [
-        "Area and perimeter provide quantitative tools for analyzing geometric figures",
-        "Measurement formulas connect geometric properties to numerical calculations",
-        "Understanding units is essential for meaningful geometric measurement"
-      ],
-      "core_concepts": [
-        "Perimeter as boundary length measurement",
-        "Area as interior space measurement",
-        "Formulas for rectangles, triangles, and circles",
-        "Units of measurement: linear vs. square units",
-        "Relationship between shape properties and measurements"
-      ],
-      "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
-      },
-      "knowledge_benchmark": {
-        "connect": "Area and perimeter concepts to real-world problems involving space, materials, and costs",
-        "explain": "Methods for calculating area and perimeter of basic geometric shapes",
-        "awareness": "How measurement connects geometric concepts to quantitative analysis",
-        "recognize": "Units of measurement for area and perimeter, and their practical applications",
-        "understand": "Area as the amount of space inside a figure and perimeter as the distance around the boundary"
-      },
-      "practical_connections": "Measure rooms, furniture, or outdoor spaces to practice area and perimeter calculations. Compare different shapes with the same perimeter but different areas. Use measurement to solve practical problems involving materials, space planning, or cost estimation.",
-      "primary_reading_focus": "Area and perimeter definitions, measurement formulas for basic shapes, unit analysis, and applications of geometric measurement",
-      "supplementary_readings": [
-        {
-          "doi": "N/A",
-          "isbn": "9780130309631",
-          "year": "2001",
-          "focus": "Hands-on activities for discovering area and perimeter relationships through manipulation and construction",
-          "title": "Experiencing Geometry - Measurement and Applications",
-          "author": "David W. Henderson",
-          "journal": "Book Chapter",
-          "publisher": "Prentice Hall",
-          "reading_time": "18 minutes"
-        }
-      ]
-    },
-    {
-      "day": 10,
-      "date": "2025-07-08",
-      "title": "Integration and Geometric Reasoning",
-      "key_insights": [
-        "Geometric concepts form an interconnected network of mathematical relationships",
-        "Problem-solving requires integrating multiple geometric tools and concepts",
-        "Geometric reasoning skills transfer to many areas of mathematics and practical application"
-      ],
-      "core_concepts": [
-        "Integrating shape properties, measurements, and relationships",
-        "Geometric problem-solving strategies",
-        "Connections between different geometric topics",
-        "Applications of geometry in design, construction, and science",
-        "Preparation for advanced geometric reasoning"
-      ],
-      "time_allocation": {
-        "total": "60 minutes",
-        "primary_text": "42 minutes",
-        "supplementary_materials": "18 minutes"
-      },
-      "knowledge_benchmark": {
-        "connect": "Geometric knowledge to advanced mathematical concepts and real-world applications",
-        "explain": "Connections between different areas of geometry and their applications",
-        "awareness": "Geometry as a foundation for further mathematical learning and practical problem-solving",
-        "recognize": "Geometric reasoning patterns and problem-solving strategies",
-        "understand": "How all geometric concepts work together to solve complex spatial problems"
-      },
-      "practical_connections": "Design a project that combines multiple geometric concepts, such as planning a garden layout or analyzing architectural features. Reflect on how geometric thinking has developed over the 10-day journey and identify areas for further exploration.",
-      "primary_reading_focus": "Synthesis of geometric concepts, problem-solving applications, connections between different geometric areas, and preparation for advanced geometric study",
-      "supplementary_readings": [
-        {
-          "doi": "N/A",
-          "isbn": "9780395470923",
-          "year": "1991",
-          "focus": "Comprehensive problems that integrate multiple geometric concepts and develop reasoning skills",
-          "title": "Geometry for Enjoyment and Challenge - Integration and Problem Solving",
-          "author": "Richard Rhoad, George Milauskas, and Robert Whipple",
-          "journal": "Book Chapter",
-          "publisher": "McDougal Littell",
-          "reading_time": "18 minutes"
+          "doi": "10.1145/773227.773231",
+          "isbn": "978-1595930286",
+          "year": "2003",
+          "focus": "Certified compiler implementation and machine code verification",
+          "title": "A formally verified compiler back-end",
+          "author": "X. Leroy",
+          "journal": "ACM SIGPLAN Notices",
+          "publisher": "ACM",
+          "reading_time": "60 minutes"
         }
       ]
     }
   ],
   "primary_resource": {
-    "isbn": "9781285195698",
-    "year": "2014",
-    "title": "Elementary Geometry for College Students",
-    "author": "Daniel C. Alexander and Geralyn M. Koeberlein",
-    "publisher": "Cengage Learning"
+    "isbn": "978-3540741121",
+    "year": "2007",
+    "title": "The Calculus of Computation: Decision Procedures with Applications to Verification",
+    "author": "Aaron R. Bradley and Zohar Manna",
+    "publisher": "Springer"
   },
-  "executive_overview": "This 10-day geometry curriculum is designed for novice learners to develop foundational geometric understanding through a conceptual approach centered on visual recognition, spatial reasoning, and logical thinking. Using Alexander and Koeberlein's comprehensive textbook as the primary resource, the curriculum integrates classical Euclidean methods, hands-on discovery learning, and problem-solving approaches to build geometric literacy from the ground up. The program follows the Van Hiele model of geometric thinking, progressing from visual recognition (Level 0) toward basic analysis (Level 1) and informal deduction. Each day builds systematically on previous knowledge, ensuring learners develop both spatial intuition and mathematical reasoning skills essential for geometric understanding.",
+  "executive_overview": "This curriculum introduces undergraduate students to symbolic logic principles applied to machine code verification. Using Bradley and Manna's rigorous treatment as our foundation, learners will build understanding from basic propositional logic to sophisticated verification techniques. The journey progresses from fundamental logical concepts through decision procedures to practical applications in software verification. Supplementary resources provide broader context in computer science applications, hardware fundamentals, and formal language theory to create a comprehensive understanding of how logic enables machine code analysis.",
   "knowledge_framework": {
-    "synthesis_goals": "By the end of the curriculum, learners will have developed geometric literacy that enables them to analyze spatial relationships, communicate using geometric language, apply measurement concepts to real-world problems, and use geometric reasoning to solve complex spatial problems. This foundation prepares students for formal geometry study, practical applications in design and construction, and mathematical reasoning in other areas.",
-    "advanced_applications": "Students develop geometric reasoning abilities that prepare them for formal proof concepts, coordinate geometry, and geometric problem-solving. Advanced applications include analyzing complex shape relationships, applying measurement to practical problems, using congruence for logical reasoning, and integrating multiple geometric concepts in comprehensive problem-solving scenarios.",
-    "foundational_concepts": "The curriculum builds from visual recognition of geometric shapes (Van Hiele Level 0) through basic property analysis (Level 1), establishing spatial vocabulary, measurement skills, and logical reasoning patterns. Core foundations include understanding points, lines, and planes as geometric primitives; angle formation and measurement; polygon classification systems; circle properties; spatial relationships; and basic measurement concepts."
+    "synthesis_goals": "Enables learners to understand how symbolic logic provides both theoretical foundations and practical tools for reasoning about machine code correctness, preparing them for advanced study in formal methods and verification",
+    "advanced_applications": "Integrates SAT/SMT solving with real-world verification frameworks, demonstrating how logical techniques solve practical problems in compiler verification, software analysis, and certified code generation",
+    "foundational_concepts": "Builds systematically from propositional logic through first-order logic to decision procedures, establishing the mathematical foundations necessary for formal verification while connecting to practical machine code analysis challenges"
   },
   "visual_learning_path": {
-    "day_1": "Foundation Building → Visual Recognition of Basic Shapes → Spatial Awareness Development",
-    "day_2": "Point-Line-Plane Framework → Geometric Language → Position and Direction Concepts",
-    "day_3": "Angle Formation → Measurement Concepts → Angular Relationships",
-    "day_4": "Triangle Discovery → Classification Systems → Basic Properties",
-    "day_5": "Polygon Exploration → Shape Families → Classification Principles",
-    "day_6": "Circle Fundamentals → Curved Geometry → Central Concepts",
-    "day_7": "Spatial Relationships → Distance and Position → Coordinate Thinking"
+    "day_1": "Foundation → Propositional Logic fundamentals and Boolean reasoning",
+    "day_2": "Expansion → First-order logic, predicates, and quantification",
+    "day_3": "Bridging → Computer systems architecture and machine code basics",
+    "day_4": "Application → SAT solving and satisfiability theory",
+    "day_5": "Integration → SMT solvers and theory combinations",
+    "day_6": "Sophistication → Formal languages, automata, and computational foundations",
+    "day_7": "Synthesis → Comprehensive verification frameworks and real-world applications"
   },
   "resource_requirements": {
     "primary_book": {
-      "isbn": "9781285195698",
-      "year": "2014",
-      "title": "Elementary Geometry for College Students",
-      "author": "Daniel C. Alexander and Geralyn M. Koeberlein",
-      "edition": "5th Edition",
-      "publisher": "Cengage Learning"
+      "isbn": "978-3540741121",
+      "year": "2007",
+      "title": "The Calculus of Computation: Decision Procedures with Applications to Verification",
+      "author": "Aaron R. Bradley and Zohar Manna",
+      "edition": "1st",
+      "publisher": "Springer"
     },
     "academic_papers": [
       {
-        "doi": "10.1016/j.tate.2020.103038",
-        "year": "2020",
-        "title": "Examining the influence of van Hiele theory-based instructional activities on elementary preservice teachers' geometry knowledge for teaching 2-D shapes",
-        "authors": "Minju Yi, Raymond Flores, Jian Wang",
-        "journal": "Teaching and Teacher Education"
-      },
-      {
-        "doi": "10.1063/1.5054479",
-        "year": "2018",
-        "title": "The Van Hiele theory and realistic mathematics education: As teachers' instruction for teaching geometry",
-        "authors": "Saepul Watan, Sugiman",
-        "journal": "AIP Conference Proceedings"
-      },
-      {
-        "doi": "10.4102/pythagoras.v39i1.376",
-        "year": "2018",
-        "title": "Students' understanding of geometry terminology through the lens of Van Hiele theory",
-        "authors": "Jogymol Alex, Kuttickattu J. Mammen",
-        "journal": "Pythagoras"
-      },
-      {
-        "doi": "10.1088/1742-6596/983/1/012148",
-        "year": "2018",
-        "title": "Exploring students' adaptive reasoning skills and van Hiele levels of geometric thinking: a case study in geometry",
-        "authors": "H T N Rizki, D Frentika, A Wijaya",
-        "journal": "Journal of Physics: Conference Series"
-      },
-      {
-        "doi": "10.1016/j.sbspro.2010.12.169",
+        "doi": "10.1109/TC.2010.211",
         "year": "2010",
-        "title": "The effects of Google Sketchup based geometry activities and projects on spatial visualization ability of student mathematics teachers",
-        "authors": "Aytaç Kurtulus, Candas Uygan",
-        "journal": "Procedia Social and Behavioral Sciences"
+        "title": "Handbook of Satisfiability",
+        "authors": "A. Biere, M. Heule, H. van Maaren, and T. Walsh",
+        "journal": "IEEE Transactions on Computers"
       },
       {
-        "doi": "10.26737/jetl.v3i1.552",
-        "year": "2020",
-        "title": "The Effect of Non-Routine Geometry Problem on Elementary Students Belief in Mathematics: A Case Study",
-        "authors": "Khoerul Umam, Kowiyah Kowiyah",
-        "journal": "Journal of Educational Technology and Learning"
+        "doi": "10.1145/1066100.1066102",
+        "year": "2005",
+        "title": "Translation validation for an optimizing compiler",
+        "authors": "G. C. Necula",
+        "journal": "ACM Transactions on Programming Languages and Systems"
       },
       {
-        "doi": "10.15663/tandc.v20i1.344",
-        "year": "2019",
-        "title": "Observing the effects of hands-on activities on mathematics teacher confidence in geometry and statistics: A case study",
-        "authors": "Zachariah Benton Hurdle",
-        "journal": "Teaching and Learning in Communication Sciences & Disorders"
+        "doi": "10.1145/773227.773231",
+        "year": "2003",
+        "title": "A formally verified compiler back-end",
+        "authors": "X. Leroy",
+        "journal": "ACM SIGPLAN Notices"
+      },
+      {
+        "doi": "10.1145/1536616.1536622",
+        "year": "2009",
+        "title": "Z3: An efficient SMT solver",
+        "authors": "L. de Moura and N. Bjørner",
+        "journal": "ACM Transactions on Programming Languages and Systems"
+      },
+      {
+        "doi": "10.1109/TSE.2007.70758",
+        "year": "2008",
+        "title": "A generic framework for formal verification of machine code",
+        "authors": "G. Klein and M. Norrish",
+        "journal": "IEEE Transactions on Software Engineering"
       }
     ],
-    "equipment_needed": "Compass, protractor, ruler, graph paper, construction paper, scissors, colored pencils, string or yarn for geometric models, calculator (optional), access to academic papers through library or online databases",
-    "total_reading_time": "10 hours (primary text: 7 hours, supplementary materials: 3 hours)",
+    "equipment_needed": "Computer with internet access for academic paper retrieval, basic mathematical background in discrete mathematics or introductory logic",
+    "total_reading_time": "21 hours over 7 days",
     "supplementary_books": [
       {
-        "isbn": "9780977985203",
-        "year": "2006",
-        "title": "Kiselev's Geometry / Book I. Planimetry",
-        "author": "A. P. Kiselev",
-        "publisher": "Sumizdat"
+        "isbn": "978-0521543101",
+        "year": "2000",
+        "title": "Logic in Computer Science: Modelling and Reasoning about Systems",
+        "author": "Michael Huth and Mark Ryan",
+        "publisher": "Cambridge University Press"
       },
       {
-        "isbn": "9780130309631",
-        "year": "2001",
-        "title": "Experiencing Geometry",
-        "author": "David W. Henderson",
-        "publisher": "Prentice Hall"
+        "isbn": "978-0124077263",
+        "year": "2013",
+        "title": "Computer Organization and Design: The Hardware/Software Interface",
+        "author": "David A. Patterson and John L. Hennessy",
+        "publisher": "Morgan Kaufmann"
       },
       {
-        "isbn": "9780395470923",
-        "year": "1991",
-        "title": "Geometry for Enjoyment and Challenge",
-        "author": "Richard Rhoad, George Milauskas, and Robert Whipple",
-        "publisher": "McDougal Littell"
+        "isbn": "978-1284077247",
+        "year": "2016",
+        "title": "An Introduction to Formal Languages and Automata",
+        "author": "Peter Linz",
+        "publisher": "Jones & Bartlett Learning"
       }
     ]
   }

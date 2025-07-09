@@ -86,7 +86,7 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             </div>
             <div className="grid flex-1 text-left">
               <span className="font-semibold text-lg">Owsla</span>
-              <span className="text-sm text-muted-foreground">Learning Platform</span>
+              <span className="text-sm text-muted-foreground">Learn Anything at Lightspeed</span>
             </div>
           </div>
         </SidebarHeader>
@@ -207,7 +207,7 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Owsla</span>
-                  <span className="truncate text-xs">Learning Platform</span>
+                  <span className="truncate text-xs">Learn Anything at Lightspeed</span>
                 </div>
               </Link>
             </SidebarMenuButton>

@@ -83,20 +83,6 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
           isActive={activeCurriculumId === curriculum.id}
         />
       ))}
-      
-      <SidebarMenuItem>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full"
-          asChild
-        >
-          <Link href="/new-curriculum">
-            <Plus className="h-4 w-4 mr-2" />
-            Create New
-          </Link>
-        </Button>
-      </SidebarMenuItem>
     </SidebarMenu>
   )
 })
