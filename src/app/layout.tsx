@@ -7,6 +7,7 @@ import { CurriculumCacheProvider } from "@/lib/curriculum-cache"
 import { ServiceWorkerRegister } from "@/components/service-worker-register"
 import { PWAInstallBanner } from "@/components/pwa-install-banner"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <Analytics />
+      <SpeedInsights />
       <body>
         <ThemeProvider
           attribute="class"
