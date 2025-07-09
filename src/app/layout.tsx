@@ -38,6 +38,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
   themeColor: '#000000',
 }
 
@@ -48,8 +49,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Analytics />
-      <SpeedInsights />
       <body>
         <ThemeProvider
           attribute="class"
@@ -67,6 +66,8 @@ export default function RootLayout({
             </StackTheme>
           </StackProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

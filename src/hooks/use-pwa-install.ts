@@ -15,12 +15,17 @@ export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Only run PWA logic on client side
+    if (typeof window === 'undefined') return;
+
     // Check if app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches || 
         (window.navigator as { standalone?: boolean }).standalone === true) {
       setIsInstalled(true);
+      setIsInitialized(true);
       return;
     }
 
@@ -38,6 +43,9 @@ export function usePWAInstall() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Mark as initialized after setting up listeners
+    setIsInitialized(true);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -60,8 +68,8 @@ export function usePWAInstall() {
   };
 
   return {
-    isInstallable,
-    isInstalled,
+    isInstallable: isInitialized ? isInstallable : false,
+    isInstalled: isInitialized ? isInstalled : false,
     installPWA,
   };
 }

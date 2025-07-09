@@ -89,12 +89,22 @@ const CurriculumItem = React.memo(function CurriculumItem({
   curriculum, 
   isActive, 
 }: CurriculumItemProps) {
-  // Determine the correct link path and icon based on curriculum type
-  const curriculumPath = curriculum.curriculum_type === 'video' 
+  // Enhanced video detection: check both curriculum_type and presence of video data
+  const hasVideoData = !!(
+    curriculum.primary_video_url || 
+    curriculum.primary_video_id || 
+    curriculum.full_curriculum_data?.primary_video?.url || 
+    curriculum.full_curriculum_data?.primary_video?.video_id
+  )
+  
+  const isVideoCurriculum = curriculum.curriculum_type === 'video' || hasVideoData
+  
+  // Determine the correct link path and icon based on enhanced detection
+  const curriculumPath = isVideoCurriculum
     ? `/video-curriculum/${curriculum.id}` 
     : `/curriculum/${curriculum.id}`
   
-  const IconComponent = curriculum.curriculum_type === 'video' ? Video : BookOpen
+  const IconComponent = isVideoCurriculum ? Video : BookOpen
 
   return (
     <SidebarMenuItem>

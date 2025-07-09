@@ -11,15 +11,27 @@ export function PWAInstallBanner() {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Check if banner was previously dismissed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem('pwa-banner-dismissed');
+      if (dismissed === 'true') {
+        setIsDismissed(true);
+      }
+      setIsHydrated(true);
+    }
+  }, []);
 
   useEffect(() => {
-    // Show banner if app is installable, not installed, on mobile, and not dismissed
-    if (isInstallable && !isInstalled && isMobile && !isDismissed) {
+    // Only show banner after hydration to prevent mismatches
+    if (isHydrated && isInstallable && !isInstalled && isMobile && !isDismissed) {
       setIsVisible(true);
     } else {
       setIsVisible(false);
     }
-  }, [isInstallable, isInstalled, isMobile, isDismissed]);
+  }, [isHydrated, isInstallable, isInstalled, isMobile, isDismissed]);
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -38,17 +50,8 @@ export function PWAInstallBanner() {
     }
   };
 
-  // Check if banner was previously dismissed
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem('pwa-banner-dismissed');
-      if (dismissed === 'true') {
-        setIsDismissed(true);
-      }
-    }
-  }, []);
-
-  if (!isVisible) {
+  // Don't render anything during SSR or before hydration
+  if (!isHydrated || !isVisible) {
     return null;
   }
 

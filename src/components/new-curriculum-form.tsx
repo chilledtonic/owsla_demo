@@ -18,6 +18,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { submitNewCurriculum, submitYoutubeCurriculum } from "@/lib/actions"
+import Image from "next/image"
 
 interface YoutubeMetadata {
   title: string
@@ -546,9 +547,11 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                     )}>
                       <div className="flex gap-4">
                         <div className="relative flex-shrink-0">
-                          <img 
+                          <Image 
                             src={youtubeMetadata.thumbnail_url} 
                             alt="Video thumbnail"
+                            width={96}
+                            height={72}
                             className="w-24 h-18 object-cover rounded"
                           />
                           <div className="absolute inset-0 flex items-center justify-center">

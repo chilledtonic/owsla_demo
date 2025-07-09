@@ -67,8 +67,8 @@ export function RightSidebar({
   const [completedBenchmarks, setCompletedBenchmarks] = React.useState<Set<string>>(new Set())
 
   // Helper to get localStorage keys
-  const getConceptsKey = () => currentModule ? `concepts-completion-${currentModule.day}` : ''
-  const getBenchmarksKey = () => currentModule ? `benchmarks-completion-${currentModule.day}` : ''
+  const getConceptsKey = React.useCallback(() => currentModule ? `concepts-completion-${currentModule.day}` : '', [currentModule])
+  const getBenchmarksKey = React.useCallback(() => currentModule ? `benchmarks-completion-${currentModule.day}` : '', [currentModule])
 
   // Load completed concepts/benchmarks from localStorage on mount or when module changes
   useEffect(() => {
@@ -97,7 +97,7 @@ export function RightSidebar({
         }
       }
     }
-  }, [currentModule])
+  }, [currentModule, getBenchmarksKey, getConceptsKey])
 
   // Save completed concepts/benchmarks to localStorage whenever they change
   useEffect(() => {
@@ -112,7 +112,7 @@ export function RightSidebar({
         localStorage.setItem(bKey, JSON.stringify(Array.from(completedBenchmarks)))
       }
     }
-  }, [completedConcepts, completedBenchmarks, currentModule])
+  }, [completedConcepts, completedBenchmarks, currentModule, getBenchmarksKey, getConceptsKey])
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout

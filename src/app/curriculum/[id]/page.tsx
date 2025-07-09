@@ -171,7 +171,7 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
       setCurrentDay(calculatedCurrentDay)
       setActualDay(calculatedActualDay)
     }
-  }, [curriculum])
+  }, [curriculum, router])
 
   const handlePreviousDay = () => {
     setCurrentDay(prev => Math.max(1, prev - 1))
