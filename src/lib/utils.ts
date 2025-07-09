@@ -123,3 +123,144 @@ export function deduplicateBooks<T extends { title: string; type: 'primary' | 's
 
   return Array.from(deduplicatedBooks.values())
 }
+
+export function calculateCurrentCurriculumDay(dailyModules: Array<{ day: number; date: string }>): { currentDay: number; actualDay: number } {
+  const today = new Date()
+  const todayString = today.toISOString().split('T')[0] // Format: YYYY-MM-DD
+  
+  // Find the module that matches today's date exactly
+  const todayModule = dailyModules.find(module => module.date === todayString)
+  if (todayModule) {
+    return {
+      currentDay: todayModule.day,
+      actualDay: todayModule.day
+    }
+  }
+  
+  // If no exact match, find the latest module date that has passed
+  const passedModules = dailyModules
+    .filter(module => {
+      const moduleDate = new Date(module.date)
+      return moduleDate <= today
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  
+  if (passedModules.length > 0) {
+    // User is past the start date - set to the latest passed module
+    const latestPassedModule = passedModules[0]
+    return {
+      currentDay: latestPassedModule.day,
+      actualDay: latestPassedModule.day
+    }
+  }
+  
+  // If today is before the course start date, default to day 1
+  const futureModules = dailyModules
+    .filter(module => {
+      const moduleDate = new Date(module.date)
+      return moduleDate > today
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  
+  if (futureModules.length > 0) {
+    // Course hasn't started yet - set to day 1 but actualDay to 0
+    return {
+      currentDay: 1,
+      actualDay: 0
+    }
+  }
+  
+  // Fallback to day 1 if no dates are found or other edge cases
+  return {
+    currentDay: 1,
+    actualDay: 1
+  }
+}
+
+export function getCurriculumProgressStatus(currentDay: number, actualDay: number, currentModuleDate: string): {
+  status: 'on-schedule' | 'ahead' | 'behind' | 'preview'
+  message: string
+  variant: 'default' | 'secondary' | 'outline' | 'destructive'
+} {
+  const dateInfo = getRelativeDateInfo(currentModuleDate)
+  
+  if (currentDay === actualDay && dateInfo.isToday) {
+    return {
+      status: 'on-schedule',
+      message: "You're on schedule for today",
+      variant: 'default'
+    }
+  }
+  
+  if (currentDay === actualDay && dateInfo.isPast) {
+    return {
+      status: 'on-schedule',
+      message: "Current progress",
+      variant: 'default'
+    }
+  }
+  
+  if (currentDay > actualDay) {
+    return {
+      status: 'preview',
+      message: dateInfo.isFuture 
+        ? `Previewing content for ${dateInfo.formattedDate}` 
+        : "Previewing upcoming content",
+      variant: 'secondary'
+    }
+  }
+  
+  if (currentDay < actualDay) {
+    return {
+      status: 'behind',
+      message: "Reviewing previous content",
+      variant: 'outline'
+    }
+  }
+  
+  if (dateInfo.isFuture) {
+    const daysUntil = Math.abs(dateInfo.daysFromToday)
+    return {
+      status: 'ahead',
+      message: daysUntil === 1 ? "Course starts tomorrow" : `Course starts in ${daysUntil} days`,
+      variant: 'default'
+    }
+  }
+  
+  return {
+    status: 'on-schedule',
+    message: "Current progress",
+    variant: 'default'
+  }
+}
+
+export function getRelativeDateInfo(moduleDate: string): {
+  isToday: boolean
+  isPast: boolean
+  isFuture: boolean
+  daysFromToday: number
+  formattedDate: string
+} {
+  const today = new Date()
+  const module = new Date(moduleDate)
+  
+  // Reset time to compare just dates
+  today.setHours(0, 0, 0, 0)
+  module.setHours(0, 0, 0, 0)
+  
+  const diffTime = module.getTime() - today.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+  
+  return {
+    isToday: diffDays === 0,
+    isPast: diffDays < 0,
+    isFuture: diffDays > 0,
+    daysFromToday: diffDays,
+    formattedDate: module.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: module.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+    })
+  }
+}

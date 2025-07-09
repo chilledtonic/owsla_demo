@@ -6,7 +6,6 @@ import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import React from "react"
-import { deleteCurriculum } from "@/lib/actions"
 import { useCachedUserCurricula } from "@/hooks/use-curriculum-data"
 import {
   SidebarMenu,
@@ -35,26 +34,6 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
   const router = useRouter()
   const { curricula, loading, error, invalidate } = useCachedUserCurricula()
   const [deleteError, setDeleteError] = useState<string | null>(null)
-
-  const handleDeleteCurriculum = useCallback(async (curriculumId: number) => {
-    try {
-      const result = await deleteCurriculum(curriculumId)
-      if (result.success) {
-        // Invalidate the cache to refresh the curricula list
-        invalidate()
-        
-        // If the deleted curriculum was active, redirect to homepage
-        if (activeCurriculumId === curriculumId) {
-          router.push('/')
-        }
-      } else {
-        setDeleteError(result.error || 'Failed to delete curriculum')
-      }
-    } catch (error) {
-      console.error('Error deleting curriculum:', error)
-      setDeleteError('Failed to delete curriculum')
-    }
-  }, [invalidate, activeCurriculumId, router])
 
 
 
@@ -114,7 +93,6 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
           key={curriculum.id}
           curriculum={curriculum}
           isActive={activeCurriculumId === curriculum.id}
-          onDelete={handleDeleteCurriculum}
         />
       ))}
       
@@ -138,18 +116,13 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
 interface CurriculumItemProps {
   curriculum: { id: number; title: string; topic: string }
   isActive: boolean
-  onDelete: (id: number) => void
+  onDelete?: (id: number) => void
 }
 
 const CurriculumItem = React.memo(function CurriculumItem({ 
   curriculum, 
   isActive, 
-  onDelete 
 }: CurriculumItemProps) {
-  const handleDelete = useCallback(() => {
-    onDelete(curriculum.id)
-  }, [onDelete, curriculum.id])
-
   return (
     <SidebarMenuItem>
       <div className="flex items-center w-full">
@@ -172,36 +145,6 @@ const CurriculumItem = React.memo(function CurriculumItem({
             </div>
           </Link>
         </SidebarMenuButton>
-        
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 w-8 p-0 ml-1 text-muted-foreground hover:text-destructive"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Curriculum</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete &quot;{curriculum.title}&quot;? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </SidebarMenuItem>
   )

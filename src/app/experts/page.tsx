@@ -3,352 +3,618 @@
 import { useState } from "react"
 import { useUser } from "@stackframe/stack"
 import { AppLayout } from "@/components/app-layout"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, Clock, MapPin, MessageSquare, Phone, Search, Filter } from "lucide-react"
+import { 
+  MessageSquare, 
+  Search, 
+  ArrowUp, 
+  ArrowDown, 
+  Share, 
+  Bookmark,
+  MoreHorizontal,
+  Clock,
+  Eye,
+  Plus,
+  TrendingUp,
+  BookOpen,
+  Users,
+  Award,
+  CheckCircle
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
-interface Expert {
+interface User {
   id: string
   name: string
   title: string
-  specialties: string[]
-  rating: number
-  reviewCount: number
-  experience: number
-  location: string
-  availability: "available" | "busy" | "offline"
-  description: string
-  hourlyRate: number
-  responseTime: string
-  languages: string[]
   avatar: string
-  subjects: string[]
+  verified: boolean
+  reputation: number
+  specialties: string[]
 }
 
-// Mock data using famous scientists
-const mockExperts: Expert[] = [
+interface Answer {
+  id: string
+  user: User
+  content: string
+  upvotes: number
+  downvotes: number
+  timeAgo: string
+  isAccepted?: boolean
+  hasUpvoted?: boolean
+  hasDownvoted?: boolean
+}
+
+interface Question {
+  id: string
+  title: string
+  content: string
+  author: User
+  timeAgo: string
+  views: number
+  answers: Answer[]
+  tags: string[]
+  upvotes: number
+  hasUpvoted?: boolean
+  hasBookmarked?: boolean
+}
+
+// Mock users (famous scientists and educators)
+const mockUsers: User[] = [
   {
     id: "1",
     name: "Dr. Marie Curie",
     title: "Nobel Prize Winner in Physics & Chemistry",
-    specialties: ["Radioactivity", "Nuclear Physics", "Chemistry", "Research Methods"],
-    rating: 4.9,
-    reviewCount: 127,
-    experience: 15,
-    location: "Paris, France",
-    availability: "available",
-    description: "Pioneering researcher in radioactivity with expertise in experimental physics and chemistry. Excellent at explaining complex scientific concepts to students of all levels. Passionate about encouraging women in STEM fields.",
-    hourlyRate: 85,
-    responseTime: "2 hours",
-    languages: ["English", "French", "Polish"],
-    avatar: "/api/placeholder/150/150",
-    subjects: ["Physics", "Chemistry", "Mathematics", "Research Methods"]
+    avatar: "/api/placeholder/40/40",
+    verified: true,
+    reputation: 15240,
+    specialties: ["Physics", "Chemistry", "Research Methods"]
   },
   {
     id: "2",
-    name: "Dr. Albert Einstein",
+    name: "Albert Einstein",
     title: "Theoretical Physicist",
-    specialties: ["Relativity Theory", "Quantum Mechanics", "Mathematical Physics", "Philosophy of Science"],
-    rating: 5.0,
-    reviewCount: 203,
-    experience: 20,
-    location: "Princeton, USA",
-    availability: "busy",
-    description: "Revolutionary theoretical physicist known for developing the theory of relativity. Exceptional at making complex physics concepts accessible through thought experiments and analogies. Great mentor for advanced physics students.",
-    hourlyRate: 120,
-    responseTime: "4 hours",
-    languages: ["English", "German"],
-    avatar: "/api/placeholder/150/150",
-    subjects: ["Physics", "Mathematics", "Philosophy", "Astronomy"]
+    avatar: "/api/placeholder/40/40",
+    verified: true,
+    reputation: 22100,
+    specialties: ["Physics", "Mathematics", "Philosophy"]
   },
   {
     id: "3",
-    name: "Dr. Charles Darwin",
-    title: "Naturalist & Evolutionary Biologist",
-    specialties: ["Evolution", "Natural Selection", "Biology", "Scientific Method"],
-    rating: 4.8,
-    reviewCount: 89,
-    experience: 18,
-    location: "Cambridge, UK",
-    availability: "available",
-    description: "Expert in evolutionary biology and natural history. Skilled at teaching observational skills and scientific reasoning. Perfect for students interested in biology, ecology, and understanding life sciences through a scientific lens.",
-    hourlyRate: 75,
-    responseTime: "3 hours",
-    languages: ["English"],
-    avatar: "/api/placeholder/150/150",
-    subjects: ["Biology", "Ecology", "Geology", "Scientific Method"]
+    name: "Richard Feynman",
+    title: "Quantum Physicist & Educator",
+    avatar: "/api/placeholder/40/40",
+    verified: true,
+    reputation: 18750,
+    specialties: ["Physics", "Teaching", "Problem Solving"]
   },
   {
     id: "4",
-    name: "Dr. Nikola Tesla",
-    title: "Inventor & Electrical Engineer",
-    specialties: ["Electrical Engineering", "Electromagnetics", "Innovation", "Patent Strategy"],
-    rating: 4.7,
-    reviewCount: 156,
-    experience: 22,
-    location: "New York, USA",
-    availability: "available",
-    description: "Brilliant inventor and electrical engineer with expertise in electromagnetic fields and wireless technology. Excellent at explaining practical applications of physics and engineering principles. Inspiring mentor for aspiring inventors.",
-    hourlyRate: 95,
-    responseTime: "1 hour",
-    languages: ["English", "Serbian", "German"],
-    avatar: "/api/placeholder/150/150",
-    subjects: ["Physics", "Engineering", "Mathematics", "Innovation"]
+    name: "Carl Sagan",
+    title: "Astronomer & Science Communicator",
+    avatar: "/api/placeholder/40/40",
+    verified: true,
+    reputation: 14320,
+    specialties: ["Astronomy", "Science Communication", "Philosophy"]
   },
   {
     id: "5",
-    name: "Dr. Rosalind Franklin",
-    title: "X-ray Crystallographer & Molecular Biologist",
-    specialties: ["X-ray Crystallography", "Molecular Biology", "DNA Structure", "Research Techniques"],
-    rating: 4.9,
-    reviewCount: 94,
-    experience: 12,
-    location: "London, UK",
-    availability: "offline",
-    description: "Expert in X-ray crystallography and molecular biology. Meticulous researcher with strong skills in experimental design and data analysis. Excellent at teaching precision in scientific research and interpretation of structural data.",
-    hourlyRate: 80,
-    responseTime: "6 hours",
-    languages: ["English", "French"],
-    avatar: "/api/placeholder/150/150",
-    subjects: ["Biology", "Chemistry", "Physics", "Research Methods"]
+    name: "Katherine Johnson",
+    title: "Mathematician & NASA Pioneer",
+    avatar: "/api/placeholder/40/40",
+    verified: true,
+    reputation: 12890,
+    specialties: ["Mathematics", "Engineering", "Space Science"]
   },
   {
     id: "6",
-    name: "Dr. Alan Turing",
-    title: "Mathematician & Computer Scientist",
-    specialties: ["Computer Science", "Cryptography", "Mathematical Logic", "Artificial Intelligence"],
-    rating: 5.0,
-    reviewCount: 178,
-    experience: 16,
-    location: "Cambridge, UK",
-    availability: "available",
-    description: "Pioneering mathematician and computer scientist. Expert in computational theory, cryptography, and early artificial intelligence concepts. Perfect for students interested in the intersection of mathematics and computer science.",
-    hourlyRate: 100,
-    responseTime: "2 hours",
-    languages: ["English", "German"],
-    avatar: "/api/placeholder/150/150",
-    subjects: ["Mathematics", "Computer Science", "Logic", "Cryptography"]
+    name: "Neil deGrasse Tyson",
+    title: "Astrophysicist & Director of Hayden Planetarium",
+    avatar: "/api/placeholder/40/40",
+    verified: true,
+    reputation: 16540,
+    specialties: ["Astrophysics", "Science Education", "Public Speaking"]
+  }
+]
+
+// Mock questions and answers
+const mockQuestions: Question[] = [
+  {
+    id: "1",
+    title: "How do I effectively study quantum mechanics without getting overwhelmed by the mathematics?",
+    content: "I'm a physics undergraduate struggling with quantum mechanics. The mathematical formalism seems incredibly dense and I often lose sight of the physical intuition. What strategies have worked for others when approaching this subject? Are there particular resources or mental models that help bridge the gap between the math and the physics?",
+    author: {
+      id: "student1",
+      name: "Alex Chen",
+      title: "Physics Undergraduate",
+      avatar: "/api/placeholder/40/40",
+      verified: false,
+      reputation: 45,
+      specialties: ["Physics Student"]
+    },
+    timeAgo: "2 hours ago",
+    views: 234,
+    upvotes: 12,
+    hasUpvoted: false,
+    hasBookmarked: true,
+    tags: ["quantum-mechanics", "study-methods", "physics", "mathematics"],
+    answers: [
+      {
+        id: "1a",
+        user: mockUsers[2], // Feynman
+        content: "The key is to always ask yourself: 'What is this equation telling me about the world?' Don't just memorize the math - try to visualize what's happening. Start with the simplest cases: a particle in a box, harmonic oscillator. Draw diagrams of wave functions. Use analogies - though imperfect, they help build intuition. Remember, if you can't explain it simply, you don't understand it well enough yourself.",
+        upvotes: 45,
+        downvotes: 2,
+        timeAgo: "1 hour ago",
+        isAccepted: true,
+        hasUpvoted: true
+      },
+      {
+        id: "1b",
+        user: mockUsers[1], // Einstein
+        content: "Mathematics is the language in which the universe speaks to us. But like any language, you must first understand the grammar before appreciating the poetry. I recommend studying the historical development - how Planck, Bohr, and Schrödinger each contributed. Understanding why these equations were necessary helps demystify them. Also, work through many problems - mathematics becomes intuitive through practice.",
+        upvotes: 38,
+        downvotes: 1,
+        timeAgo: "45 minutes ago",
+        hasUpvoted: false
+      },
+      {
+        id: "1c",
+        user: mockUsers[5], // Neil deGrasse Tyson
+        content: "I always tell students: embrace the weirdness! Quantum mechanics is supposed to feel counterintuitive - that's what makes it so fascinating. Use online simulations and visualizations. There are great interactive tools that let you 'see' wave functions evolve. Also, join study groups - explaining concepts to others often clarifies your own understanding.",
+        upvotes: 22,
+        downvotes: 0,
+        timeAgo: "30 minutes ago",
+        hasUpvoted: false
+      }
+    ]
+  },
+  {
+    id: "2",
+    title: "What's the most effective way to read and retain information from dense academic papers?",
+    content: "I'm working on my thesis and need to read dozens of research papers, but I find myself forgetting details shortly after reading. How do experienced researchers approach reading academic literature? What note-taking systems work best?",
+    author: {
+      id: "student2",
+      name: "Sarah Martinez",
+      title: "Graduate Student in Chemistry",
+      avatar: "/api/placeholder/40/40",
+      verified: false,
+      reputation: 78,
+      specialties: ["Chemistry Student"]
+    },
+    timeAgo: "5 hours ago",
+    views: 156,
+    upvotes: 8,
+    hasUpvoted: true,
+    hasBookmarked: false,
+    tags: ["research", "study-methods", "academic-papers", "note-taking"],
+    answers: [
+      {
+        id: "2a",
+        user: mockUsers[0], // Marie Curie
+        content: "I developed a three-pass system: First, read abstract and conclusions to grasp the main idea. Second, read introduction and skim methodology. Third, read thoroughly with detailed notes. Always summarize the key findings in your own words - this forces deeper understanding. Keep a research log with connections between papers.",
+        upvotes: 28,
+        downvotes: 0,
+        timeAgo: "3 hours ago",
+        isAccepted: true,
+        hasUpvoted: false
+      },
+      {
+        id: "2b",
+        user: mockUsers[4], // Katherine Johnson
+        content: "Create concept maps linking ideas across papers. I use different colors for methodology, results, and implications. Most importantly, always ask: 'How does this relate to my research question?' If you can't answer that, you might be reading too broadly. Focus on papers that directly contribute to your thesis narrative.",
+        upvotes: 19,
+        downvotes: 1,
+        timeAgo: "2 hours ago",
+        hasUpvoted: true
+      }
+    ]
+  },
+  {
+    id: "3",
+    title: "How can I maintain motivation during long-term learning projects?",
+    content: "I'm working through several multi-month curricula and sometimes lose motivation halfway through. The initial excitement fades and the daily grind sets in. How do experienced learners maintain momentum and enthusiasm over months or years of study?",
+    author: {
+      id: "student3",
+      name: "Mike Johnson",
+      title: "Self-taught Programmer",
+      avatar: "/api/placeholder/40/40",
+      verified: false,
+      reputation: 123,
+      specialties: ["Programming", "Self-directed Learning"]
+    },
+    timeAgo: "1 day ago",
+    views: 412,
+    upvotes: 24,
+    hasUpvoted: false,
+    hasBookmarked: true,
+    tags: ["motivation", "self-study", "long-term-learning", "discipline"],
+    answers: [
+      {
+        id: "3a",
+        user: mockUsers[3], // Carl Sagan
+        content: "Wonder is the antidote to routine. Regularly step back and marvel at what you've learned. Connect new knowledge to the bigger picture - how does this programming concept relate to problem-solving in the universe? Set mini-milestones and celebrate them. Share your progress with others - teaching reinforces your own learning and provides accountability.",
+        upvotes: 67,
+        downvotes: 2,
+        timeAgo: "18 hours ago",
+        isAccepted: true,
+        hasUpvoted: true
+      },
+      {
+        id: "3b",
+        user: mockUsers[2], // Feynman
+        content: "I learned to play bongos while studying physics - it kept my mind fresh! Don't just study - play with the concepts. Build silly projects, explain things to your rubber duck, take tangents when something interests you. The goal isn't just to complete the curriculum, but to become the kind of person who loves learning. That intrinsic motivation sustains you forever.",
+        upvotes: 41,
+        downvotes: 3,
+        timeAgo: "12 hours ago",
+        hasUpvoted: false
+      }
+    ]
+  },
+  {
+    id: "4",
+    title: "Best practices for collaborative learning in STEM subjects?",
+    content: "I'm organizing a study group for advanced calculus. What are the most effective formats and approaches for group learning in mathematics? How can we ensure everyone contributes and benefits?",
+    author: {
+      id: "student4",
+      name: "Emma Rodriguez",
+      title: "Mathematics Major",
+      avatar: "/api/placeholder/40/40",
+      verified: false,
+      reputation: 67,
+      specialties: ["Mathematics Student"]
+    },
+    timeAgo: "3 days ago",
+    views: 189,
+    upvotes: 15,
+    hasUpvoted: false,
+    hasBookmarked: false,
+    tags: ["collaborative-learning", "mathematics", "study-groups", "calculus"],
+    answers: [
+      {
+        id: "4a",
+        user: mockUsers[4], // Katherine Johnson
+        content: "Assign rotating roles: presenter, questioner, note-taker, devil's advocate. Each person explains one concept per session. Set ground rules: no question is too basic, mistakes are learning opportunities. Work problems together on a board - the act of writing helps everyone follow the logic. Schedule regular check-ins to ensure balanced participation.",
+        upvotes: 32,
+        downvotes: 1,
+        timeAgo: "2 days ago",
+        isAccepted: true,
+        hasUpvoted: true
+      },
+      {
+        id: "4b",
+        user: mockUsers[1], // Einstein
+        content: "The most beautiful thing about group learning is that explaining forces you to truly understand. Create an environment where teaching each other is the primary goal. When someone struggles, others should guide them to the answer rather than giving it directly. This way, both the teacher and student benefit from the interaction.",
+        upvotes: 26,
+        downvotes: 0,
+        timeAgo: "1 day ago",
+        hasUpvoted: false
+      }
+    ]
   }
 ]
 
 export default function ExpertsPage() {
   useUser({ or: "redirect" })
   const [searchTerm, setSearchTerm] = useState("")
-  const [subjectFilter, setSubjectFilter] = useState("all")
-  const [availabilityFilter, setAvailabilityFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("recent")
+  const [filterTag, setFilterTag] = useState("all")
 
-  // Get unique subjects for filter
-  const allSubjects = Array.from(new Set(mockExperts.flatMap(expert => expert.subjects)))
+  // Get all unique tags
+  const allTags = Array.from(new Set(mockQuestions.flatMap(q => q.tags)))
 
-  // Filter experts based on search and filters
-  const filteredExperts = mockExperts.filter(expert => {
-    const matchesSearch = expert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         expert.specialties.some(specialty => 
-                           specialty.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         expert.subjects.some(subject => 
-                           subject.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Filter and sort questions
+  const filteredQuestions = mockQuestions
+    .filter(question => {
+      const matchesSearch = question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           question.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           question.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      
+      const matchesTag = filterTag === "all" || question.tags.includes(filterTag)
+      
+      return matchesSearch && matchesTag
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "recent":
+          return 0 // Keep original order (most recent first)
+        case "popular":
+          return b.upvotes - a.upvotes
+        case "answers":
+          return b.answers.length - a.answers.length
+        default:
+          return 0
+      }
+    })
 
-    const matchesSubject = subjectFilter === "all" || expert.subjects.includes(subjectFilter)
-    const matchesAvailability = availabilityFilter === "all" || expert.availability === availabilityFilter
-
-    return matchesSearch && matchesSubject && matchesAvailability
-  })
-
-  const getAvailabilityColor = (availability: string) => {
-    switch (availability) {
-      case "available": return "bg-green-500"
-      case "busy": return "bg-yellow-500"
-      case "offline": return "bg-gray-500"
-      default: return "bg-gray-500"
-    }
+  const handleVote = (questionId: string, isUpvote: boolean) => {
+    // In a real app, this would make an API call
+    console.log(`${isUpvote ? 'Upvoted' : 'Downvoted'} question ${questionId}`)
   }
 
-  const getAvailabilityText = (availability: string) => {
-    switch (availability) {
-      case "available": return "Available"
-      case "busy": return "Busy"
-      case "offline": return "Offline"
-      default: return "Unknown"
-    }
+  const handleAnswerVote = (questionId: string, answerId: string, isUpvote: boolean) => {
+    // In a real app, this would make an API call
+    console.log(`${isUpvote ? 'Upvoted' : 'Downvoted'} answer ${answerId} on question ${questionId}`)
+  }
+
+  const handleBookmark = (questionId: string) => {
+    // In a real app, this would make an API call
+    console.log(`Bookmarked question ${questionId}`)
   }
 
   return (
-    <AppLayout>
-      <div className="h-full p-4 overflow-x-hidden">
-        <div className="space-y-6 min-w-0">
-          {/* Header */}
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold">Expert Network</h1>
-            <p className="text-sm text-muted-foreground">
-              Connect with world-class experts to accelerate your learning
-            </p>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search experts by name, specialty, or subject..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+    <AppLayout
+      rightSidebar={
+        <div className="p-4">
+          {/* Top Contributors */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold mb-3 flex items-center">
+              <Award className="h-4 w-4 mr-2" />
+              Top Contributors
+            </h3>
+            <div className="space-y-3">
+              {mockUsers.slice(0, 5).map((user) => (
+                <div key={user.id} className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback className="text-xs">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-medium truncate">{user.name}</p>
+                      {user.verified && <CheckCircle className="h-3 w-3 text-blue-500 flex-shrink-0" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{user.reputation.toLocaleString()} rep</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="All Subjects" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subjects</SelectItem>
-                {allSubjects.map(subject => (
-                  <SelectItem key={subject} value={subject}>{subject}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="busy">Busy</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
-          {/* Results Count */}
-          <div className="text-sm text-muted-foreground">
-            {filteredExperts.length} expert{filteredExperts.length !== 1 ? 's' : ''} found
+          {/* Popular Tags */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold mb-3 flex items-center">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Popular Tags
+            </h3>
+            <div className="flex flex-wrap gap-1">
+              {allTags.slice(0, 8).map((tag) => (
+                <Badge 
+                  key={tag} 
+                  variant="secondary" 
+                  className="text-xs cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                  onClick={() => setFilterTag(tag)}
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
 
-          {/* Expert Cards */}
-          <div className="grid gap-6">
-            {filteredExperts.map((expert) => (
-              <Card key={expert.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <div className="relative">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={expert.avatar} alt={expert.name} />
-                          <AvatarFallback className="text-lg">
-                            {expert.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className={cn(
-                          "absolute -bottom-1 -right-1 w-4 h-4 rounded border-2 border-white",
-                          getAvailabilityColor(expert.availability)
-                        )} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-semibold">{expert.name}</h3>
-                          <Badge variant="outline" className="text-xs">
-                            {getAvailabilityText(expert.availability)}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">{expert.title}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium">{expert.rating}</span>
-                            <span>({expert.reviewCount} reviews)</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{expert.experience} years exp</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{expert.location}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold">${expert.hourlyRate}/hr</div>
-                      <div className="text-xs text-muted-foreground">
-                        Responds in {expert.responseTime}
-                      </div>
-                    </div>
+          {/* Quick Stats */}
+          <div className="space-y-3">
+            <div className="p-3 rounded bg-background/50 border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium">Questions Asked</span>
+                <span className="text-xs">{mockQuestions.length}</span>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium">Total Answers</span>
+                <span className="text-xs">{mockQuestions.reduce((acc, q) => acc + q.answers.length, 0)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Active Experts</span>
+                <span className="text-xs">{mockUsers.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <div className="h-full overflow-auto">
+        {/* Header */}
+        <div className="border-b">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold">Expert Forum</h1>
+                <p className="text-muted-foreground">
+                  Ask questions, share knowledge, and learn from world-class experts
+                </p>
+              </div>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Ask Question
+              </Button>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search questions, answers, or tags..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most Recent</SelectItem>
+                  <SelectItem value="popular">Most Popular</SelectItem>
+                  <SelectItem value="answers">Most Answers</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterTag} onValueChange={setFilterTag}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="All Tags" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tags</SelectItem>
+                  {allTags.map(tag => (
+                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Questions List */}
+        <div className="p-6">
+          <div className="space-y-6">
+            {filteredQuestions.map((question) => (
+              <div key={question.id} className="border-b pb-6 last:border-b-0">
+                {/* Question Header */}
+                <div className="flex items-start gap-4">
+                  <div className="flex flex-col items-center gap-1 mt-1">
+                    <button 
+                      onClick={() => handleVote(question.id, true)}
+                      className={cn(
+                        "p-1 rounded hover:bg-muted transition-colors",
+                        question.hasUpvoted && "bg-blue-100 text-blue-600"
+                      )}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm font-medium">{question.upvotes}</span>
+                    <button 
+                      onClick={() => handleVote(question.id, false)}
+                      className="p-1 rounded hover:bg-muted transition-colors"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </button>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">{expert.description}</p>
-                    
-                    <div className="space-y-2">
-                      <div>
-                        <h4 className="text-sm font-medium mb-1">Specialties</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {expert.specialties.map((specialty, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {specialty}
-                            </Badge>
-                          ))}
+
+                  <div className="flex-1 min-w-0">
+                    <Link 
+                      href={`/experts/question/${question.id}`}
+                      className="block hover:bg-muted/30 -m-2 p-2 rounded transition-colors"
+                    >
+                      <h3 className="font-semibold text-lg mb-2 hover:text-primary">
+                        {question.title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                        {question.content}
+                      </p>
+                    </Link>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {question.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {/* Question Meta */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={question.author.avatar} alt={question.author.name} />
+                            <AvatarFallback className="text-xs">
+                              {question.author.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{question.author.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{question.timeAgo}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{question.views} views</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          <span>{question.answers.length} answers</span>
                         </div>
                       </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium mb-1">Subjects</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {expert.subjects.map((subject, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {subject}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-medium mb-1">Languages</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {expert.languages.map((language, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {language}
-                            </Badge>
-                          ))}
-                        </div>
+
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleBookmark(question.id)}
+                          className={cn(
+                            "p-1 rounded hover:bg-muted transition-colors",
+                            question.hasBookmarked && "bg-yellow-100 text-yellow-600"
+                          )}
+                        >
+                          <Bookmark className="h-4 w-4" />
+                        </button>
+                        <button className="p-1 rounded hover:bg-muted transition-colors">
+                          <Share className="h-4 w-4" />
+                        </button>
+                        <button className="p-1 rounded hover:bg-muted transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        className="flex-1" 
-                        disabled={expert.availability === "offline"}
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Book a Call
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1"
-                        disabled={expert.availability === "offline"}
-                      >
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Send Message
-                      </Button>
-                    </div>
+                    {/* Featured Answer Preview */}
+                    {question.answers.length > 0 && (
+                      <div className="mt-4 pl-4 border-l-2 border-muted">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={question.answers[0].user.avatar} alt={question.answers[0].user.name} />
+                            <AvatarFallback className="text-xs">
+                              {question.answers[0].user.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium">{question.answers[0].user.name}</span>
+                          {question.answers[0].user.verified && (
+                            <CheckCircle className="h-4 w-4 text-blue-500" />
+                          )}
+                          {question.answers[0].isAccepted && (
+                            <Badge variant="default" className="text-xs bg-green-600">
+                              Accepted
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {question.answers[0].content}
+                        </p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>{question.answers[0].upvotes} upvotes</span>
+                          <span>{question.answers[0].timeAgo}</span>
+                          <Link 
+                            href={`/experts/question/${question.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            View all {question.answers.length} answers
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
 
-          {filteredExperts.length === 0 && (
+          {filteredQuestions.length === 0 && (
             <div className="text-center py-12">
               <div className="text-muted-foreground">
-                <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">No experts found</p>
-                <p className="text-sm">Try adjusting your search criteria</p>
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No questions found</p>
+                <p className="text-sm">Try adjusting your search or filters, or ask the first question!</p>
+                <Button className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ask Question
+                </Button>
               </div>
             </div>
           )}

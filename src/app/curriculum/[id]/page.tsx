@@ -5,6 +5,7 @@ import { CurriculumContent } from "@/components/curriculum-content"
 import { deleteCurriculum } from "@/lib/actions"
 import { useCachedCurriculum } from "@/hooks/use-curriculum-data"
 import { CurriculumData } from "@/lib/database"
+import { calculateCurrentCurriculumDay } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -141,11 +142,26 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     if (curriculum?.full_curriculum_data) {
+      const transformedCurriculum = transformDatabaseCurriculum(curriculum.full_curriculum_data, curriculum)
       setCurriculumData({
-        curriculum: transformDatabaseCurriculum(curriculum.full_curriculum_data, curriculum)
+        curriculum: transformedCurriculum
       })
-      // Set initial actual day - could be loaded from user progress in the future
-      setActualDay(1)
+      
+      // Intelligently calculate the current day based on today's date
+      const { currentDay: calculatedCurrentDay, actualDay: calculatedActualDay } = 
+        calculateCurrentCurriculumDay(transformedCurriculum.daily_modules)
+      
+      // Debug info (can be removed in production)
+      // console.log('Curriculum date calculation:', {
+      //   today: new Date().toISOString().split('T')[0],
+      //   calculatedCurrentDay,
+      //   calculatedActualDay,
+      //   firstModuleDate: transformedCurriculum.daily_modules[0]?.date,
+      //   lastModuleDate: transformedCurriculum.daily_modules[transformedCurriculum.daily_modules.length - 1]?.date
+      // })
+      
+      setCurrentDay(calculatedCurrentDay)
+      setActualDay(calculatedActualDay)
     }
   }, [curriculum])
 

@@ -78,7 +78,7 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
               asChild
             >
               <Link href="/" prefetch={true}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-primary-foreground">
                   <Image 
                     src={logoImage} 
                     alt="Owsla Logo" 
@@ -136,9 +136,11 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-            <CurriculaList 
-              activeCurriculumId={activeCurriculumId}
-            />
+            {state !== "collapsed" && (
+              <CurriculaList 
+                activeCurriculumId={activeCurriculumId}
+              />
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
 

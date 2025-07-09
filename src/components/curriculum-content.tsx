@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Target, BookOpen, Lightbulb, CheckCircle, MapPin, Users, Calendar, Timer, ChevronLeft, ChevronRight, Clock } from "lucide-react"
-import { getAmazonIsbnUrl, handleResourceClick } from "@/lib/utils"
+import { getAmazonIsbnUrl, handleResourceClick, getCurriculumProgressStatus, getRelativeDateInfo } from "@/lib/utils"
 
 interface DailyModule {
   day: number
@@ -65,6 +65,9 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
     ? curriculum.daily_modules[currentDay] 
     : null
 
+  const progressStatus = getCurriculumProgressStatus(currentDay, actualDay, currentModule.date)
+  const currentDateInfo = getRelativeDateInfo(currentModule.date)
+
   const handleSupplementaryClick = (reading: { isbn?: string; doi?: string }) => {
     handleResourceClick(reading)
   }
@@ -76,11 +79,21 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-lg font-bold">{curriculum.title}</h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Day {currentDay} of {totalDays}</span>
-              <Badge variant={currentDay > actualDay ? "secondary" : "default"} className="text-xs">
-                {currentDay > actualDay ? "Preview" : "Current"}
-              </Badge>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Day {currentDay} of {totalDays}</span>
+                <Badge variant={progressStatus.variant} className="text-xs">
+                  {progressStatus.status === 'on-schedule' ? 'Current' : 
+                   progressStatus.status === 'preview' ? 'Preview' : 
+                   progressStatus.status === 'ahead' ? 'Ahead' : 'Behind'}
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {currentDateInfo.formattedDate}
+                {currentDateInfo.isToday && (
+                  <span className="ml-1 text-primary font-medium">• Today</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -91,7 +104,10 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
             {Math.round(actualProgress)}%
           </span>
         </div>
-        <Progress value={actualProgress} className="h-2 mb-3" />
+        <Progress value={actualProgress} className="h-2 mb-1" />
+        <div className="text-xs text-muted-foreground mb-3">
+          {progressStatus.message}
+        </div>
         
         <div className="flex gap-2">
           <Button
@@ -148,8 +164,10 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">Your Progress</span>
-            <Badge variant={currentDay > actualDay ? "secondary" : "default"}>
-              {currentDay > actualDay ? "Preview" : "Current"} Day {currentDay}
+            <Badge variant={progressStatus.variant}>
+              {progressStatus.status === 'on-schedule' ? 'Current' : 
+               progressStatus.status === 'preview' ? 'Preview' : 
+               progressStatus.status === 'ahead' ? 'Ahead' : 'Behind'} Day {currentDay}
             </Badge>
           </div>
           <span className="text-sm text-muted-foreground">
@@ -157,15 +175,26 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
           </span>
         </div>
         <Progress value={actualProgress} className="h-2" />
+        <div className="text-xs text-muted-foreground mt-1">
+          {progressStatus.message}
+        </div>
       </div>
 
       {/* Main Content */}
       <div className="p-4 lg:p-6 space-y-6">
         {/* Today's Focus Section */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="h-5 w-5 text-primary" />
-            <h2 className="text-lg lg:text-xl font-semibold">Day {currentModule.day}: {currentModule.title}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              <h2 className="text-lg lg:text-xl font-semibold">Day {currentModule.day}: {currentModule.title}</h2>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {currentDateInfo.formattedDate}
+              {currentDateInfo.isToday && (
+                <span className="ml-1 text-primary font-medium">• Today</span>
+              )}
+            </div>
           </div>
           
           {/* Mobile: Stack vertically, Desktop: Grid */}

@@ -2,11 +2,12 @@
 
 import { useUser } from "@stackframe/stack"
 import { useCachedDashboardData } from "@/hooks/use-curriculum-data"
-import { deduplicateBooks } from "@/lib/utils"
+import { deduplicateBooks, calculateCurrentCurriculumDay, getCurriculumProgressStatus } from "@/lib/utils"
 import { AppLayout } from "@/components/app-layout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { BookCover } from "@/components/ui/book-cover"
 import Link from "next/link"
 import React from "react"
 
@@ -309,6 +310,12 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Curricula Overview */}
+        <CurriculaOverview 
+          curricula={dashboardData.curricula}
+          dailyModules={calculatedData.todayModules.concat(calculatedData.upcomingModules)}
+        />
+
         {/* Today's Focus */}
         {todayModules.length > 0 && (
           <TodaysFocus 
@@ -518,5 +525,134 @@ const UpcomingDay = React.memo(function UpcomingDay({
         ))}
       </CollapsibleContent>
     </Collapsible>
+  )
+})
+
+const CurriculaOverview = React.memo(function CurriculaOverview({
+  curricula,
+  dailyModules
+}: {
+  curricula: any[]
+  dailyModules: any[]
+}) {
+  return (
+    <div className="border-b">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold flex items-center">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Your Curricula
+          </h2>
+          <Badge variant="secondary" className="text-xs">
+            {curricula.length} active
+          </Badge>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {curricula.map((curriculum) => (
+            <CurriculumCard
+              key={curriculum.id}
+              curriculum={curriculum}
+              dailyModules={dailyModules.filter(m => m.curriculumId === curriculum.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+})
+
+const CurriculumCard = React.memo(function CurriculumCard({
+  curriculum,
+  dailyModules
+}: {
+  curriculum: any
+  dailyModules: any[]
+}) {
+  const progressData = React.useMemo(() => {
+    if (!dailyModules.length) return null
+    
+    const { currentDay, actualDay } = calculateCurrentCurriculumDay(dailyModules)
+    const currentModule = dailyModules.find(m => m.day === currentDay)
+    const progressStatus = currentModule 
+      ? getCurriculumProgressStatus(currentDay, actualDay, currentModule.date)
+      : null
+    
+    const totalDays = Math.max(...dailyModules.map(m => m.day), 0)
+    const progressPercentage = totalDays > 0 ? Math.round((actualDay / totalDays) * 100) : 0
+    
+    return {
+      currentDay,
+      actualDay,
+      totalDays,
+      progressPercentage,
+      progressStatus,
+      currentModule
+    }
+  }, [dailyModules])
+
+  return (
+    <Link 
+      href={`/curriculum/${curriculum.id}`}
+      className="block p-4 rounded-lg border hover:bg-muted/50 transition-colors group"
+    >
+      <div className="flex gap-3">
+        <div className="flex-shrink-0">
+          <BookCover
+            isbn={curriculum.primary_resource_isbn}
+            title={curriculum.primary_resource_title}
+            className="h-16 w-12"
+          />
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-sm truncate group-hover:text-primary">
+                {curriculum.title}
+              </h3>
+              <p className="text-xs text-muted-foreground truncate">
+                {curriculum.topic}
+              </p>
+            </div>
+          </div>
+          
+          {progressData && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Day {progressData.currentDay} of {progressData.totalDays}
+                </span>
+                <Badge 
+                  variant={progressData.progressStatus?.variant || 'default'} 
+                  className="text-xs px-2 py-0"
+                >
+                  {progressData.progressPercentage}%
+                </Badge>
+              </div>
+              
+              <div className="w-full bg-muted rounded-full h-1.5">
+                <div 
+                  className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progressData.progressPercentage}%` }}
+                />
+              </div>
+              
+              {progressData.currentModule && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {progressData.currentModule.title}
+                </p>
+              )}
+            </div>
+          )}
+          
+          {(!progressData || !dailyModules.length) && (
+            <div className="text-xs text-muted-foreground">
+              {curriculum.length_of_study} day curriculum
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
   )
 })

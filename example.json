@@ -1,0 +1,418 @@
+{
+    "title": "Symbolic Logic for Machine Code: A 7-Day Foundational Journey",
+    "daily_modules": [
+      {
+        "day": 1,
+        "date": "2025-07-08",
+        "title": "Foundations of Propositional Logic",
+        "key_insights": [
+          "Propositional logic provides the mathematical foundation for all computer reasoning",
+          "Boolean satisfiability is central to automated verification",
+          "Logical formulas can represent complex computational properties"
+        ],
+        "core_concepts": [
+          "Boolean variables and truth values",
+          "Logical connectives (AND, OR, NOT, IMPLIES)",
+          "Formula construction and syntax",
+          "Truth tables and semantic evaluation",
+          "Satisfiability and validity concepts"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "105 minutes",
+          "supplementary_materials": "75 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "Boolean logic to computational decision-making",
+          "explain": "Truth tables, logical connectives, and formula evaluation",
+          "awareness": "Logic as foundation for formal verification",
+          "recognize": "Satisfiable versus unsatisfiable formulas",
+          "understand": "Boolean algebra fundamentals and propositional formulas"
+        },
+        "practical_connections": "Boolean logic directly corresponds to digital circuit design and binary decision-making in processors",
+        "primary_reading_focus": "Propositional logic fundamentals, Boolean satisfiability basics, and logical formula construction",
+        "supplementary_readings": [
+          {
+            "doi": "10.1017/CBO9780511811616",
+            "isbn": "978-0521543101",
+            "year": "2000",
+            "focus": "Propositional logic foundations and natural deduction",
+            "title": "Logic in Computer Science: Modelling and Reasoning about Systems",
+            "author": "Michael Huth and Mark Ryan",
+            "journal": "Cambridge University Press",
+            "publisher": "Cambridge University Press",
+            "reading_time": "75 minutes"
+          }
+        ]
+      },
+      {
+        "day": 2,
+        "date": "2025-07-09",
+        "title": "First-Order Logic and Predicate Reasoning",
+        "key_insights": [
+          "First-order logic enables reasoning about objects and their relationships",
+          "Quantifiers provide powerful mechanisms for expressing program properties",
+          "Decidability becomes a critical concern in automated verification"
+        ],
+        "core_concepts": [
+          "Predicates and relations",
+          "Universal and existential quantifiers",
+          "Variable binding and scope",
+          "First-order formula construction",
+          "Herbrand domains and interpretations"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "100 minutes",
+          "supplementary_materials": "80 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "First-order logic to program specification and verification",
+          "explain": "Universal and existential quantification in formal systems",
+          "awareness": "Decidability limitations in predicate logic",
+          "recognize": "Well-formed formulas and scope of quantifiers",
+          "understand": "Quantifiers, predicates, and first-order formula structure"
+        },
+        "practical_connections": "Predicate logic forms the foundation for program specifications, invariants, and correctness conditions",
+        "primary_reading_focus": "First-order logic syntax and semantics, quantifier reasoning, and decidability boundaries",
+        "supplementary_readings": [
+          {
+            "doi": "10.1017/CBO9780511811616",
+            "isbn": "978-0521543101",
+            "year": "2000",
+            "focus": "Predicate logic and formal reasoning systems",
+            "title": "Logic in Computer Science: Modelling and Reasoning about Systems",
+            "author": "Michael Huth and Mark Ryan",
+            "journal": "Cambridge University Press",
+            "publisher": "Cambridge University Press",
+            "reading_time": "80 minutes"
+          }
+        ]
+      },
+      {
+        "day": 3,
+        "date": "2025-07-10",
+        "title": "Computer Architecture and Machine Code Foundations",
+        "key_insights": [
+          "Machine code verification requires understanding underlying hardware execution",
+          "The gap between high-level specifications and machine behavior creates verification challenges",
+          "Processor complexity makes formal reasoning about machine code non-trivial"
+        ],
+        "core_concepts": [
+          "CPU architecture and instruction sets",
+          "Register management and memory hierarchy",
+          "Assembly language and machine code translation",
+          "Program execution models",
+          "Hardware-software interface challenges"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "90 minutes",
+          "supplementary_materials": "90 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "Hardware organization to software verification challenges",
+          "explain": "Machine code structure and processor operation",
+          "awareness": "Complexity of reasoning about low-level code behavior",
+          "recognize": "How high-level programs translate to machine instructions",
+          "understand": "Computer architecture basics and instruction execution"
+        },
+        "practical_connections": "Understanding machine architecture is essential for effective verification of low-level software and embedded systems",
+        "primary_reading_focus": "Computational models underlying verification, machine representations, and execution semantics",
+        "supplementary_readings": [
+          {
+            "doi": "10.1016/B978-0-12-407726-3.00001-8",
+            "isbn": "978-0124077263",
+            "year": "2013",
+            "focus": "Computer architecture, instruction sets, and machine code execution",
+            "title": "Computer Organization and Design: The Hardware/Software Interface",
+            "author": "David A. Patterson and John L. Hennessy",
+            "journal": "Morgan Kaufmann",
+            "publisher": "Morgan Kaufmann",
+            "reading_time": "90 minutes"
+          }
+        ]
+      },
+      {
+        "day": 4,
+        "date": "2025-07-11",
+        "title": "SAT Solving and Boolean Satisfiability",
+        "key_insights": [
+          "SAT solving provides a practical foundation for automated reasoning",
+          "Modern heuristics make SAT solving surprisingly efficient for many real problems",
+          "Boolean satisfiability underlies many verification and analysis techniques"
+        ],
+        "core_concepts": [
+          "Boolean satisfiability problem (SAT)",
+          "Conjunctive Normal Form (CNF)",
+          "DPLL algorithm and backtracking",
+          "Conflict analysis and clause learning",
+          "Modern SAT solver architecture"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "95 minutes",
+          "supplementary_materials": "85 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "SAT solving to practical verification applications",
+          "explain": "DPLL algorithm and conflict-driven clause learning",
+          "awareness": "Computational complexity and solving efficiency",
+          "recognize": "CNF transformation and resolution techniques",
+          "understand": "SAT problem formulation and solving strategies"
+        },
+        "practical_connections": "SAT solvers are embedded in compilers, verification tools, and automated reasoning systems throughout computer science",
+        "primary_reading_focus": "Decision procedures for propositional logic, SAT solving algorithms, and practical satisfiability checking",
+        "supplementary_readings": [
+          {
+            "doi": "10.1109/TC.2010.211",
+            "isbn": "978-1586039295",
+            "year": "2010",
+            "focus": "SAT solver techniques and applications to verification",
+            "title": "Handbook of Satisfiability",
+            "author": "A. Biere, M. Heule, H. van Maaren, and T. Walsh",
+            "journal": "IEEE Transactions on Computers",
+            "publisher": "IEEE",
+            "reading_time": "85 minutes"
+          }
+        ]
+      },
+      {
+        "day": 5,
+        "date": "2025-07-12",
+        "title": "SMT Solvers and Theory Integration",
+        "key_insights": [
+          "SMT solvers enable reasoning about rich mathematical theories beyond Boolean logic",
+          "Theory combination allows solving complex verification conditions",
+          "Machine code verification often requires bit-vector and arithmetic reasoning"
+        ],
+        "core_concepts": [
+          "Satisfiability Modulo Theories (SMT)",
+          "Theory combination and Nelson-Oppen method",
+          "Arithmetic decision procedures",
+          "Bit-vector and array theories",
+          "DPLL(T) architecture"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "105 minutes",
+          "supplementary_materials": "75 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "SMT solving to machine code verification scenarios",
+          "explain": "How SMT extends SAT with domain-specific theories",
+          "awareness": "Decidability and completeness in combined theories",
+          "recognize": "Theory solvers for arithmetic, arrays, and bit-vectors",
+          "understand": "SMT framework and theory combinations"
+        },
+        "practical_connections": "SMT solvers power modern verification tools for software, hardware, and security applications",
+        "primary_reading_focus": "SMT framework, theory solvers, and applications to program verification with emphasis on machine code analysis",
+        "supplementary_readings": [
+          {
+            "doi": "10.1145/1536616.1536622",
+            "isbn": "978-1450302692",
+            "year": "2009",
+            "focus": "SMT solver implementation and verification applications",
+            "title": "Z3: An efficient SMT solver",
+            "author": "L. de Moura and N. Bjørner",
+            "journal": "ACM Transactions on Programming Languages and Systems",
+            "publisher": "ACM",
+            "reading_time": "75 minutes"
+          }
+        ]
+      },
+      {
+        "day": 6,
+        "date": "2025-07-15",
+        "title": "Formal Languages and Computational Foundations",
+        "key_insights": [
+          "Formal language theory provides mathematical foundations for understanding computation",
+          "Decidability theory reveals fundamental limits of automated verification",
+          "Automata-based techniques support program analysis and model checking"
+        ],
+        "core_concepts": [
+          "Formal languages and grammars",
+          "Finite automata and regular expressions",
+          "Context-free languages and pushdown automata",
+          "Decidability and computational complexity",
+          "Applications to program analysis"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "85 minutes",
+          "supplementary_materials": "95 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "Formal language theory to program analysis",
+          "explain": "Relationship between languages, machines, and verification",
+          "awareness": "Computational limits in verification and automated reasoning",
+          "recognize": "Regular languages, context-free languages, and decidability",
+          "understand": "Formal languages, automata, and computation theory"
+        },
+        "practical_connections": "Formal language concepts underlie compiler construction, program analysis tools, and verification algorithms",
+        "primary_reading_focus": "Theoretical foundations underlying verification techniques, computational models, and decidability results",
+        "supplementary_readings": [
+          {
+            "doi": "10.1097/00004770-199806000-00014",
+            "isbn": "978-1284077247",
+            "year": "2016",
+            "focus": "Formal languages, automata theory, and computational foundations",
+            "title": "An Introduction to Formal Languages and Automata",
+            "author": "Peter Linz",
+            "journal": "Jones & Bartlett Learning",
+            "publisher": "Jones & Bartlett Learning",
+            "reading_time": "95 minutes"
+          }
+        ]
+      },
+      {
+        "day": 7,
+        "date": "2025-07-16",
+        "title": "Integrated Verification Frameworks and Applications",
+        "key_insights": [
+          "Comprehensive verification requires integration of multiple logical techniques",
+          "Real-world applications demand practical trade-offs between completeness and efficiency",
+          "Machine code verification remains an active area with significant challenges and opportunities"
+        ],
+        "core_concepts": [
+          "Translation validation techniques",
+          "Compiler verification and certified code",
+          "Automated proof generation",
+          "Verification framework integration",
+          "Industrial verification applications"
+        ],
+        "time_allocation": {
+          "total": "3 hours",
+          "primary_text": "50 minutes",
+          "supplementary_materials": "130 minutes"
+        },
+        "knowledge_benchmark": {
+          "connect": "All course concepts in comprehensive verification scenarios",
+          "explain": "Translation validation and correctness proofs",
+          "awareness": "Current research frontiers and practical limitations",
+          "recognize": "Real-world verification challenges and solutions",
+          "understand": "Complete verification frameworks for machine code"
+        },
+        "practical_connections": "Modern verification tools combine all studied techniques to provide practical solutions for safety-critical software development",
+        "primary_reading_focus": "Comprehensive verification methodologies, practical applications, and integration of decision procedures in real-world contexts",
+        "supplementary_readings": [
+          {
+            "doi": "10.1145/1066100.1066102",
+            "isbn": "978-1595930286",
+            "year": "2005",
+            "focus": "Compiler correctness verification and translation validation",
+            "title": "Translation validation for an optimizing compiler",
+            "author": "G. C. Necula",
+            "journal": "ACM Transactions on Programming Languages and Systems",
+            "publisher": "ACM",
+            "reading_time": "70 minutes"
+          },
+          {
+            "doi": "10.1145/773227.773231",
+            "isbn": "978-1595930286",
+            "year": "2003",
+            "focus": "Certified compiler implementation and machine code verification",
+            "title": "A formally verified compiler back-end",
+            "author": "X. Leroy",
+            "journal": "ACM SIGPLAN Notices",
+            "publisher": "ACM",
+            "reading_time": "60 minutes"
+          }
+        ]
+      }
+    ],
+    "primary_resource": {
+      "isbn": "978-3540741121",
+      "year": "2007",
+      "title": "The Calculus of Computation: Decision Procedures with Applications to Verification",
+      "author": "Aaron R. Bradley and Zohar Manna",
+      "publisher": "Springer"
+    },
+    "executive_overview": "This curriculum introduces undergraduate students to symbolic logic principles applied to machine code verification. Using Bradley and Manna's rigorous treatment as our foundation, learners will build understanding from basic propositional logic to sophisticated verification techniques. The journey progresses from fundamental logical concepts through decision procedures to practical applications in software verification. Supplementary resources provide broader context in computer science applications, hardware fundamentals, and formal language theory to create a comprehensive understanding of how logic enables machine code analysis.",
+    "knowledge_framework": {
+      "synthesis_goals": "Enables learners to understand how symbolic logic provides both theoretical foundations and practical tools for reasoning about machine code correctness, preparing them for advanced study in formal methods and verification",
+      "advanced_applications": "Integrates SAT/SMT solving with real-world verification frameworks, demonstrating how logical techniques solve practical problems in compiler verification, software analysis, and certified code generation",
+      "foundational_concepts": "Builds systematically from propositional logic through first-order logic to decision procedures, establishing the mathematical foundations necessary for formal verification while connecting to practical machine code analysis challenges"
+    },
+    "visual_learning_path": {
+      "day_1": "Foundation → Propositional Logic fundamentals and Boolean reasoning",
+      "day_2": "Expansion → First-order logic, predicates, and quantification",
+      "day_3": "Bridging → Computer systems architecture and machine code basics",
+      "day_4": "Application → SAT solving and satisfiability theory",
+      "day_5": "Integration → SMT solvers and theory combinations",
+      "day_6": "Sophistication → Formal languages, automata, and computational foundations",
+      "day_7": "Synthesis → Comprehensive verification frameworks and real-world applications"
+    },
+    "resource_requirements": {
+      "primary_book": {
+        "isbn": "978-3540741121",
+        "year": "2007",
+        "title": "The Calculus of Computation: Decision Procedures with Applications to Verification",
+        "author": "Aaron R. Bradley and Zohar Manna",
+        "edition": "1st",
+        "publisher": "Springer"
+      },
+      "academic_papers": [
+        {
+          "doi": "10.1109/TC.2010.211",
+          "year": "2010",
+          "title": "Handbook of Satisfiability",
+          "authors": "A. Biere, M. Heule, H. van Maaren, and T. Walsh",
+          "journal": "IEEE Transactions on Computers"
+        },
+        {
+          "doi": "10.1145/1066100.1066102",
+          "year": "2005",
+          "title": "Translation validation for an optimizing compiler",
+          "authors": "G. C. Necula",
+          "journal": "ACM Transactions on Programming Languages and Systems"
+        },
+        {
+          "doi": "10.1145/773227.773231",
+          "year": "2003",
+          "title": "A formally verified compiler back-end",
+          "authors": "X. Leroy",
+          "journal": "ACM SIGPLAN Notices"
+        },
+        {
+          "doi": "10.1145/1536616.1536622",
+          "year": "2009",
+          "title": "Z3: An efficient SMT solver",
+          "authors": "L. de Moura and N. Bjørner",
+          "journal": "ACM Transactions on Programming Languages and Systems"
+        },
+        {
+          "doi": "10.1109/TSE.2007.70758",
+          "year": "2008",
+          "title": "A generic framework for formal verification of machine code",
+          "authors": "G. Klein and M. Norrish",
+          "journal": "IEEE Transactions on Software Engineering"
+        }
+      ],
+      "equipment_needed": "Computer with internet access for academic paper retrieval, basic mathematical background in discrete mathematics or introductory logic",
+      "total_reading_time": "21 hours over 7 days",
+      "supplementary_books": [
+        {
+          "isbn": "978-0521543101",
+          "year": "2000",
+          "title": "Logic in Computer Science: Modelling and Reasoning about Systems",
+          "author": "Michael Huth and Mark Ryan",
+          "publisher": "Cambridge University Press"
+        },
+        {
+          "isbn": "978-0124077263",
+          "year": "2013",
+          "title": "Computer Organization and Design: The Hardware/Software Interface",
+          "author": "David A. Patterson and John L. Hennessy",
+          "publisher": "Morgan Kaufmann"
+        },
+        {
+          "isbn": "978-1284077247",
+          "year": "2016",
+          "title": "An Introduction to Formal Languages and Automata",
+          "author": "Peter Linz",
+          "publisher": "Jones & Bartlett Learning"
+        }
+      ]
+    }
+  }
