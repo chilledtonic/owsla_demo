@@ -29,24 +29,22 @@ export function getDoiUrl(doi: string): string {
  * Helper function to handle resource clicks based on resource type
  */
 export function handleResourceClick(resource: { title?: string, author?: string, isbn?: string | null, doi?: string | null }) {
+  // Prioritize DOI for academic papers
+  if (resource.doi && resource.doi !== 'N/A') {
+    // It's an academic paper - go to DOI lookup
+    const url = getDoiUrl(resource.doi)
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+      return
+    }
+  }
+  
+  // For books, always use title/author search (more accurate than ISBN)
   if (resource.title && resource.author) {
-    // It's a book - search Amazon by title and author
     const title = encodeURIComponent(resource.title);
     const author = encodeURIComponent(resource.author);
     const url = `https://www.amazon.com/s?k=${title}+${author}`;
     window.open(url, '_blank', 'noopener,noreferrer');
-  } else if (resource.isbn && resource.isbn !== 'N/A') {
-    // Fallback to ISBN if title/author not available
-    const url = getAmazonIsbnUrl(resource.isbn)
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer')
-    }
-  } else if (resource.doi && resource.doi !== 'N/A') {
-    // It's a paper - go to DOI lookup
-    const url = getDoiUrl(resource.doi)
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer')
-    }
   }
 }
 

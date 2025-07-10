@@ -482,7 +482,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
               </TabsTrigger>
               <TabsTrigger value="youtube" className="flex items-center gap-2">
                 <Youtube className="h-4 w-4" />
-                <span className={isMobile ? 'text-xs' : 'text-sm'}>YouTube Course</span>
+                <span className={isMobile ? 'text-xs' : 'text-sm'}>YouTube Video</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -498,6 +498,14 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "topic" | "youtube")} className="w-full">
               <TabsContent value="topic" className="space-y-6 mt-0">
                 <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Topic-Based Learning</h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                      Enter any topic you&apos;d like to explore, and our AI agent will create a comprehensive multi-day curriculum 
+                      with curated books, texts, and learning materials. Perfect for deep dives into subjects like philosophy, 
+                      science, history, or any area of knowledge.
+                    </p>
+                  </div>
                   <div>
                     <Label htmlFor="topic" className="text-base font-medium">What would you like to learn?</Label>
                     <Input
@@ -514,6 +522,14 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
               <TabsContent value="youtube" className="space-y-6 mt-0">
                 <div className="space-y-4">
+                  <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-red-900 dark:text-red-100 mb-2">YouTube Video Courses</h4>
+                    <p className="text-sm text-red-800 dark:text-red-200 leading-relaxed">
+                      Transform any YouTube video (30+ minutes) into a structured learning experience. Perfect for video essays, 
+                      tutorials, lectures, or documentaries. The AI will break down the content into digestible daily lessons 
+                      with supplementary materials and exercises.
+                    </p>
+                  </div>
                   <div>
                     <Label htmlFor="youtube-url" className="text-base font-medium">YouTube Course URL</Label>
                     <Input
