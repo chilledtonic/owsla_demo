@@ -11,7 +11,7 @@ import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users } from "lucide-react"
+import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users, Edit } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -184,6 +184,56 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
   }
 
 
+
+  function handleEditCurriculum() {
+    if (!curriculumData?.curriculum) return
+    
+    // Convert curriculum data to course editor format
+    const courseData = {
+      title: curriculumData.curriculum.title,
+      executive_overview: curriculumData.curriculum.executive_overview,
+      daily_modules: curriculumData.curriculum.daily_modules.map(module => ({
+        ...module,
+        supplementary_readings: module.supplementary_readings.map(reading => ({
+          ...reading,
+          id: `${reading.title}-${reading.author}`.replace(/\s+/g, '-').toLowerCase(),
+          type: reading.isbn ? 'book' as const : 'paper' as const
+        }))
+      })),
+      primary_resource: {
+        isbn: curriculumData.curriculum.primary_resource.isbn,
+        year: "",
+        title: curriculumData.curriculum.primary_resource.title,
+        author: curriculumData.curriculum.primary_resource.author,
+        publisher: ""
+      },
+      knowledge_framework: {
+        synthesis_goals: "",
+        advanced_applications: "",
+        foundational_concepts: ""
+      },
+      visual_learning_path: curriculumData.curriculum.visual_learning_path,
+      resource_requirements: {
+        primary_book: {
+          isbn: curriculumData.curriculum.primary_resource.isbn,
+          year: "",
+          title: curriculumData.curriculum.primary_resource.title,
+          author: curriculumData.curriculum.primary_resource.author,
+          publisher: ""
+        },
+        academic_papers: [],
+        equipment_needed: "",
+        total_reading_time: "",
+        supplementary_books: []
+      }
+    }
+    
+    // Store the course data in sessionStorage to pass to the editor
+    sessionStorage.setItem('editCourseData', JSON.stringify(courseData))
+    
+    // Navigate to course editor
+    router.push('/course-editor')
+  }
 
   async function handleDeleteCurriculum() {
     if (!curriculum?.id) return
@@ -368,6 +418,15 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                 <Badge variant="secondary" className="text-xs w-full justify-center">
                   Active Curriculum
                 </Badge>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleEditCurriculum}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit in Course Editor
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive">
@@ -439,7 +498,7 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -448,6 +507,15 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                   >
                     <Users className="h-3 w-3 mr-1" />
                     Get Help
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleEditCurriculum}
+                    className="text-xs"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
