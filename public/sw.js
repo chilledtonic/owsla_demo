@@ -11,13 +11,6 @@ const urlsToCache = [
   '/favicon.png'
 ];
 
-// API endpoints to cache for offline use
-const apiEndpointsToCache = [
-  '/api/curricula',
-  '/api/dashboard',
-  '/api/user-curricula'
-];
-
 // Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -28,7 +21,6 @@ self.addEventListener('install', (event) => {
       }),
       caches.open(API_CACHE_NAME).then((cache) => {
         console.log('Opened API cache');
-        // Pre-cache will be done on first network requests
         return Promise.resolve();
       })
     ])
@@ -46,8 +38,8 @@ function getCacheStrategy(url) {
     return 'cache-first';
   }
   
-  // API endpoints - network first with cache fallback
-  if (pathname.startsWith('/api/') || pathname.includes('/actions/')) {
+  // Next.js server actions and API routes - network first with cache fallback
+  if (pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.includes('/actions/')) {
     return 'network-first';
   }
   
@@ -55,15 +47,14 @@ function getCacheStrategy(url) {
   return 'network-first';
 }
 
-// Network-first strategy for API calls
+// Network-first strategy for server actions and API calls
 async function networkFirstStrategy(request, cacheName = API_CACHE_NAME) {
   try {
     const response = await fetch(request.clone());
     
-    // Only cache successful responses
-    if (response.ok) {
+    // Only cache successful responses and avoid caching POST requests (server actions)
+    if (response.ok && request.method === 'GET') {
       const cache = await caches.open(cacheName);
-      // Clone response before caching
       cache.put(request.clone(), response.clone());
     }
     
@@ -123,9 +114,10 @@ self.addEventListener('fetch', (event) => {
 
   // Skip caching for Next.js hot-reload and dev resources
   if (
-    url.pathname.startsWith('/_next/') ||
+    url.pathname.startsWith('/_next/webpack-hmr') ||
     url.pathname.includes('.hot-update.') ||
-    request.headers.get('x-nextjs-data')
+    request.headers.get('x-nextjs-data') ||
+    url.pathname.startsWith('/_next/static/chunks/pages/_error')
   ) {
     event.respondWith(fetch(request));
     return;
@@ -149,18 +141,36 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CACHE_INVALIDATE') {
     const { cacheKey, userId } = event.data;
     
-    // Invalidate specific API cache entries
-    caches.open(API_CACHE_NAME).then(cache => {
+    // Clear all relevant caches when curriculum data changes
+    Promise.all([
+      caches.open(API_CACHE_NAME),
+      caches.open(CACHE_NAME)
+    ]).then(([apiCache, mainCache]) => {
       if (cacheKey === 'user-curricula' && userId) {
-        // Remove cached user curricula
-        cache.delete(`/api/user-curricula?userId=${userId}`);
+        // Clear all cache entries - server actions don't have predictable URLs
+        console.log('Clearing all API caches for user curricula update');
+        return Promise.all([
+          apiCache.keys().then(keys => Promise.all(keys.map(key => apiCache.delete(key)))),
+          mainCache.keys().then(keys => 
+            Promise.all(keys.filter(key => 
+              // Only clear page caches, not static assets
+              !key.url.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff2?)$/)
+            ).map(key => mainCache.delete(key)))
+          )
+        ]);
       } else if (cacheKey === 'all') {
-        // Clear all API caches
-        cache.keys().then(keys => {
-          keys.forEach(key => cache.delete(key));
-        });
+        // Clear all caches
+        console.log('Clearing all caches');
+        return Promise.all([
+          apiCache.keys().then(keys => Promise.all(keys.map(key => apiCache.delete(key)))),
+          mainCache.keys().then(keys => 
+            Promise.all(keys.filter(key => 
+              !key.url.match(/\.(png|jpg|jpeg|gif|svg|ico|css|js|woff2?)$/)
+            ).map(key => mainCache.delete(key)))
+          )
+        ]);
       }
-    });
+    }).catch(err => console.error('Cache invalidation error:', err));
   }
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
@@ -194,7 +204,7 @@ if ('sync' in self.registration) {
   self.addEventListener('sync', (event) => {
     if (event.tag === 'curriculum-sync') {
       event.waitUntil(
-        // Could sync curriculum data when back online
+        // Signal clients to refresh their data
         self.clients.matchAll().then(clients => {
           clients.forEach(client => {
             client.postMessage({

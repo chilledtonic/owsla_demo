@@ -2,8 +2,9 @@
 
 import { AppLayout } from "@/components/app-layout"
 import { CurriculumContent } from "@/components/curriculum-content"
-import { deleteCurriculum } from "@/lib/actions"
+import { deleteCurriculum, forkCurriculum } from "@/lib/actions"
 import { useCachedCurriculum } from "@/hooks/use-curriculum-data"
+import { useCurriculumCache } from "@/lib/curriculum-cache"
 import { CurriculumData } from "@/lib/database"
 import { calculateCurrentCurriculumDay } from "@/lib/utils"
 import { useRouter } from "next/navigation"
@@ -11,7 +12,7 @@ import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users, Edit } from "lucide-react"
+import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users, Edit, Copy } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import { useUser } from "@stackframe/stack"
 import { BookCover } from "@/components/ui/book-cover"
 
 // Transform database curriculum to display format
@@ -124,12 +127,15 @@ function transformDatabaseCurriculum(dbCurriculum: {
 
 export default function CurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const user = useUser()
+  const curriculumCache = useCurriculumCache()
   const isMobile = useIsMobile()
   const [curriculumId, setCurriculumId] = useState<number | null>(null)
   const { curriculum, loading, error } = useCachedCurriculum(curriculumId || 0)
   const [curriculumData, setCurriculumData] = useState<{ curriculum: ReturnType<typeof transformDatabaseCurriculum> } | null>(null)
   const [currentDay, setCurrentDay] = useState(1)
   const [actualDay, setActualDay] = useState(1) // User's actual progress day
+  const [isForking, setIsForking] = useState(false)
 
   useEffect(() => {
     async function initParams() {
@@ -186,10 +192,11 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
 
 
   function handleEditCurriculum() {
-    if (!curriculumData?.curriculum) return
+    if (!curriculumData?.curriculum || !curriculum?.id) return
     
     // Convert curriculum data to course editor format
     const courseData = {
+      id: curriculum.id.toString(), // Include the curriculum ID for updating
       title: curriculumData.curriculum.title,
       executive_overview: curriculumData.curriculum.executive_overview,
       daily_modules: curriculumData.curriculum.daily_modules.map(module => ({
@@ -236,17 +243,79 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
   }
 
   async function handleDeleteCurriculum() {
-    if (!curriculum?.id) return
+    if (!curriculum?.id || !user?.id) return
     
     try {
       const result = await deleteCurriculum(curriculum.id)
       if (result.success) {
+        console.log('Invalidating caches after curriculum deletion')
+        
+        // Invalidate client-side caches - use targeted approach
+        curriculumCache.invalidateUserCurricula(user.id)
+        
+        // Tell service worker to clear caches
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'CACHE_INVALIDATE',
+            cacheKey: 'user-curricula',
+            userId: user.id
+          })
+          console.log('Invalidated service worker caches after curriculum deletion')
+        }
+        
+        toast.success("Curriculum deleted successfully")
         router.push('/')
       } else {
         console.error('Failed to delete curriculum:', result.error)
+        toast.error(result.error || "Failed to delete curriculum")
       }
     } catch (error) {
       console.error('Error deleting curriculum:', error)
+      toast.error("An unexpected error occurred while deleting")
+    }
+  }
+
+  async function handleForkCurriculum() {
+    if (!curriculum?.id || !user?.id) {
+      toast.error("You must be signed in to fork curricula")
+      return
+    }
+    
+    setIsForking(true)
+    try {
+      const result = await forkCurriculum(curriculum.id, user.id)
+      if (result.success) {
+        console.log('Invalidating caches after curriculum fork')
+        
+        // Invalidate client-side caches to show the new forked curriculum
+        curriculumCache.invalidateUserCurricula(user.id)
+        
+        // Tell service worker to clear caches
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'CACHE_INVALIDATE',
+            cacheKey: 'user-curricula',
+            userId: user.id
+          })
+          console.log('Invalidated service worker caches after curriculum fork')
+        }
+        
+        toast.success(`Forked "${curriculum.title}" successfully!`)
+        
+        // Navigate to the new forked curriculum
+        if (result.data?.id) {
+          router.push(`/curriculum/${result.data.id}`)
+        } else {
+          router.push('/')
+        }
+      } else {
+        toast.error(result.error || "Failed to fork curriculum")
+      }
+    } catch (error) {
+      console.error('Error forking curriculum:', error)
+      toast.error("An unexpected error occurred while forking")
+    } finally {
+      setIsForking(false)
     }
   }
 
@@ -427,6 +496,16 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                   <Edit className="h-4 w-4 mr-2" />
                   Edit in Course Editor
                 </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleForkCurriculum}
+                  disabled={isForking}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  {isForking ? "Forking..." : "Fork Curriculum"}
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive">
@@ -498,7 +577,7 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2 mb-2">
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -516,6 +595,18 @@ export default function CurriculumPage({ params }: { params: Promise<{ id: strin
                   >
                     <Edit className="h-3 w-3 mr-1" />
                     Edit
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleForkCurriculum}
+                    disabled={isForking}
+                    className="text-xs"
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    {isForking ? "Forking..." : "Fork"}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

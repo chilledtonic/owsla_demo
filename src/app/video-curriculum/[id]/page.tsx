@@ -11,7 +11,7 @@ import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users, Play, Video } from "lucide-react"
+import { Trash2, Calendar, Clock, ChevronLeft, ChevronRight, Timer, Users, Play, Video, Edit } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -189,6 +189,69 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
     }
   }
 
+  function handleEditCurriculum() {
+    if (!curriculumData || !curriculum?.id) return
+    
+    // Transform video curriculum data to course editor format
+    const courseData = {
+      id: curriculum.id.toString(), // Include the curriculum ID for updating
+      type: 'video' as const,
+      title: curriculumData.curriculum.title,
+      executive_overview: curriculumData.curriculum.executive_overview,
+      primary_video: curriculumData.curriculum.primary_video,
+      daily_modules: curriculumData.curriculum.daily_modules.map(module => ({
+        day: module.day,
+        date: module.date,
+        title: module.title,
+        video_segment: module.video_segment,
+        key_insights: module.key_insights,
+        core_concepts: module.core_concepts,
+        time_allocation: {
+          total: module.time_allocation.total,
+          primary_text: module.time_allocation.video_viewing,
+          supplementary_materials: module.time_allocation.supplementary_materials
+        },
+        knowledge_benchmark: module.knowledge_benchmark,
+        practical_connections: "",
+        primary_reading_focus: module.primary_reading_focus,
+        supplementary_readings: module.supplementary_readings.map(reading => ({
+          id: crypto.randomUUID(),
+          title: reading.title,
+          author: reading.author,
+          reading_time: reading.reading_time,
+          focus: reading.focus,
+          isbn: reading.isbn,
+          doi: reading.doi,
+          year: "",
+          journal: "",
+          publisher: "",
+          type: reading.isbn && reading.isbn !== 'N/A' ? 'book' : (reading.doi ? 'paper' : 'article')
+        })),
+        pre_viewing_primer: module.pre_viewing_primer,
+        post_viewing_synthesis: module.post_viewing_synthesis
+      })),
+      knowledge_framework: {
+        synthesis_goals: "",
+        advanced_applications: "",
+        foundational_concepts: ""
+      },
+      visual_learning_path: curriculumData.curriculum.visual_learning_path,
+      resource_requirements: {
+        primary_video: curriculumData.curriculum.primary_video,
+        academic_papers: [],
+        equipment_needed: "",
+        total_time_commitment: "",
+        supplementary_books: []
+      }
+    }
+    
+    // Store in session storage for the course editor
+    sessionStorage.setItem('editCourseData', JSON.stringify(courseData))
+    
+    // Navigate to course editor
+    router.push('/course-editor')
+  }
+
   if (error) {
     return (
       <AppLayout>
@@ -358,6 +421,15 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
                 <Badge variant="secondary" className="text-xs w-full justify-center">
                   Video Curriculum
                 </Badge>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleEditCurriculum}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Curriculum
+                </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive">
@@ -415,7 +487,7 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -423,7 +495,16 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
                     className="text-xs"
                   >
                     <Users className="h-3 w-3 mr-1" />
-                    Get Help
+                    Help
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleEditCurriculum}
+                    className="text-xs"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

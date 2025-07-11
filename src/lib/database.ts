@@ -161,6 +161,108 @@ export async function deleteCurriculumById(id: number): Promise<boolean> {
   }
 }
 
+export async function createCurriculum(curriculumData: Omit<CurriculumData, 'id' | 'created_at' | 'updated_at'>): Promise<CurriculumData> {
+  try {
+    const result = await sql`
+      INSERT INTO curriculums (
+        title,
+        topic,
+        executive_overview,
+        length_of_study,
+        depth_level,
+        education_level,
+        start_date,
+        end_date,
+        curriculum_type,
+        primary_resource_title,
+        primary_resource_author,
+        primary_resource_year,
+        primary_resource_isbn,
+        primary_video_id,
+        primary_video_channel,
+        primary_video_duration,
+        primary_video_url,
+        primary_video_published,
+        full_curriculum_data,
+        user_id
+      ) VALUES (
+        ${curriculumData.title},
+        ${curriculumData.topic},
+        ${curriculumData.executive_overview},
+        ${curriculumData.length_of_study},
+        ${curriculumData.depth_level},
+        ${curriculumData.education_level},
+        ${curriculumData.start_date},
+        ${curriculumData.end_date},
+        ${curriculumData.curriculum_type},
+        ${curriculumData.primary_resource_title},
+        ${curriculumData.primary_resource_author},
+        ${curriculumData.primary_resource_year},
+        ${curriculumData.primary_resource_isbn},
+        ${curriculumData.primary_video_id},
+        ${curriculumData.primary_video_channel},
+        ${curriculumData.primary_video_duration},
+        ${curriculumData.primary_video_url},
+        ${curriculumData.primary_video_published},
+        ${curriculumData.full_curriculum_data}::jsonb,
+        ${curriculumData.user_id}
+      ) RETURNING *
+    `
+    
+    if (result.length === 0) {
+      throw new Error('Failed to create curriculum')
+    }
+    
+    return result[0] as CurriculumData
+  } catch (error) {
+    console.error('Error creating curriculum:', error)
+    throw new Error('Failed to create curriculum')
+  }
+}
+
+export async function updateCurriculum(id: number, curriculumData: Partial<Omit<CurriculumData, 'id' | 'created_at' | 'updated_at'>>): Promise<CurriculumData> {
+  try {
+    console.log('Updating curriculum:', id, 'with data:', curriculumData.title)
+    
+    const result = await sql`
+      UPDATE curriculums SET
+        title = COALESCE(${curriculumData.title}, title),
+        topic = COALESCE(${curriculumData.topic}, topic),
+        executive_overview = COALESCE(${curriculumData.executive_overview}, executive_overview),
+        length_of_study = COALESCE(${curriculumData.length_of_study}, length_of_study),
+        depth_level = COALESCE(${curriculumData.depth_level}, depth_level),
+        education_level = COALESCE(${curriculumData.education_level}, education_level),
+        start_date = COALESCE(${curriculumData.start_date}, start_date),
+        end_date = COALESCE(${curriculumData.end_date}, end_date),
+        curriculum_type = COALESCE(${curriculumData.curriculum_type}, curriculum_type),
+        primary_resource_title = COALESCE(${curriculumData.primary_resource_title}, primary_resource_title),
+        primary_resource_author = COALESCE(${curriculumData.primary_resource_author}, primary_resource_author),
+        primary_resource_year = COALESCE(${curriculumData.primary_resource_year}, primary_resource_year),
+        primary_resource_isbn = COALESCE(${curriculumData.primary_resource_isbn}, primary_resource_isbn),
+        primary_video_id = COALESCE(${curriculumData.primary_video_id}, primary_video_id),
+        primary_video_channel = COALESCE(${curriculumData.primary_video_channel}, primary_video_channel),
+        primary_video_duration = COALESCE(${curriculumData.primary_video_duration}, primary_video_duration),
+        primary_video_url = COALESCE(${curriculumData.primary_video_url}, primary_video_url),
+        primary_video_published = COALESCE(${curriculumData.primary_video_published}, primary_video_published),
+        full_curriculum_data = COALESCE(${curriculumData.full_curriculum_data}::jsonb, full_curriculum_data),
+        updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+    
+    console.log('Update result:', result.length > 0 ? 'SUCCESS' : 'NO_ROWS_AFFECTED')
+    
+    if (result.length === 0) {
+      throw new Error('Curriculum not found or no changes made')
+    }
+    
+    return result[0] as CurriculumData
+  } catch (error) {
+    console.error('Error updating curriculum:', error)
+    throw new Error('Failed to update curriculum')
+  }
+}
+
 export interface ActiveJobData {
   id: number
   curriculum_id: number | null

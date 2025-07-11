@@ -159,7 +159,7 @@ const mockQuestions: Question[] = [
       {
         id: "1c",
         user: mockUsers[5], // Neil deGrasse Tyson
-        content: "I always tell students: embrace the weirdness! Quantum mechanics is supposed to feel counterintuitive - that's what makes it so fascinating. Use online simulations and visualizations. There are great interactive tools that let you 'see' wave functions evolve. Also, join study groups - explaining concepts to others often clarifies your own understanding.",
+        content: "I always tell learners: embrace the weirdness! Quantum mechanics is supposed to feel counterintuitive - that's what makes it so fascinating. Use online simulations and visualizations. There are great interactive tools that let you 'see' wave functions evolve. Also, join study groups - explaining concepts to others often clarifies your own understanding.",
         upvotes: 22,
         downvotes: 0,
         timeAgo: "30 minutes ago",

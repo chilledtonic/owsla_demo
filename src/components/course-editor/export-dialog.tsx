@@ -8,9 +8,19 @@ interface ExportDialogProps {
   course: CourseData
   open: boolean
   onOpenChange: (open: boolean) => void
+  customBookCover?: string | null
+  customVideoThumbnail?: string | null
+  customSupplementaryCovers?: Map<string, string>
 }
 
-export function ExportDialog({ course, open, onOpenChange }: ExportDialogProps) {
+export function ExportDialog({ 
+  course, 
+  open, 
+  onOpenChange,
+  customBookCover,
+  customVideoThumbnail,
+  customSupplementaryCovers
+}: ExportDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -20,6 +30,9 @@ export function ExportDialog({ course, open, onOpenChange }: ExportDialogProps) 
         <TopstersExport 
           course={course} 
           onClose={() => onOpenChange(false)}
+          customBookCover={customBookCover}
+          customVideoThumbnail={customVideoThumbnail}
+          customSupplementaryCovers={customSupplementaryCovers}
         />
       </DialogContent>
     </Dialog>

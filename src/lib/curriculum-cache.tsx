@@ -40,7 +40,7 @@ interface CurriculumCacheContextType {
     isOfflineData?: boolean
   }>
   
-  // Cache management
+  // Cache management - simplified
   invalidateUserCurricula: (userId: string) => void
   invalidateCurriculum: (id: number) => void
   invalidateAllCaches: () => void
@@ -82,6 +82,9 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   const sendMessageToSW = useCallback((message: Record<string, unknown>) => {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage(message);
+      console.log('Sent message to service worker:', message);
+    } else {
+      console.log('Service worker not available, skipping message:', message);
     }
   }, [])
 
@@ -551,8 +554,22 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   }, [getCachedUserCurricula, processDashboardData, triggerUpdate, isOnline])
 
   const invalidateUserCurricula = useCallback((userId: string) => {
-    userCurriculaCache.current.delete(userId)
-    dashboardDataCache.current.delete(userId)
+    // Mark cache as stale instead of deleting it
+    const userCache = userCurriculaCache.current.get(userId)
+    if (userCache) {
+      userCurriculaCache.current.set(userId, {
+        ...userCache,
+        timestamp: 0 // Mark as expired
+      })
+    }
+    
+    const dashboardCache = dashboardDataCache.current.get(userId)
+    if (dashboardCache) {
+      dashboardDataCache.current.set(userId, {
+        ...dashboardCache,
+        timestamp: 0 // Mark as expired
+      })
+    }
     
     // Tell service worker to invalidate related cache
     sendMessageToSW({
@@ -565,12 +582,26 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   }, [triggerUpdate, sendMessageToSW])
 
   const invalidateCurriculum = useCallback((id: number) => {
+    // Remove the specific curriculum from individual cache
     individualCurriculumCache.current.delete(id)
-    // Also invalidate user curricula caches since they contain this curriculum
-    userCurriculaCache.current.clear()
-    dashboardDataCache.current.clear()
     
-    // Tell service worker to invalidate all caches
+    // For user curricula and dashboard caches, mark them as stale instead of clearing
+    // This preserves the data while forcing a refresh on next access
+    for (const [userId, userCache] of userCurriculaCache.current.entries()) {
+      userCurriculaCache.current.set(userId, {
+        ...userCache,
+        timestamp: 0 // Mark as expired but keep the data
+      })
+    }
+    
+    for (const [userId, dashboardCache] of dashboardDataCache.current.entries()) {
+      dashboardDataCache.current.set(userId, {
+        ...dashboardCache,
+        timestamp: 0 // Mark as expired but keep the data
+      })
+    }
+    
+    // Tell service worker to invalidate caches
     sendMessageToSW({
       type: 'CACHE_INVALIDATE',
       cacheKey: 'all'

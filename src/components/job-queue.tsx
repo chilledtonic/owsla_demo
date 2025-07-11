@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
-import React from "react"
-import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react"
-import { fetchActiveJobs } from "@/lib/actions"
-import { ActiveJobData } from "@/lib/database"
-import { Badge } from "@/components/ui/badge"
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { fetchActiveJobs, revalidateCurriculumCache } from '@/lib/actions'
+import { ActiveJobData } from '@/lib/database'
+import { useCurriculumCache } from '@/lib/curriculum-cache'
 import { Card, CardContent } from "@/components/ui/card"
 
 interface JobQueueProps {
@@ -17,6 +17,8 @@ export const JobQueue = React.memo(function JobQueue({ userId }: JobQueueProps) 
   const [loading, setLoading] = useState(true)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const mountedRef = useRef(true)
+  const previousJobsRef = useRef<ActiveJobData[]>([])
+  const cache = useCurriculumCache()
 
   const fetchJobs = useCallback(async () => {
     if (!mountedRef.current) return
@@ -25,7 +27,47 @@ export const JobQueue = React.memo(function JobQueue({ userId }: JobQueueProps) 
       const result = await fetchActiveJobs(userId)
       if (result.success && mountedRef.current) {
         const jobData = result.data || []
+        
+        // Check for jobs that completed since last fetch
+        const previousJobs = previousJobsRef.current
+        const completedJobs = previousJobs.filter(prevJob => {
+          const currentJob = jobData.find(job => job.id === prevJob.id)
+          return (
+            (prevJob.status === "true" || prevJob.status === "pending") &&
+            currentJob &&
+            (currentJob.status === "completed" || currentJob.status === "false")
+          )
+        })
+        
+        // If any jobs completed, invalidate the cache
+        if (completedJobs.length > 0) {
+          console.log('Jobs completed, invalidating cache for user:', userId)
+          
+          // 1. Client-side cache invalidation
+          cache.invalidateUserCurricula(userId)
+          
+          // 2. Server-side cache revalidation (CRITICAL for Next.js server cache)
+          try {
+            await revalidateCurriculumCache(userId)
+            console.log('Server cache revalidated after job completion')
+          } catch (error) {
+            console.error('Failed to revalidate server cache:', error)
+          }
+          
+          // 3. Service worker cache invalidation
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'CACHE_INVALIDATE',
+              cacheKey: 'user-curricula',
+              userId: userId
+            })
+            console.log('Invalidated service worker caches after job completion')
+          }
+        }
+        
+        // Update state and refs
         setJobs(jobData)
+        previousJobsRef.current = jobData
         
         // If no jobs are running or pending, stop polling
         const hasActiveJobs = jobData.some(job => 
@@ -46,7 +88,7 @@ export const JobQueue = React.memo(function JobQueue({ userId }: JobQueueProps) 
         setLoading(false)
       }
     }
-  }, [userId])
+  }, [userId, cache])
 
   const startPolling = useCallback(() => {
     // Don't start multiple intervals
