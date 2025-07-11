@@ -576,10 +576,6 @@ export function CourseEditor({
                   )}
                   {isSaving ? "Saving..." : "Save"}
                 </Button>
-                <Button onClick={handleExport} size="sm" variant="outline">
-                  <Download className="h-4 w-4 mr-1" />
-                  Export
-                </Button>
               </div>
             </div>
           </div>
@@ -594,7 +590,7 @@ export function CourseEditor({
                 </TabsTrigger>
                 <TabsTrigger value="export" className="flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  Export Preview
+                  Export
                 </TabsTrigger>
               </TabsList>
             </div>
