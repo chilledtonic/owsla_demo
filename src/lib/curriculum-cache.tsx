@@ -88,7 +88,70 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
     }
   }, [])
 
-  // Cache invalidation function
+  // Helper function to check if cache is valid
+  const isCacheValid = (timestamp: number): boolean => {
+    return Date.now() - timestamp < CACHE_TTL
+  }
+
+  // Cache invalidation functions - define these first to avoid temporal dead zone issues
+  const invalidateUserCurricula = useCallback((userId: string) => {
+    // Mark cache as stale instead of deleting it
+    const userCache = userCurriculaCache.current.get(userId)
+    if (userCache) {
+      userCurriculaCache.current.set(userId, {
+        ...userCache,
+        timestamp: 0 // Mark as expired
+      })
+    }
+    
+    const dashboardCache = dashboardDataCache.current.get(userId)
+    if (dashboardCache) {
+      dashboardDataCache.current.set(userId, {
+        ...dashboardCache,
+        timestamp: 0 // Mark as expired
+      })
+    }
+    
+    // Tell service worker to invalidate related cache
+    sendMessageToSW({
+      type: 'CACHE_INVALIDATE',
+      cacheKey: 'user-curricula',
+      userId: userId
+    })
+    
+    triggerUpdate()
+  }, [triggerUpdate, sendMessageToSW])
+
+  const invalidateCurriculum = useCallback((id: number) => {
+    // Remove the specific curriculum from individual cache
+    individualCurriculumCache.current.delete(id)
+    
+    // For user curricula and dashboard caches, mark them as stale instead of clearing
+    // This preserves the data while forcing a refresh on next access
+    for (const [userId, userCache] of userCurriculaCache.current.entries()) {
+      userCurriculaCache.current.set(userId, {
+        ...userCache,
+        timestamp: 0 // Mark as expired but keep the data
+      })
+    }
+    
+    for (const [userId, dashboardCache] of dashboardDataCache.current.entries()) {
+      dashboardDataCache.current.set(userId, {
+        ...dashboardCache,
+        timestamp: 0 // Mark as expired but keep the data
+      })
+    }
+    
+    // Tell service worker to invalidate caches
+    sendMessageToSW({
+      type: 'CACHE_INVALIDATE',
+      cacheKey: 'all'
+    })
+    
+    triggerUpdate()
+  }, [triggerUpdate, sendMessageToSW])
+
+  // Cache invalidation function - define after individual functions
   const invalidateAllCaches = useCallback(() => {
     userCurriculaCache.current.clear()
     individualCurriculumCache.current.clear()
@@ -102,52 +165,6 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
     
     triggerUpdate()
   }, [triggerUpdate, sendMessageToSW])
-
-  // Setup online/offline detection and service worker communication
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      // Trigger sync when coming back online
-      if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
-        navigator.serviceWorker.ready.then(registration => {
-          return (registration as ServiceWorkerRegistration & { sync?: { register: (tag: string) => Promise<void> } }).sync?.register('curriculum-sync');
-        }).catch(err => console.log('Sync registration failed:', err));
-      }
-    }
-
-    const handleOffline = () => setIsOnline(false)
-
-    const handleSWMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'SYNC_CURRICULUM_DATA') {
-        // Service worker is requesting data sync
-        // Force refresh all cached data
-        invalidateAllCaches()
-      }
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', handleSWMessage)
-    }
-
-    // Initial online state
-    setIsOnline(navigator.onLine)
-
-    return () => {
-      window.removeEventListener('online', handleOffline)
-      window.removeEventListener('offline', handleOffline)
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', handleSWMessage)
-      }
-    }
-  }, [invalidateAllCaches])
-
-  // Helper function to check if cache is valid
-  const isCacheValid = (timestamp: number): boolean => {
-    return Date.now() - timestamp < CACHE_TTL
-  }
 
   // Helper function to process dashboard data from curricula
   const processDashboardData = useCallback((curricula: CurriculumData[], isOfflineData = false) => {
@@ -280,6 +297,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       isOfflineData
     }
   }, [])
+
+
 
   const getCachedUserCurricula = useCallback(async (userId: string, forceRefresh = false): Promise<CurriculumData[]> => {
     const cached = userCurriculaCache.current.get(userId)
@@ -553,63 +572,6 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
     }
   }, [getCachedUserCurricula, processDashboardData, triggerUpdate, isOnline])
 
-  const invalidateUserCurricula = useCallback((userId: string) => {
-    // Mark cache as stale instead of deleting it
-    const userCache = userCurriculaCache.current.get(userId)
-    if (userCache) {
-      userCurriculaCache.current.set(userId, {
-        ...userCache,
-        timestamp: 0 // Mark as expired
-      })
-    }
-    
-    const dashboardCache = dashboardDataCache.current.get(userId)
-    if (dashboardCache) {
-      dashboardDataCache.current.set(userId, {
-        ...dashboardCache,
-        timestamp: 0 // Mark as expired
-      })
-    }
-    
-    // Tell service worker to invalidate related cache
-    sendMessageToSW({
-      type: 'CACHE_INVALIDATE',
-      cacheKey: 'user-curricula',
-      userId: userId
-    })
-    
-    triggerUpdate()
-  }, [triggerUpdate, sendMessageToSW])
-
-  const invalidateCurriculum = useCallback((id: number) => {
-    // Remove the specific curriculum from individual cache
-    individualCurriculumCache.current.delete(id)
-    
-    // For user curricula and dashboard caches, mark them as stale instead of clearing
-    // This preserves the data while forcing a refresh on next access
-    for (const [userId, userCache] of userCurriculaCache.current.entries()) {
-      userCurriculaCache.current.set(userId, {
-        ...userCache,
-        timestamp: 0 // Mark as expired but keep the data
-      })
-    }
-    
-    for (const [userId, dashboardCache] of dashboardDataCache.current.entries()) {
-      dashboardDataCache.current.set(userId, {
-        ...dashboardCache,
-        timestamp: 0 // Mark as expired but keep the data
-      })
-    }
-    
-    // Tell service worker to invalidate caches
-    sendMessageToSW({
-      type: 'CACHE_INVALIDATE',
-      cacheKey: 'all'
-    })
-    
-    triggerUpdate()
-  }, [triggerUpdate, sendMessageToSW])
-
   const isLoadingUserCurricula = useCallback((userId: string): boolean => {
     return userCurriculaCache.current.get(userId)?.loading || false
   }, [])
@@ -651,6 +613,47 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
     const interval = setInterval(cleanup, 60 * 1000)
     return () => clearInterval(interval)
   }, [])
+
+  // Setup online/offline detection and service worker communication
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      // Trigger sync when coming back online
+      if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+        navigator.serviceWorker.ready.then(registration => {
+          return (registration as ServiceWorkerRegistration & { sync?: { register: (tag: string) => Promise<void> } }).sync?.register('curriculum-sync');
+        }).catch(err => console.log('Sync registration failed:', err));
+      }
+    }
+
+    const handleOffline = () => setIsOnline(false)
+
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SYNC_CURRICULUM_DATA') {
+        // Service worker is requesting data sync
+        // Force refresh all cached data
+        invalidateAllCaches()
+      }
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSWMessage)
+    }
+
+    // Initial online state
+    setIsOnline(navigator.onLine)
+
+    return () => {
+      window.removeEventListener('online', handleOffline)
+      window.removeEventListener('offline', handleOffline)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSWMessage)
+      }
+    }
+  }, [invalidateAllCaches])
 
   const contextValue: CurriculumCacheContextType = {
     getCachedUserCurricula,
