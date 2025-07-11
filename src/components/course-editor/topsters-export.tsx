@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useCallback, useState, useEffect } from "react"
-import { toPng } from "html-to-image"
+import { snapdom } from "@zumer/snapdom";
 import { deduplicateBooks } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -113,31 +113,31 @@ export function TopstersExport({
 
   // Calculate dynamic height based on content
   const calculateExportHeight = () => {
-    // Base components heights
-    const headerHeight = 300 // Course title, stats, executive overview
-    const primaryResourceHeight = isVideoCourse ? 200 : 300 // Video thumbnail or book cover area
-    const supplementaryBooksHeight = supplementaryBooks.length > 0 ? Math.ceil(supplementaryBooks.length / 6) * 120 + 50 : 0
-    const papersHeight = allPapers.length > 0 ? Math.ceil(allPapers.length / 2) * 80 + 50 : 0
-    const footerHeight = 60
-    const sectionSpacing = 60 // Spacing between major sections
+    // Base components heights (more accurate measurements)
+    const headerHeight = 220 // Course title, stats, executive overview
+    const primaryResourceHeight = isVideoCourse ? 180 : 280 // Video thumbnail or book cover area
+    const supplementaryBooksHeight = supplementaryBooks.length > 0 ? Math.ceil(supplementaryBooks.length / 6) * 100 + 40 : 0
+    const papersHeight = allPapers.length > 0 ? Math.ceil(allPapers.length / 2) * 70 + 40 : 0
+    const footerHeight = 50
+    const sectionSpacing = 30 // Reduced spacing between major sections
     
     // Daily modules section
     const moduleCount = course.daily_modules.length
     const fullRows = Math.floor(moduleCount / 3)
     const remainingModules = moduleCount % 3
     
-    // Each module card is approximately 350px tall with content + spacing
-    const moduleRowHeight = 380
+    // Each module card is approximately 320px tall with content + spacing
+    const moduleRowHeight = 340
     const fullRowsHeight = fullRows * moduleRowHeight
     
     // Remaining modules in centered layout (same height but fewer cards)
     const remainingRowHeight = remainingModules > 0 ? moduleRowHeight : 0
     
-    const dailyModulesHeaderHeight = 60
+    const dailyModulesHeaderHeight = 50
     const totalModulesHeight = dailyModulesHeaderHeight + fullRowsHeight + remainingRowHeight
     
-    // Add generous padding for safety
-    const safetyPadding = 200
+    // Minimal padding for safety
+    const safetyPadding = 40
     
     const totalHeight = headerHeight + 
                        primaryResourceHeight + 
@@ -148,7 +148,7 @@ export function TopstersExport({
                        footerHeight + 
                        safetyPadding
     
-    return Math.max(1000, totalHeight)
+    return totalHeight
   }
 
   const exportHeight = calculateExportHeight()
@@ -210,89 +210,26 @@ export function TopstersExport({
     if (exportRef.current === null) return
 
     try {
-      // Log the actual dimensions for debugging
-      const rect = exportRef.current.getBoundingClientRect()
-      const finalHeight = Math.max(exportHeight, exportRef.current.scrollHeight)
-      
-      console.log('Export container dimensions:', {
-        width: rect.width,
-        height: rect.height,
-        calculatedHeight: exportHeight,
-        scrollHeight: exportRef.current.scrollHeight,
-        finalHeight
-      })
-
-      // Check if the image is too large (browsers typically have limits around 32,767px)
-      const maxSafeHeight = 25000 // Conservative limit to avoid browser issues
-      let pixelRatio = 1
-      let adjustedHeight = finalHeight
-      
-      if (finalHeight > maxSafeHeight) {
-        // Scale down for very large courses
-        pixelRatio = maxSafeHeight / finalHeight
-        adjustedHeight = maxSafeHeight
-        console.log(`Large course detected. Scaling down by ${pixelRatio.toFixed(2)}x`)
-      }
-
       // Ensure all content is rendered before capturing
       await new Promise(resolve => setTimeout(resolve, 200))
       
-      // Create the PNG image with appropriate scaling
-      const dataUrl = await toPng(exportRef.current, {
-        quality: 0.95, // Slightly reduce quality for very large images
-        pixelRatio: pixelRatio,
+      // Create the PNG image using snapdom
+      const result = await snapdom(exportRef.current, {
         backgroundColor: '#ffffff',
-        skipFonts: true,
         width: 1200,
-        height: adjustedHeight,
-        canvasWidth: 1200 * pixelRatio,
-        canvasHeight: adjustedHeight * pixelRatio,
-        style: {
-          fontFamily: 'Arial, sans-serif',
-          transform: `scale(${pixelRatio})`,
-          transformOrigin: 'top left'
-        }
+        format: 'png',
+        useProxy: 'https://api.allorigins.win/raw?url='
       })
       
       // Download the image
-      const link = document.createElement('a')
       const courseType = isVideoCourse ? 'video' : 'book'
-      const scaleSuffix = pixelRatio < 1 ? '_scaled' : ''
-      link.download = `owsla_${courseType}_${course.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}${scaleSuffix}.png`
-      link.href = dataUrl
-      link.click()
+      const filename = `owsla_${courseType}_${course.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+      
+      await result.download({ filename })
       
     } catch (error) {
       console.error('Error exporting image:', error)
-      
-      // Fallback: try with much more aggressive scaling
-      try {
-        console.log('Trying fallback export with aggressive scaling...')
-        const dataUrl = await toPng(exportRef.current, {
-          quality: 0.8,
-          pixelRatio: 0.5,
-          backgroundColor: '#ffffff',
-          skipFonts: true,
-          width: 1200,
-          height: Math.min(exportHeight, 15000), // Hard limit
-          style: {
-            fontFamily: 'Arial, sans-serif',
-            transform: 'scale(0.5)',
-            transformOrigin: 'top left'
-          }
-        })
-        
-        const link = document.createElement('a')
-        const courseType = isVideoCourse ? 'video' : 'book'
-        link.download = `owsla_${courseType}_${course.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_compressed.png`
-        link.href = dataUrl
-        link.click()
-        
-        alert('Exported with reduced quality due to course size. For best quality, consider splitting very long courses.')
-      } catch (fallbackError) {
-        console.error('Fallback export also failed:', fallbackError)
-        alert('Export failed due to course size. Very long courses may exceed browser limits. Consider splitting the course into smaller sections.')
-      }
+      alert('Export failed. Please try again.')
     }
   }, [course, isVideoCourse, exportHeight])
 
@@ -325,8 +262,7 @@ export function TopstersExport({
           ref={exportRef}
           className="w-[1200px] max-w-none bg-white text-gray-900 p-6"
           style={{ 
-            fontFamily: 'var(--font-sans)',
-            minHeight: `${exportHeight}px`
+            fontFamily: 'var(--font-sans)'
           }}
         >
             {/* Header Section */}
@@ -698,8 +634,7 @@ export function TopstersExport({
           ref={exportRef}
           className="w-[1200px] max-w-none bg-white text-gray-900 p-6"
           style={{ 
-            fontFamily: 'var(--font-sans)',
-            minHeight: `${exportHeight}px`
+            fontFamily: 'var(--font-sans)'
           }}
         >
           {/* Header Section */}
