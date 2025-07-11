@@ -6,21 +6,17 @@ import { deduplicateBooks } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookCover } from "@/components/ui/book-cover"
-import { Card, CardContent } from "@/components/ui/card"
 import { 
   Download,
-  CheckCircle,
-  AlertCircle,
   Play,
   Clock,
   FileText,
   BookOpen,
   Calendar,
   Target,
-  Lightbulb,
-  CheckSquare
+  Lightbulb
 } from "lucide-react"
-import { CourseData, Resource } from "@/types/course-editor"
+import { CourseData } from "@/types/course-editor"
 
 interface TopstersExportProps {
   course: CourseData

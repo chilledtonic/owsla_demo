@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,14 +7,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookCover } from "@/components/ui/book-cover"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { 
   BookOpen, 
   Target, 
   Brain, 
-  Lightbulb,
-  Plus,
   X,
   Youtube,
   Play,
@@ -164,7 +160,7 @@ export function CourseMetadataEditor({ course, onUpdate }: CourseMetadataEditorP
           </div>
           <div>
             <h2 className="text-xl font-semibold">Course Overview</h2>
-            <p className="text-sm text-muted-foreground">Start with the basics - what's your course about?</p>
+            <p className="text-sm text-muted-foreground">Start with the basics - what&apos;s your course about?</p>
           </div>
         </div>
         
@@ -181,7 +177,7 @@ export function CourseMetadataEditor({ course, onUpdate }: CourseMetadataEditorP
               id="course-title"
               value={course.title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="e.g., 'Introduction to Data Science' or 'Advanced Photography Techniques'"
+              placeholder="e.g., &apos;Introduction to Data Science&apos; or &apos;Advanced Photography Techniques&apos;"
               className="text-lg font-medium h-12"
             />
             <p className="text-xs text-muted-foreground">Make it clear and compelling - this is what learners will see first</p>
@@ -531,11 +527,11 @@ export function CourseMetadataEditor({ course, onUpdate }: CourseMetadataEditorP
               id="synthesis-goals"
               value={course.knowledge_framework.synthesis_goals}
               onChange={(e) => handleKnowledgeFrameworkChange('synthesis_goals', e.target.value)}
-              placeholder="What will learners be able to create, analyze, or synthesize by the end? What's the ultimate learning outcome..."
+              placeholder="What will learners be able to create, analyze, or synthesize by the end? What&apos;s the ultimate learning outcome..."
               rows={3}
               className="resize-none"
             />
-            <p className="text-xs text-muted-foreground">Think: How will learners demonstrate mastery? What's the end goal?</p>
+            <p className="text-xs text-muted-foreground">Think: How will learners demonstrate mastery? What&apos;s the end goal?</p>
           </div>
         </div>
       </div>

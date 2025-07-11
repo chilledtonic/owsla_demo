@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { 
   DndContext, 
   DragEndEvent, 
-  DragOverEvent,
   DragStartEvent,
   closestCenter,
   PointerSensor,
@@ -14,7 +13,6 @@ import {
 } from "@dnd-kit/core"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -27,8 +25,6 @@ import {
   X, 
   Plus, 
   BookOpen, 
-  FileText,
-  GripVertical,
   Edit,
   Package,
   Target,
@@ -38,6 +34,7 @@ import {
   ExternalLink,
   RefreshCw
 } from "lucide-react"
+import Image from "next/image"
 import { CourseEditorProps, CourseData, DailyModule, Resource } from "@/types/course-editor"
 import { ResourceLibrary } from "@/components/course-editor/resource-library"
 import { DailyModuleEditor } from "@/components/course-editor/daily-module-editor"
@@ -151,7 +148,7 @@ export function CourseEditor({
 }: CourseEditorProps) {
   const [course, setCourse] = useState<CourseData>(initialCourse || defaultCourse)
 
-  const [activeId, setActiveId] = useState<string | null>(null)
+
   const [hasChanges, setHasChanges] = useState(false)
   const [activeTab, setActiveTab] = useState("editor")
   
@@ -166,9 +163,9 @@ export function CourseEditor({
   // Add custom covers for supplementary resources - keyed by resource ID
   const [customSupplementaryCovers, setCustomSupplementaryCovers] = useState<Map<string, string>>(new Map())
   
-  const [exportDialogOpen, setExportDialogOpen] = useState(false)
+
   const [isDraggingFile, setIsDraggingFile] = useState<'book' | 'video' | string | null>(null)
-  const [videoUrl, setVideoUrl] = useState("")
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -183,19 +180,6 @@ export function CourseEditor({
   }, [course])
 
   // File drop handlers
-  const handleFileRead = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (e) => resolve(e.target?.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
-
-  const isImageFile = (file: File): boolean => {
-    return file.type.startsWith('image/') && 
-           ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)
-  }
 
   const handleFileDrop = async (e: React.DragEvent, type: 'book' | 'video' | string) => {
     e.preventDefault()
@@ -353,14 +337,14 @@ export function CourseEditor({
   }, [extractYouTubeVideoId, course.type])
 
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
+    // Handle drag start if needed
+    console.log('Drag started', event)
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     
     if (!over) {
-      setActiveId(null)
       return
     }
 
@@ -417,7 +401,6 @@ export function CourseEditor({
       }
     }
 
-    setActiveId(null)
   }
 
   const handleCourseTypeChange = (newType: 'book' | 'video') => {
@@ -715,9 +698,11 @@ export function CourseEditor({
                                       className="w-32 h-24 object-cover rounded-lg border shadow-sm"
                                     />
                                   ) : videoMetadata?.thumbnail_url ? (
-                                    <img 
+                                    <Image 
                                       src={videoMetadata.thumbnail_url} 
                                       alt="Video thumbnail"
+                                      width={128}
+                                      height={96}
                                       className="w-32 h-24 object-cover rounded-lg border shadow-sm"
                                     />
                                   ) : (
@@ -1092,7 +1077,7 @@ export function CourseEditor({
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {course.daily_modules.map((module, index) => (
+                          {course.daily_modules.map((module) => (
                             <DailyModuleEditor
                               key={module.day}
                               module={module}

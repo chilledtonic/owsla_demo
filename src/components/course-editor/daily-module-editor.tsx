@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { 
-  Calendar,
   Clock,
   Target,
   Lightbulb,
@@ -20,11 +19,9 @@ import {
   Globe,
   Plus,
   X,
-  GripVertical,
   Trash2,
   ChevronDown,
   ChevronUp,
-  Play,
   Edit3
 } from "lucide-react"
 import { DailyModule, Resource, VideoSegment } from "@/types/course-editor"
@@ -261,7 +258,7 @@ export function DailyModuleEditor({
   const [isExpanded, setIsExpanded] = useState(false)
   const isVideoCourse = !!module.video_segment
 
-  const handleFieldChange = (field: keyof DailyModule, value: any) => {
+  const handleFieldChange = (field: keyof DailyModule, value: string | string[]) => {
     onUpdate({ ...module, [field]: value })
   }
 
@@ -285,7 +282,7 @@ export function DailyModuleEditor({
     })
   }
 
-  const handleVideoSegmentChange = (field: keyof VideoSegment, value: any) => {
+  const handleVideoSegmentChange = (field: keyof VideoSegment, value: string | string[]) => {
     if (!module.video_segment) return
     
     onUpdate({
@@ -476,7 +473,7 @@ export function DailyModuleEditor({
             className="text-lg font-medium border-0 bg-background/50 h-12 focus-visible:ring-1"
           />
           <p className="text-xs text-muted-foreground">
-            Give this day a clear, descriptive title that tells learners what they'll focus on
+            Give this day a clear, descriptive title that tells learners what they&apos;ll focus on
           </p>
         </div>
       </div>

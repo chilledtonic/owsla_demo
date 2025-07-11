@@ -20,8 +20,14 @@ export function validateCourse(course: CourseData): ValidationResult {
   }
 
   // Primary resource validation
-  if (!course.primary_resource.title || !course.primary_resource.author) {
-    warnings.push("Primary resource information is incomplete")
+  if (course.type === 'book') {
+    if (!course.primary_resource?.title || !course.primary_resource?.author) {
+      warnings.push("Primary resource information is incomplete")
+    }
+  } else if (course.type === 'video') {
+    if (!course.primary_video?.title || !course.primary_video?.channel) {
+      warnings.push("Primary video information is incomplete")
+    }
   }
 
   // Daily modules validation
@@ -176,7 +182,9 @@ export function getCourseSummary(course: CourseData) {
   
   const datesSet = course.daily_modules.every(module => module.date)
   const hasOverview = course.executive_overview.trim().length > 0
-  const hasPrimaryResource = course.primary_resource.title && course.primary_resource.author
+  const hasPrimaryResource = course.type === 'book' 
+    ? course.primary_resource?.title && course.primary_resource?.author
+    : course.primary_video?.title && course.primary_video?.channel
   const hasKnowledgeFramework = Object.values(course.knowledge_framework).some(value => 
     value && value.trim().length > 0
   )
