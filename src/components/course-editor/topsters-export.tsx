@@ -723,18 +723,18 @@ export function TopstersExport({
                               <img 
                                 src={customCover} 
                                 alt="Book cover"
-                                className="h-20 w-14 object-cover rounded border shadow-sm mx-auto"
+                                className="h-28 w-20 object-cover rounded border shadow-sm mx-auto"
                               />
                             ) : (
                               <BookCover 
                                 isbn={book.isbn}
                                 title={book.title}
-                                className="h-20 w-14 shadow-sm mx-auto"
+                                className="h-28 w-20 shadow-sm mx-auto"
                               />
                             )
                           ) : (
-                            <div className="h-20 w-14 bg-blue-100 border border-blue-200 rounded flex items-center justify-center mx-auto">
-                              <BookOpen className="h-3 w-3 text-blue-600" />
+                            <div className="h-28 w-20 bg-blue-100 border border-blue-200 rounded flex items-center justify-center mx-auto">
+                              <BookOpen className="h-4 w-4 text-blue-600" />
                             </div>
                           )}
                           <div className="text-xs text-gray-600 mt-1 leading-tight">
@@ -749,28 +749,41 @@ export function TopstersExport({
                   </div>
                 </div>
               )}
-
-              {/* Academic Papers */}
-              {allPapers.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Academic Papers</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {allPapers.map((paper, index) => (
-                      <div key={index} className="bg-green-50 border border-green-200 rounded p-2">
-                        <div className="text-xs font-medium text-green-800 leading-tight">
-                          {paper.title}
-                        </div>
-                        <div className="text-xs text-green-600 leading-tight">{paper.author}</div>
-                        {paper.journal && (
-                          <div className="text-xs text-green-500 leading-tight">{paper.journal}</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
+
+          {/* Academic Papers - Full Width 3 Column Grid */}
+          {allPapers.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Academic Papers
+              </h2>
+              <div className="grid grid-cols-3 gap-4">
+                {allPapers.map((paper, index) => (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-start gap-2">
+                      <div className="text-xs text-gray-600 mt-1">•</div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-gray-800 leading-tight">
+                          {paper.title}
+                        </div>
+                        <div className="text-xs text-gray-600 leading-tight">
+                          {paper.author}
+                        </div>
+                        {(paper.journal || paper.year) && (
+                          <div className="text-xs text-gray-500 leading-tight">
+                            {paper.journal && paper.year ? `${paper.journal} (${paper.year})` : 
+                             paper.journal || paper.year}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Daily Learning Plan - 3 Column Grid */}
           <div>

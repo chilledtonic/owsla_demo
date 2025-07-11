@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { ResourceEditDialog } from "@/components/course-editor/resource-edit-dialog"
 import { 
   Clock,
   Target,
@@ -22,7 +23,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Edit3
+  Edit3,
+  Pencil
 } from "lucide-react"
 import { DailyModule, Resource, VideoSegment } from "@/types/course-editor"
 
@@ -70,6 +72,7 @@ function DroppableArea({ id, children, className = "", type, moduleDay }: Droppa
 function ResourceCard({ 
   resource, 
   onRemove,
+  onEdit,
   customCover,
   onFileDrop,
   onDragOver,
@@ -79,6 +82,7 @@ function ResourceCard({
 }: { 
   resource: Resource; 
   onRemove: () => void;
+  onEdit: (updatedResource: Resource) => void;
   customCover?: string;
   onFileDrop?: (e: React.DragEvent, type: string) => void;
   onDragOver?: (e: React.DragEvent, type: string) => void;
@@ -102,6 +106,7 @@ function ResourceCard({
 
   const resourceId = resource.id || `${resource.title}-${resource.author}`
   const isDragging = isDraggingFile === resourceId
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   return (
     <div className="p-4 border rounded-lg bg-background">
@@ -173,14 +178,26 @@ function ResourceCard({
             <h5 className="font-medium text-sm leading-tight line-clamp-2">
               {resource.title}
             </h5>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onRemove}
-              className="h-6 w-6 p-0 flex-shrink-0"
-            >
-              <X className="h-3 w-3" />
-            </Button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditDialogOpen(true)}
+                className="h-6 w-6 p-0"
+                title="Edit resource"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onRemove}
+                className="h-6 w-6 p-0"
+                title="Remove resource"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
           
           {/* Author and Year */}
@@ -239,6 +256,14 @@ function ResourceCard({
           </div>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <ResourceEditDialog
+        resource={resource}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={onEdit}
+      />
     </div>
   )
 }
@@ -347,6 +372,15 @@ export function DailyModuleEditor({
     onUpdate({
       ...module,
       supplementary_readings: module.supplementary_readings.filter((_, i) => i !== index)
+    })
+  }
+
+  const editResource = (index: number, updatedResource: Resource) => {
+    onUpdate({
+      ...module,
+      supplementary_readings: module.supplementary_readings.map((resource, i) => 
+        i === index ? updatedResource : resource
+      )
     })
   }
 
@@ -761,6 +795,7 @@ export function DailyModuleEditor({
                             key={index}
                             resource={resource}
                             onRemove={() => removeResource(index)}
+                            onEdit={(updatedResource) => editResource(index, updatedResource)}
                             customCover={customSupplementaryCovers?.get(resourceId)}
                             onFileDrop={onSupplementaryFileDrop}
                             onDragOver={onSupplementaryDragOver}

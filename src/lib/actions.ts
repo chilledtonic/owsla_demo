@@ -199,7 +199,17 @@ function convertCurriculumToCourseData(curriculum: CurriculumData): CourseData {
         year: reading.year?.toString() || '',
         journal: reading.journal || '',
         publisher: reading.publisher || '',
-        type: reading.isbn ? 'book' as const : 'paper' as const
+        // Improved type determination logic
+        type: (() => {
+          // If it has a DOI, it's most likely a paper
+          if (reading.doi && reading.doi !== 'N/A') return 'paper' as const
+          // If it has a journal, it's definitely a paper
+          if (reading.journal && reading.journal !== 'N/A') return 'paper' as const
+          // If it has an ISBN but no journal/DOI, it's likely a book
+          if (reading.isbn && reading.isbn !== 'N/A' && !reading.journal) return 'book' as const
+          // Default to paper if we can't determine clearly
+          return 'paper' as const
+        })()
       })) || [],
       pre_viewing_primer: module.pre_viewing_primer,
       post_viewing_synthesis: module.post_viewing_synthesis
