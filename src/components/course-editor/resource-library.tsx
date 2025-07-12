@@ -200,11 +200,11 @@ function ResourceSkeleton() {
 }
 
 function EmptyState({ 
-  selectedSources,
+  selectedSource,
   hasSearched, 
   onExampleSearch 
 }: { 
-  selectedSources: SearchSource[]
+  selectedSource: SearchSource
   hasSearched: boolean
   onExampleSearch: (query: string) => void 
 }) {
@@ -247,7 +247,7 @@ function EmptyState({
 export function ResourceLibrary() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
-  const [selectedSources, setSelectedSources] = useState<SearchSource[]>(['openlibrary', 'crossref'])
+  const [selectedSource, setSelectedSource] = useState<SearchSource>('openlibrary')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<Resource[]>([])
@@ -350,8 +350,8 @@ export function ResourceLibrary() {
       try {
         const allResults: Resource[] = []
 
-        // Search Zotero if selected and enabled
-        if (selectedSources.includes('zotero') && zoteroEnabled) {
+        // Search the selected source
+        if (selectedSource === 'zotero' && zoteroEnabled) {
           try {
             const zoteroResults = await searchZoteroResources(debouncedQuery)
             allResults.push(...zoteroResults)
@@ -359,13 +359,9 @@ export function ResourceLibrary() {
             console.error('Zotero search error:', err)
             setError(err instanceof Error ? err.message : 'Zotero search failed')
           }
-        }
-
-        // Search external sources
-        const externalSources = selectedSources.filter(s => s !== 'zotero')
-        if (externalSources.length > 0) {
+        } else if (selectedSource !== 'zotero') {
           try {
-            const externalResults = await searchExternalResources(debouncedQuery, externalSources)
+            const externalResults = await searchExternalResources(debouncedQuery, [selectedSource])
             allResults.push(...externalResults)
           } catch (err) {
             console.error('External search error:', err)
@@ -384,7 +380,7 @@ export function ResourceLibrary() {
     }
 
     performSearch()
-  }, [debouncedQuery, selectedSources, zoteroEnabled])
+  }, [debouncedQuery, selectedSource, zoteroEnabled])
 
   const handleExampleSearch = useCallback((query: string) => {
     setSearchQuery(query)
@@ -406,15 +402,8 @@ export function ResourceLibrary() {
       return
     }
 
-    setSelectedSources(prev => {
-      if (prev.includes(sourceId)) {
-        // Don't allow deselecting all sources
-        if (prev.length === 1) return prev
-        return prev.filter(s => s !== sourceId)
-      } else {
-        return [...prev, sourceId]
-      }
-    })
+    // Simply set the new source - this creates toggle behavior
+    setSelectedSource(sourceId)
   }, [zoteroEnabled])
 
   return (
@@ -448,7 +437,7 @@ export function ResourceLibrary() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {SEARCH_SOURCES.map((source) => {
-              const isSelected = selectedSources.includes(source.id)
+              const isSelected = selectedSource === source.id
               const isZoteroUnavailable = source.id === 'zotero' && !zoteroEnabled
               
               return (
@@ -470,10 +459,7 @@ export function ResourceLibrary() {
             })}
           </div>
           <p className="text-xs text-muted-foreground">
-            {selectedSources.length === 0 
-              ? 'Select at least one source'
-              : `Searching ${selectedSources.map(s => SEARCH_SOURCES.find(src => src.id === s)?.name).join(', ')}`
-            }
+            {`Searching ${SEARCH_SOURCES.find(src => src.id === selectedSource)?.name || 'Unknown'}`}
           </p>
         </div>
 
@@ -512,7 +498,7 @@ export function ResourceLibrary() {
               ))
             ) : (
               <EmptyState 
-                selectedSources={selectedSources}
+                selectedSource={selectedSource}
                 hasSearched={hasSearched}
                 onExampleSearch={handleExampleSearch}
               />

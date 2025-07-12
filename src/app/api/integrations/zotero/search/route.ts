@@ -237,7 +237,7 @@ async function searchZoteroLibraryCached(
     const headers: Record<string, string> = {
       'Zotero-API-Version': '3',
       'Zotero-API-Key': apiKey,
-      'User-Agent': 'Owsla Learning Platform'
+      'User-Agent': 'owsla.io'
     }
 
     if (cached?.version) {

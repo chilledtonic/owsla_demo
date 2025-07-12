@@ -251,7 +251,7 @@ export function SourceTab({
   courseOutline,
   setCourseOutline
 }: SourceTabProps) {
-  const [selectedSources, setSelectedSources] = useState<SearchSource[]>(['openlibrary', 'crossref'])
+  const [selectedSource, setSelectedSource] = useState<SearchSource>('openlibrary')
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -352,7 +352,7 @@ export function SourceTab({
       try {
         const allResults: Resource[] = []
 
-        if (selectedSources.includes('zotero') && zoteroEnabled) {
+        if (selectedSource === 'zotero' && zoteroEnabled) {
           try {
             const zoteroResults = await searchZoteroResources(debouncedQuery)
             allResults.push(...zoteroResults)
@@ -360,12 +360,9 @@ export function SourceTab({
             console.error('Zotero search error:', err)
             setError(err instanceof Error ? err.message : 'Zotero search failed')
           }
-        }
-
-        const externalSources = selectedSources.filter(s => s !== 'zotero')
-        if (externalSources.length > 0) {
+        } else if (selectedSource !== 'zotero') {
           try {
-            const externalResults = await searchExternalResources(debouncedQuery, externalSources)
+            const externalResults = await searchExternalResources(debouncedQuery, [selectedSource])
             allResults.push(...externalResults)
           } catch (err) {
             console.error('External search error:', err)
@@ -384,7 +381,7 @@ export function SourceTab({
     }
 
     performSearch()
-  }, [debouncedQuery, selectedSources, zoteroEnabled])
+  }, [debouncedQuery, selectedSource, zoteroEnabled])
 
   const handleSourceToggle = useCallback((sourceId: SearchSource) => {
     if (sourceId === 'zotero' && !zoteroEnabled) {
@@ -392,14 +389,8 @@ export function SourceTab({
       return
     }
 
-    setSelectedSources(prev => {
-      if (prev.includes(sourceId)) {
-        if (prev.length === 1) return prev
-        return prev.filter(s => s !== sourceId)
-      } else {
-        return [...prev, sourceId]
-      }
-    })
+    // Simply set the new source - this creates toggle behavior
+    setSelectedSource(sourceId)
   }, [zoteroEnabled])
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -511,27 +502,27 @@ export function SourceTab({
                 )}
               </div>
               <div className="flex gap-2 flex-wrap">
-                {SEARCH_SOURCES.map((source) => {
-                  const isSelected = selectedSources.includes(source.id)
-                  const isZoteroUnavailable = source.id === 'zotero' && !zoteroEnabled
-                  
-                  return (
-                    <Button
-                      key={source.id}
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
-                      className={`h-8 text-xs px-2 gap-1 ${
-                        isZoteroUnavailable ? 'opacity-60' : ''
-                      }`}
-                      onClick={() => handleSourceToggle(source.id)}
-                      disabled={checkingZotero && source.id === 'zotero'}
-                    >
-                      <source.icon className="h-3 w-3" />
-                      {source.name}
-                      {isZoteroUnavailable && <ExternalLink className="h-3 w-3 ml-1" />}
-                    </Button>
-                  )
-                })}
+                            {SEARCH_SOURCES.map((source) => {
+              const isSelected = selectedSource === source.id
+              const isZoteroUnavailable = source.id === 'zotero' && !zoteroEnabled
+              
+              return (
+                <Button
+                  key={source.id}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={`h-8 text-xs px-2 gap-1 ${
+                    isZoteroUnavailable ? 'opacity-60' : ''
+                  }`}
+                  onClick={() => handleSourceToggle(source.id)}
+                  disabled={checkingZotero && source.id === 'zotero'}
+                >
+                  <source.icon className="h-3 w-3" />
+                  {source.name}
+                  {isZoteroUnavailable && <ExternalLink className="h-3 w-3 ml-1" />}
+                </Button>
+              )
+            })}
               </div>
             </div>
 
