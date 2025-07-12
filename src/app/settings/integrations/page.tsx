@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { 
   Save, 
-  Trash2, 
   ExternalLink, 
   RefreshCw, 
   CheckCircle, 
@@ -103,7 +102,7 @@ export default function IntegrationsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          is_enabled: zotero.isEnabled,
+          is_enabled: true, // Always enable when saving a key
           api_key: zotero.apiKey
         })
       })
@@ -117,9 +116,9 @@ export default function IntegrationsPage() {
       setZotero(prev => ({
         ...prev,
         lastSyncAt: data.last_sync_at,
-        success: 'Integration saved successfully',
+        success: 'Integration saved and enabled successfully',
         apiKey: "", // Clear the input for security
-        isEnabled: data.is_enabled // Update enabled state from server response
+        isEnabled: true // Always enabled when key is saved
       }))
     } catch (error) {
       console.error('Error saving integration:', error)
@@ -132,11 +131,60 @@ export default function IntegrationsPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this integration? This will also remove all cached Zotero resources.')) {
-      return
-    }
+  const handleToggle = async (checked: boolean) => {
+    if (checked) {
+      // If trying to enable but no saved integration exists, show error
+      if (!zotero.lastSyncAt) {
+        setZotero(prev => ({ 
+          ...prev, 
+          error: 'Please save your API key first to enable the integration'
+        }))
+        return
+      }
+      
+      // Enable the existing integration
+      setZotero(prev => ({ ...prev, isSaving: true, error: null, success: null }))
+      
+      try {
+        const response = await fetch('/api/integrations/zotero', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            is_enabled: true,
+            api_key: null // Don't change the existing key
+          })
+        })
 
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to enable integration')
+        }
+
+        setZotero(prev => ({
+          ...prev,
+          isEnabled: true,
+          success: 'Integration enabled successfully'
+        }))
+      } catch (error) {
+        console.error('Error enabling integration:', error)
+        setZotero(prev => ({
+          ...prev,
+          error: error instanceof Error ? error.message : 'Failed to enable integration'
+        }))
+      } finally {
+        setZotero(prev => ({ ...prev, isSaving: false }))
+      }
+    } else {
+      // If disabling, delete the integration entirely
+      if (!confirm('Disabling will delete your API key and all cached Zotero resources. Are you sure?')) {
+        return
+      }
+      
+      await handleDelete()
+    }
+  }
+
+  const handleDelete = async () => {
     setZotero(prev => ({ ...prev, isDeleting: true, error: null, success: null }))
 
     try {
@@ -257,7 +305,7 @@ export default function IntegrationsPage() {
                     Access your Zotero library when searching for resources. Books and journal articles from your library will be available in the course editor.
                     {!zotero.lastSyncAt && (
                       <span className="block mt-1 text-amber-600 dark:text-amber-400 font-medium">
-                        Save your API key below to enable this integration.
+                        Enter your API key below to enable this integration.
                       </span>
                     )}
                   </CardDescription>
@@ -265,19 +313,8 @@ export default function IntegrationsPage() {
                 <div className="flex flex-col items-end gap-1">
                   <Switch
                     checked={zotero.isEnabled}
-                    onCheckedChange={(checked) => {
-                      // Only allow enabling if there's a saved API key (lastSyncAt indicates a saved integration)
-                      if (checked && !zotero.lastSyncAt) {
-                        setZotero(prev => ({ 
-                          ...prev, 
-                          error: 'Please save your API key first before enabling the integration'
-                        }))
-                        return
-                      }
-                      setZotero(prev => ({ ...prev, isEnabled: checked }))
-                      clearMessages()
-                    }}
-                    disabled={zotero.isSaving || zotero.isDeleting || (!zotero.lastSyncAt && !zotero.isEnabled)}
+                    onCheckedChange={handleToggle}
+                    disabled={zotero.isSaving || zotero.isDeleting}
                   />
                   {!zotero.lastSyncAt && (
                     <span className="text-xs text-muted-foreground">
@@ -318,7 +355,7 @@ export default function IntegrationsPage() {
                           setZotero(prev => ({ ...prev, apiKey: e.target.value }))
                           clearMessages()
                         }}
-                        placeholder={!zotero.lastSyncAt ? "Enter your Zotero API key to enable integration..." : "Enter new API key to update..."}
+                        placeholder={!zotero.lastSyncAt ? "Enter your Zotero API key..." : "Enter new API key to update..."}
                         disabled={zotero.isSaving || zotero.isDeleting}
                       />
                       <Button
@@ -359,6 +396,11 @@ export default function IntegrationsPage() {
                         To get an API key: visit the link above, give it a descriptive name like "Owsla Integration", 
                         and ensure "Allow library access" is checked.
                       </p>
+                      {zotero.lastSyncAt && (
+                        <p className="mt-1 text-amber-600 dark:text-amber-400">
+                          Note: Disabling the integration will delete your API key and cached resources.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -374,37 +416,22 @@ export default function IntegrationsPage() {
                     ) : (
                       <Save className="h-4 w-4 mr-2" />
                     )}
-                    {!zotero.lastSyncAt ? 'Save & Enable Integration' : 'Update Integration'}
+                    {!zotero.lastSyncAt ? 'Save & Enable' : 'Update API Key'}
                   </Button>
 
                   {zotero.lastSyncAt && (
-                    <>
-                      <Button
-                        variant="outline"
-                        onClick={handleSync}
-                        disabled={zotero.isSyncing || !zotero.isEnabled}
-                      >
-                        {zotero.isSyncing ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                        )}
-                        Sync Now
-                      </Button>
-
-                      <Button
-                        variant="destructive"
-                        onClick={handleDelete}
-                        disabled={zotero.isDeleting || zotero.isSaving}
-                      >
-                        {zotero.isDeleting ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 mr-2" />
-                        )}
-                        Delete
-                      </Button>
-                    </>
+                    <Button
+                      variant="outline"
+                      onClick={handleSync}
+                      disabled={zotero.isSyncing || !zotero.isEnabled}
+                    >
+                      {zotero.isSyncing ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      Sync Now
+                    </Button>
                   )}
                 </div>
               </div>
