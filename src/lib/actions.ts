@@ -656,6 +656,97 @@ export async function fetchDashboardData(userId: string) {
   }
 }
 
+export async function submitSourceCurriculum(payload: {
+  body: {
+    primaryResource: {
+      title: string
+      author: string
+      year?: string
+      publisher?: string
+      isbn?: string
+      type: string
+    } | null
+    secondaryResources: Array<{
+      title: string
+      author: string
+      year?: string
+      publisher?: string
+      isbn?: string
+      type: string
+    }>
+    academicPapers: Array<{
+      title: string
+      authors: string
+      year?: string
+      journal?: string
+      doi?: string
+    }>
+    courseOutline: string
+    preliminaries: string
+    course_parameters: {
+      length_of_study: number
+      daily_time_commitment: number
+      depth_level: number
+      pace: string
+    }
+    learner_profile: {
+      education_level: string
+      prior_knowledge: string
+      learning_style: string
+    }
+    curriculum_preferences: {
+      focus_areas: string[]
+      supplementary_material_ratio: number
+      contemporary_vs_classical: number
+    }
+    schedule: {
+      start_date: string
+      study_days: string[]
+      break_weeks: string[]
+    }
+  }
+  user_context: {
+    user_id: string
+    user_email: string
+    user_name: string | null
+  }
+}) {
+  console.log('📚 Submitting source-based curriculum request...')
+  
+  try {
+    const webhookUrl = 'https://owslaio.app.n8n.cloud/webhook-test/45fc3a28-2646-49af-ab25-b6b3f3c60f01'
+    const hookUser = process.env.HOOK_USER
+    const hookPass = process.env.HOOK_PASS
+
+    if (!hookUser || !hookPass) {
+      throw new Error('Webhook credentials not configured')
+    }
+
+    const credentials = Buffer.from(`${hookUser}:${hookPass}`).toString('base64')
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      throw new Error(`Webhook submission failed: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    console.log('✅ Source curriculum request submitted successfully')
+    
+    return { success: true, data: result }
+  } catch (error) {
+    console.error('❌ Error submitting source curriculum:', error)
+    throw error
+  }
+}
+
 // IMPORTANT: Dedicated server action for cache revalidation when background jobs complete
 export async function revalidateCurriculumCache(userId: string) {
   'use server'

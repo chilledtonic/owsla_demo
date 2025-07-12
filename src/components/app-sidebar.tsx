@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor, Plus, Edit } from "lucide-react"
+import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor, Plus, Edit, Plug } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { useTheme } from "next-themes"
 import Link from "next/link"
@@ -131,6 +131,14 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
             <SidebarGroupLabel>Settings</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/settings/integrations">
+                      <Plug className="size-4" />
+                      <span>Integrations</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link href="/handler/account-settings">
@@ -336,6 +344,12 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings/integrations">
+                      <Plug className="mr-2 h-4 w-4" />
+                      Integrations
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/handler/account-settings">
                       <Settings className="mr-2 h-4 w-4" />

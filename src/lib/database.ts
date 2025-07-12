@@ -307,4 +307,248 @@ export async function getAllJobsByUserId(userId: string): Promise<ActiveJobData[
   }
 }
 
+export interface UserIntegrationData {
+  id: number
+  user_id: string
+  integration_type: 'zotero'
+  is_enabled: boolean
+  api_key_encrypted: string | null
+  settings: Record<string, unknown>
+  last_sync_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ZoteroResourceData {
+  id: number
+  user_id: string
+  zotero_key: string
+  zotero_version: number
+  item_type: 'book' | 'journalArticle'
+  title: string
+  authors: string[] | null
+  year: number | null
+  publisher: string | null
+  isbn: string | null
+  doi: string | null
+  abstract: string | null
+  tags: string[] | null
+  collections: string[] | null
+  raw_data: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+// User Integrations functions
+export async function getUserIntegration(userId: string, integrationType: 'zotero'): Promise<UserIntegrationData | null> {
+  try {
+    const result = await sql`
+      SELECT * FROM user_integrations 
+      WHERE user_id = ${userId} AND integration_type = ${integrationType}
+    `
+    
+    if (result.length === 0) {
+      return null
+    }
+    
+    return result[0] as UserIntegrationData
+  } catch (error) {
+    console.error('Error fetching user integration:', error)
+    throw new Error('Failed to fetch user integration')
+  }
+}
+
+export async function upsertUserIntegration(
+  userId: string, 
+  integrationType: 'zotero', 
+  data: {
+    is_enabled: boolean
+    api_key_encrypted?: string | null
+    settings?: Record<string, unknown>
+  }
+): Promise<UserIntegrationData> {
+  try {
+    const result = await sql`
+      INSERT INTO user_integrations (
+        user_id,
+        integration_type,
+        is_enabled,
+        api_key_encrypted,
+        settings
+      ) VALUES (
+        ${userId},
+        ${integrationType},
+        ${data.is_enabled},
+        ${data.api_key_encrypted || null},
+        ${data.settings ? JSON.stringify(data.settings) : '{}'}::jsonb
+      )
+      ON CONFLICT (user_id, integration_type)
+      DO UPDATE SET
+        is_enabled = EXCLUDED.is_enabled,
+        api_key_encrypted = COALESCE(EXCLUDED.api_key_encrypted, user_integrations.api_key_encrypted),
+        settings = EXCLUDED.settings,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `
+    
+    if (result.length === 0) {
+      throw new Error('Failed to upsert user integration')
+    }
+    
+    return result[0] as UserIntegrationData
+  } catch (error) {
+    console.error('Error upserting user integration:', error)
+    throw new Error('Failed to upsert user integration')
+  }
+}
+
+export async function deleteUserIntegration(userId: string, integrationType: 'zotero'): Promise<boolean> {
+  try {
+    const result = await sql`
+      DELETE FROM user_integrations 
+      WHERE user_id = ${userId} AND integration_type = ${integrationType}
+    `
+    
+    return Array.isArray(result) ? result.length > 0 : true
+  } catch (error) {
+    console.error('Error deleting user integration:', error)
+    throw new Error('Failed to delete user integration')
+  }
+}
+
+// Zotero Resources functions
+export async function getZoteroResources(
+  userId: string, 
+  options?: {
+    search?: string
+    itemType?: 'book' | 'journalArticle'
+    limit?: number
+    offset?: number
+  }
+): Promise<ZoteroResourceData[]> {
+  try {
+    let query = sql`
+      SELECT * FROM zotero_resources 
+      WHERE user_id = ${userId}
+    `
+    
+    if (options?.itemType) {
+      query = sql`${query} AND item_type = ${options.itemType}`
+    }
+    
+    if (options?.search) {
+      const searchTerm = `%${options.search}%`
+      query = sql`
+        ${query} AND (
+          title ILIKE ${searchTerm} OR
+          ${searchTerm} = ANY(authors) OR
+          ${searchTerm} = ANY(tags)
+        )
+      `
+    }
+    
+    query = sql`${query} ORDER BY updated_at DESC`
+    
+    if (options?.limit) {
+      query = sql`${query} LIMIT ${options.limit}`
+    }
+    
+    if (options?.offset) {
+      query = sql`${query} OFFSET ${options.offset}`
+    }
+    
+    const result = await query
+    return result as ZoteroResourceData[]
+  } catch (error) {
+    console.error('Error fetching Zotero resources:', error)
+    throw new Error('Failed to fetch Zotero resources')
+  }
+}
+
+export async function upsertZoteroResources(userId: string, resources: Omit<ZoteroResourceData, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]): Promise<void> {
+  try {
+    if (resources.length === 0) return
+    
+    // Use individual upserts for Neon compatibility
+    for (const resource of resources) {
+      await sql`
+        INSERT INTO zotero_resources (
+          user_id,
+          zotero_key,
+          zotero_version,
+          item_type,
+          title,
+          authors,
+          year,
+          publisher,
+          isbn,
+          doi,
+          abstract,
+          tags,
+          collections,
+          raw_data
+        ) VALUES (
+          ${userId},
+          ${resource.zotero_key},
+          ${resource.zotero_version},
+          ${resource.item_type},
+          ${resource.title},
+          ${resource.authors || null}::text[],
+          ${resource.year || null},
+          ${resource.publisher || null},
+          ${resource.isbn || null},
+          ${resource.doi || null},
+          ${resource.abstract || null},
+          ${resource.tags || null}::text[],
+          ${resource.collections || null}::text[],
+          ${JSON.stringify(resource.raw_data)}::jsonb
+        )
+        ON CONFLICT (user_id, zotero_key)
+        DO UPDATE SET
+          zotero_version = EXCLUDED.zotero_version,
+          item_type = EXCLUDED.item_type,
+          title = EXCLUDED.title,
+          authors = EXCLUDED.authors,
+          year = EXCLUDED.year,
+          publisher = EXCLUDED.publisher,
+          isbn = EXCLUDED.isbn,
+          doi = EXCLUDED.doi,
+          abstract = EXCLUDED.abstract,
+          tags = EXCLUDED.tags,
+          collections = EXCLUDED.collections,
+          raw_data = EXCLUDED.raw_data,
+          updated_at = CURRENT_TIMESTAMP
+      `
+    }
+  } catch (error) {
+    console.error('Error upserting Zotero resources:', error)
+    throw new Error('Failed to upsert Zotero resources')
+  }
+}
+
+export async function updateZoteroSyncTime(userId: string): Promise<void> {
+  try {
+    await sql`
+      UPDATE user_integrations 
+      SET last_sync_at = CURRENT_TIMESTAMP
+      WHERE user_id = ${userId} AND integration_type = 'zotero'
+    `
+  } catch (error) {
+    console.error('Error updating Zotero sync time:', error)
+    throw new Error('Failed to update Zotero sync time')
+  }
+}
+
+export async function deleteZoteroResources(userId: string): Promise<void> {
+  try {
+    await sql`
+      DELETE FROM zotero_resources 
+      WHERE user_id = ${userId}
+    `
+  } catch (error) {
+    console.error('Error deleting Zotero resources:', error)
+    throw new Error('Failed to delete Zotero resources')
+  }
+}
+
  

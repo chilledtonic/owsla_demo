@@ -4,21 +4,23 @@ import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { useUser } from "@stackframe/stack"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarIcon, Youtube, BookOpen, ArrowRight, Play, Eye, Clock, AlertTriangle } from "lucide-react"
+import { CalendarIcon, Youtube, BookOpen, ArrowRight, Library } from "lucide-react"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { submitNewCurriculum, submitYoutubeCurriculum } from "@/lib/actions"
-import Image from "next/image"
+import { submitNewCurriculum, submitYoutubeCurriculum, submitSourceCurriculum } from "@/lib/actions"
+import { TopicTab } from "./new-curriculum-form/topic-tab"
+import { YoutubeTab } from "./new-curriculum-form/youtube-tab"
+import { SourceTab } from "./new-curriculum-form/source-tab"
+import { QuickSetup } from "./new-curriculum-form/quick-setup"
+import { AdvancedConfig } from "./new-curriculum-form/advanced-config"
+import { Resource } from "@/types/course-editor"
 
 interface YoutubeMetadata {
   title: string
@@ -35,6 +37,31 @@ interface ExtendedYoutubeMetadata extends YoutubeMetadata {
 interface NewCurriculumFormProps {
   onCancel?: () => void
   onSuccess?: () => void
+}
+
+interface CurriculumFormData {
+  topic: string
+  preliminaries: string
+  course_parameters: {
+    length_of_study: number
+    daily_time_commitment: number
+    depth_level: number
+    pace: "fast" | "moderate" | "slow"
+  }
+  learner_profile: {
+    education_level: "novice" | "undergraduate" | "graduate" | "professional"
+    prior_knowledge: "none" | "basic" | "intermediate" | "advanced"
+    learning_style: "visual" | "conceptual" | "practical" | "mixed"
+  }
+  curriculum_preferences: {
+    focus_areas: string[]
+    supplementary_material_ratio: number
+    contemporary_vs_classical: number
+  }
+  schedule: {
+    study_days: string[]
+    break_weeks: string[]
+  }
 }
 
 // Helper function to convert seconds to readable format
@@ -139,7 +166,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
   const [isAdvanced, setIsAdvanced] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [startDate, setStartDate] = useState<Date>()
-  const [activeTab, setActiveTab] = useState<"topic" | "youtube">("topic")
+  const [activeTab, setActiveTab] = useState<"topic" | "youtube" | "source">("topic")
 
   // YouTube-specific state
   const [youtubeUrl, setYoutubeUrl] = useState("")
@@ -148,13 +175,21 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
   const [metadataError, setMetadataError] = useState<string | null>(null)
   const [durationError, setDurationError] = useState<string | null>(null)
 
+  // Source-specific state
+  const [primaryResource, setPrimaryResource] = useState<Resource | null>(null)
+  const [secondaryResources, setSecondaryResources] = useState<Resource[]>([])
+  const [academicPapers, setAcademicPapers] = useState<Resource[]>([])
+  
+  // Course outline state
+  const [courseOutline, setCourseOutline] = useState("")
+
   // Basic mode state (3 sliders)
   const [depth, setDepth] = useState([5])
   const [lengthOfStudy, setLengthOfStudy] = useState([7])
   const [educationLevel, setEducationLevel] = useState([5])
 
   // Advanced mode state
-  const [formData, setFormData] = useState({
+  const [curriculumFormData, setCurriculumFormData] = useState<CurriculumFormData>({
     topic: "",
     preliminaries: "",
     course_parameters: {
@@ -169,26 +204,26 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
       learning_style: "mixed" as "visual" | "conceptual" | "practical" | "mixed"
     },
     curriculum_preferences: {
-      focus_areas: [] as string[],
-      supplementary_material_ratio: 0.8,
+      focus_areas: ["practical", "contemporary"],
+      supplementary_material_ratio: 0.3,
       contemporary_vs_classical: 0.7
     },
     schedule: {
-      study_days: ["monday", "tuesday", "wednesday", "thursday", "friday"] as string[],
-      break_weeks: [] as string[]
+      study_days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      break_weeks: []
     }
   })
 
-  // Memoized helper function to extract YouTube video ID from URL
+  // Extract YouTube video ID from URL
   const extractYouTubeVideoId = useCallback((url: string): string | null => {
-    const regexPatterns = [
+    const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
-      /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/
     ]
     
-    for (const pattern of regexPatterns) {
+    for (const pattern of patterns) {
       const match = url.match(pattern)
-      if (match && match[1]) {
+      if (match) {
         return match[1]
       }
     }
@@ -196,19 +231,11 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
     return null
   }, [])
 
-  // YouTube metadata fetching with duration
+  // Fetch YouTube metadata with duration
   const fetchYoutubeMetadata = useCallback(async (url: string) => {
-    if (!url.trim()) {
-      setYoutubeMetadata(null)
-      setMetadataError(null)
-      setDurationError(null)
-      return
-    }
-
-    // Extract video ID for validation
     const videoId = extractYouTubeVideoId(url)
     if (!videoId) {
-      setMetadataError("Please enter a valid YouTube URL")
+      setMetadataError("Invalid YouTube URL. Please check the URL and try again.")
       setYoutubeMetadata(null)
       setDurationError(null)
       return
@@ -217,34 +244,39 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
     setFetchingMetadata(true)
     setMetadataError(null)
     setDurationError(null)
-    
+
     try {
-      // Fetch basic metadata
-      const youtube = await import('youtube-metadata-from-url')
-      const basicMetadata = await youtube.metadata(url)
+      // Fetch basic metadata from oEmbed
+      const oembedResponse = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)
       
-      // Try to fetch duration
+      if (!oembedResponse.ok) {
+        throw new Error("Video not found or unavailable")
+      }
+
+      const metadata: YoutubeMetadata = await oembedResponse.json()
+      
+      // Fetch duration separately
       const duration = await getYouTubeVideoDuration(videoId)
       
       const extendedMetadata: ExtendedYoutubeMetadata = {
-        ...basicMetadata,
+        ...metadata,
         duration: duration || undefined,
         durationString: duration ? formatDuration(duration) : undefined
       }
-      
-      // Validate minimum duration
-      if (duration && duration < 1800) { // 30 minutes = 1800 seconds
-        setDurationError("Videos must be at least 30 minutes long to create a comprehensive curriculum.")
-        setYoutubeMetadata(extendedMetadata)
-        return
+
+      // Validate duration
+      if (duration && duration < 30 * 60) { // Less than 30 minutes
+        setDurationError("Video must be at least 30 minutes long for curriculum creation")
+      } else {
+        setDurationError(null)
       }
-      
-      // Update recommended study length based on duration
+
+      // Auto-adjust length of study based on video duration
       if (duration && activeTab === "youtube") {
         const recommendedDays = calculateRecommendedDays(duration)
         setLengthOfStudy([recommendedDays])
         if (isAdvanced) {
-          setFormData(prev => ({
+          setCurriculumFormData(prev => ({
             ...prev,
             course_parameters: {
               ...prev.course_parameters,
@@ -361,8 +393,8 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
           throw new Error("Could not extract video ID from URL")
         }
 
-        const submissionData = isAdvanced ? formData : {
-          ...formData,
+        const submissionData = isAdvanced ? curriculumFormData : {
+          ...curriculumFormData,
           ...advancedFromBasic
         }
 
@@ -389,9 +421,65 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
         }
 
         await submitYoutubeCurriculum(payload)
+      } else if (activeTab === "source") {
+        // Validate source selection
+        if (!primaryResource) {
+          throw new Error("Please select a primary resource")
+        }
+
+        const submissionData = isAdvanced ? curriculumFormData : {
+          ...curriculumFormData,
+          ...advancedFromBasic
+        }
+
+        const payload = {
+          body: {
+            primaryResource: {
+              title: primaryResource.title,
+              author: primaryResource.author,
+              year: primaryResource.year,
+              publisher: primaryResource.publisher,
+              isbn: primaryResource.isbn,
+              type: primaryResource.type
+            },
+            secondaryResources: secondaryResources.map(resource => ({
+              title: resource.title,
+              author: resource.author,
+              year: resource.year,
+              publisher: resource.publisher,
+              isbn: resource.isbn,
+              type: resource.type
+            })),
+            academicPapers: academicPapers.map(paper => ({
+              title: paper.title,
+              authors: paper.author, // Map author to authors for consistency with expected format
+              year: paper.year,
+              journal: paper.journal,
+              doi: paper.doi
+            })),
+            courseOutline: courseOutline,
+            preliminaries: submissionData.preliminaries,
+            course_parameters: submissionData.course_parameters,
+            learner_profile: submissionData.learner_profile,
+            curriculum_preferences: submissionData.curriculum_preferences,
+            schedule: {
+              start_date: format(startDate, "yyyy-MM-dd"),
+              study_days: submissionData.schedule.study_days,
+              break_weeks: submissionData.schedule.break_weeks
+            }
+          },
+          user_context: {
+            user_id: user.id,
+            user_email: user.primaryEmail || "",
+            user_name: user.displayName || null
+          }
+        }
+
+        await submitSourceCurriculum(payload)
       } else {
-        const submissionData = isAdvanced ? formData : {
-          ...formData,
+        // Topic-based curriculum
+        const submissionData = isAdvanced ? curriculumFormData : {
+          ...curriculumFormData,
           ...advancedFromBasic
         }
 
@@ -417,16 +505,18 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
         await submitNewCurriculum(payload)
       }
+
       onSuccess?.()
     } catch (error) {
-      console.error("Error submitting curriculum:", error)
+      console.error('Error submitting curriculum:', error)
+      // Handle error appropriately
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const toggleFocusArea = (area: string) => {
-    setFormData(prev => ({
+    setCurriculumFormData(prev => ({
       ...prev,
       curriculum_preferences: {
         ...prev.curriculum_preferences,
@@ -438,7 +528,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
   }
 
   const toggleStudyDay = (day: string) => {
-    setFormData(prev => ({
+    setCurriculumFormData(prev => ({
       ...prev,
       schedule: {
         ...prev.schedule,
@@ -449,8 +539,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
     }))
   }
 
-  const focusAreaOptions = ["theory", "research", "practical", "historical", "contemporary", "application"]
-  const weekDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
 
   return (
     <div className="min-h-screen">
@@ -474,8 +563,8 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
           </div>
 
           {/* Course Type Tabs */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "topic" | "youtube")} className="w-full">
-            <TabsList className={`grid w-full grid-cols-2 ${isMobile ? 'h-9' : 'h-11'}`}>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "topic" | "youtube" | "source")} className="w-full">
+            <TabsList className={`grid w-full grid-cols-3 ${isMobile ? 'h-9' : 'h-11'}`}>
               <TabsTrigger value="topic" className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
                 <span className={isMobile ? 'text-xs' : 'text-sm'}>Topic</span>
@@ -483,6 +572,10 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
               <TabsTrigger value="youtube" className="flex items-center gap-2">
                 <Youtube className="h-4 w-4" />
                 <span className={isMobile ? 'text-xs' : 'text-sm'}>YouTube Video</span>
+              </TabsTrigger>
+              <TabsTrigger value="source" className="flex items-center gap-2">
+                <Library className="h-4 w-4" />
+                <span className={isMobile ? 'text-xs' : 'text-sm'}>Sources</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -495,118 +588,36 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
           
           {/* Course Source Section */}
           <div className="space-y-6">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "topic" | "youtube")} className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "topic" | "youtube" | "source")} className="w-full">
               <TabsContent value="topic" className="space-y-6 mt-0">
-                <div className="space-y-4">
-                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Topic-Based Learning</h4>
-                    <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                      Enter any topic you&apos;d like to explore, and our AI agent will create a comprehensive multi-day curriculum 
-                      with curated books, texts, and learning materials. Perfect for deep dives into subjects like philosophy, 
-                      science, history, or any area of knowledge.
-                    </p>
-                  </div>
-                  <div>
-                    <Label htmlFor="topic" className="text-base font-medium">What would you like to learn?</Label>
-                    <Input
-                      id="topic"
-                      placeholder="e.g., Chaos Magick, Machine Learning, Ancient History..."
-                      value={formData.topic}
-                      onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
-                      required
-                      className="mt-2 h-12"
-                    />
-                  </div>
-                </div>
+                <TopicTab
+                  topic={curriculumFormData.topic}
+                  onTopicChange={(topic) => setCurriculumFormData(prev => ({ ...prev, topic }))}
+                />
               </TabsContent>
 
               <TabsContent value="youtube" className="space-y-6 mt-0">
-                <div className="space-y-4">
-                  <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-                    <h4 className="font-medium text-red-900 dark:text-red-100 mb-2">YouTube Video Courses</h4>
-                    <p className="text-sm text-red-800 dark:text-red-200 leading-relaxed">
-                      Transform any YouTube video (30+ minutes) into a structured learning experience. Perfect for video essays, 
-                      tutorials, lectures, or documentaries. The AI will break down the content into digestible daily lessons 
-                      with supplementary materials and exercises.
-                    </p>
-                  </div>
-                  <div>
-                    <Label htmlFor="youtube-url" className="text-base font-medium">YouTube Course URL</Label>
-                    <Input
-                      id="youtube-url"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      value={youtubeUrl}
-                      onChange={(e) => setYoutubeUrl(e.target.value)}
-                      required
-                      className="mt-2 h-12"
-                    />
-                    {metadataError && (
-                      <p className="text-sm text-destructive mt-2">{metadataError}</p>
-                    )}
-                    {durationError && (
-                      <p className="text-sm text-destructive mt-2">{durationError}</p>
-                    )}
-                  </div>
+                <YoutubeTab
+                  youtubeUrl={youtubeUrl}
+                  onUrlChange={setYoutubeUrl}
+                  youtubeMetadata={youtubeMetadata}
+                  fetchingMetadata={fetchingMetadata}
+                  metadataError={metadataError}
+                  durationError={durationError}
+                />
+              </TabsContent>
 
-                  {/* YouTube Video Preview */}
-                  {fetchingMetadata && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-                      Fetching video information...
-                    </div>
-                  )}
-
-                  {youtubeMetadata && !fetchingMetadata && (
-                    <div className={cn(
-                      "border rounded-lg p-4",
-                      durationError ? "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800" : "bg-muted/20"
-                    )}>
-                      <div className="flex gap-4">
-                        <div className="relative flex-shrink-0">
-                          <Image 
-                            src={youtubeMetadata.thumbnail_url} 
-                            alt="Video thumbnail"
-                            width={96}
-                            height={72}
-                            className="w-24 h-18 object-cover rounded"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Play className="h-6 w-6 text-white drop-shadow-lg" />
-                          </div>
-                          {durationError && (
-                            <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1">
-                              <AlertTriangle className="h-3 w-3" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm leading-tight">{youtubeMetadata.title}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">by {youtubeMetadata.author_name}</p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              Video course
-                            </span>
-                            {youtubeMetadata.durationString && (
-                              <span className={cn(
-                                "flex items-center gap-1",
-                                durationError && "text-red-600 dark:text-red-400"
-                              )}>
-                                <Clock className="h-3 w-3" />
-                                {youtubeMetadata.durationString}
-                              </span>
-                            )}
-                          </div>
-                          {!durationError && youtubeMetadata.duration && (
-                            <div className="mt-2 text-xs text-green-600 dark:text-green-400">
-                              ✓ Duration meets minimum requirement (30+ minutes)
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <TabsContent value="source" className="space-y-6 mt-0">
+                <SourceTab
+                  primaryResource={primaryResource}
+                  setPrimaryResource={setPrimaryResource}
+                  secondaryResources={secondaryResources}
+                  setSecondaryResources={setSecondaryResources}
+                  academicPapers={academicPapers}
+                  setAcademicPapers={setAcademicPapers}
+                  courseOutline={courseOutline}
+                  setCourseOutline={setCourseOutline}
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -618,8 +629,8 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
               <Textarea
                 id="preliminaries"
                 placeholder="Any background knowledge or prerequisites..."
-                value={formData.preliminaries}
-                onChange={(e) => setFormData(prev => ({ ...prev, preliminaries: e.target.value }))}
+                value={curriculumFormData.preliminaries}
+                onChange={(e) => setCurriculumFormData(prev => ({ ...prev, preliminaries: e.target.value }))}
                 className="mt-2 min-h-[80px]"
               />
             </div>
@@ -672,387 +683,25 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
           {/* Configuration Content */}
           {!isAdvanced ? (
-            // Quick Setup Mode
-            <div className="space-y-8">
-              <div className="text-center">
-                <h3 className="text-xl font-semibold mb-2">Customize Your Learning</h3>
-                <p className="text-muted-foreground">Adjust these settings to match your goals</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">{depth[0]}</div>
-                    <Label className="text-base font-medium">Study Depth</Label>
-                  </div>
-                  <OptimizedSlider
-                    value={depth}
-                    onValueChange={setDepth}
-                    max={10}
-                    min={1}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Surface</span>
-                    <span>Deep</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {depth[0] <= 3 ? "Overview and basics" : 
-                     depth[0] <= 7 ? "Detailed exploration" : 
-                     "Expert-level analysis"}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">{lengthOfStudy[0]}</div>
-                    <Label className="text-base font-medium">Study Duration</Label>
-                  </div>
-                  <OptimizedSlider
-                    value={lengthOfStudy}
-                    onValueChange={setLengthOfStudy}
-                    max={15}
-                    min={3}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Quick</span>
-                    <span>Extended</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {lengthOfStudy[0]} days of study
-                  </p>
-                  {activeTab === "youtube" && youtubeMetadata?.duration && (
-                    <div className="text-xs text-center p-2 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-center justify-center gap-1 text-blue-700 dark:text-blue-300">
-                        <AlertTriangle className="h-3 w-3" />
-                        Recommended: {calculateRecommendedDays(youtubeMetadata.duration)} days for {youtubeMetadata.durationString} video
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">{educationLevel[0]}</div>
-                    <Label className="text-base font-medium">Education Level</Label>
-                  </div>
-                  <OptimizedSlider
-                    value={educationLevel}
-                    onValueChange={setEducationLevel}
-                    max={10}
-                    min={1}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Beginner</span>
-                    <span>Expert</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {educationLevel[0] <= 3 ? "No prerequisites" : 
-                     educationLevel[0] <= 7 ? "Some background helpful" : 
-                     "Advanced knowledge assumed"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Quick Summary */}
-              <div className="bg-muted/20 rounded-lg p-4">
-                <h4 className="font-medium mb-3">Study Plan Summary</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Study Days:</span>
-                    <div className="font-medium">{lengthOfStudy[0]} days</div>
-                  </div>
-                  {activeTab === "youtube" && youtubeMetadata?.durationString && (
-                    <div>
-                      <span className="text-muted-foreground">Video Length:</span>
-                      <div className="font-medium">{youtubeMetadata.durationString}</div>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-muted-foreground">Daily Time:</span>
-                    <div className="font-medium">
-                      {(() => {
-                        const advanced = advancedFromBasic
-                        return advanced.course_parameters.daily_time_commitment
-                      })()} hours
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Total Hours:</span>
-                    <div className="font-medium">
-                      {(() => {
-                        const advanced = advancedFromBasic
-                        return Math.round(lengthOfStudy[0] * advanced.course_parameters.daily_time_commitment)
-                      })()} hours
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Pace:</span>
-                    <div className="font-medium capitalize">
-                      {(() => {
-                        const advanced = advancedFromBasic
-                        return advanced.course_parameters.pace
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <QuickSetup
+              depth={depth}
+              setDepth={setDepth}
+              lengthOfStudy={lengthOfStudy}
+              setLengthOfStudy={setLengthOfStudy}
+              educationLevel={educationLevel}
+              setEducationLevel={setEducationLevel}
+              activeTab={activeTab}
+              youtubeMetadata={youtubeMetadata}
+              calculateRecommendedDays={calculateRecommendedDays}
+              advancedFromBasic={advancedFromBasic}
+            />
           ) : (
-            // Advanced Configuration Mode
-            <div className="space-y-8">
-              <div className="text-center">
-                <h3 className="text-xl font-semibold mb-2">Advanced Configuration</h3>
-                <p className="text-muted-foreground">Fine-tune every aspect of your curriculum</p>
-              </div>
-              
-              <Tabs defaultValue="course" className="w-full">
-                <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
-                  <TabsTrigger value="course">Course</TabsTrigger>
-                  <TabsTrigger value="learner">Learner</TabsTrigger>
-                  {!isMobile && <TabsTrigger value="preferences">Preferences</TabsTrigger>}
-                  {!isMobile && <TabsTrigger value="schedule">Schedule</TabsTrigger>}
-                </TabsList>
-                
-                {isMobile && (
-                  <TabsList className="grid w-full grid-cols-2 mt-2">
-                    <TabsTrigger value="preferences">Preferences</TabsTrigger>
-                    <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                  </TabsList>
-                )}
-
-                <TabsContent value="course" className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label className="text-sm font-medium">Study Duration (days)</Label>
-                      <OptimizedSlider
-                        value={[formData.course_parameters.length_of_study]}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          course_parameters: { ...prev.course_parameters, length_of_study: value[0] }
-                        }))}
-                        max={30}
-                        min={3}
-                        step={1}
-                        className="mt-3"
-                      />
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {formData.course_parameters.length_of_study} days
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium">Daily Time Commitment (hours)</Label>
-                      <OptimizedSlider
-                        value={[formData.course_parameters.daily_time_commitment]}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          course_parameters: { ...prev.course_parameters, daily_time_commitment: value[0] }
-                        }))}
-                        max={8}
-                        min={0.5}
-                        step={0.5}
-                        className="mt-3"
-                      />
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {formData.course_parameters.daily_time_commitment} hours per day
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium">Depth Level</Label>
-                      <OptimizedSlider
-                        value={[formData.course_parameters.depth_level]}
-                        onValueChange={(value) => setFormData(prev => ({
-                          ...prev,
-                          course_parameters: { ...prev.course_parameters, depth_level: value[0] }
-                        }))}
-                        max={10}
-                        min={1}
-                        step={1}
-                        className="mt-3"
-                      />
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Level {formData.course_parameters.depth_level}/10
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium">Study Pace</Label>
-                      <Select 
-                        value={formData.course_parameters.pace} 
-                        onValueChange={(value: "fast" | "moderate" | "slow") => 
-                          setFormData(prev => ({
-                            ...prev,
-                            course_parameters: { ...prev.course_parameters, pace: value }
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="slow">Slow & Steady</SelectItem>
-                          <SelectItem value="moderate">Moderate</SelectItem>
-                          <SelectItem value="fast">Fast & Intensive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="learner" className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label className="text-sm font-medium">Education Level</Label>
-                      <Select 
-                        value={formData.learner_profile.education_level} 
-                        onValueChange={(value: "novice" | "undergraduate" | "graduate" | "professional") => 
-                          setFormData(prev => ({
-                            ...prev,
-                            learner_profile: { ...prev.learner_profile, education_level: value }
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="novice">Novice</SelectItem>
-                          <SelectItem value="undergraduate">Undergraduate</SelectItem>
-                          <SelectItem value="graduate">Graduate</SelectItem>
-                          <SelectItem value="professional">Professional</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium">Prior Knowledge</Label>
-                      <Select 
-                        value={formData.learner_profile.prior_knowledge} 
-                        onValueChange={(value: "none" | "basic" | "intermediate" | "advanced") => 
-                          setFormData(prev => ({
-                            ...prev,
-                            learner_profile: { ...prev.learner_profile, prior_knowledge: value }
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <Label className="text-sm font-medium">Learning Style</Label>
-                      <Select 
-                        value={formData.learner_profile.learning_style} 
-                        onValueChange={(value: "visual" | "conceptual" | "practical" | "mixed") => 
-                          setFormData(prev => ({
-                            ...prev,
-                            learner_profile: { ...prev.learner_profile, learning_style: value }
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="visual">Visual</SelectItem>
-                          <SelectItem value="conceptual">Conceptual</SelectItem>
-                          <SelectItem value="practical">Practical</SelectItem>
-                          <SelectItem value="mixed">Mixed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="preferences" className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Focus Areas</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {focusAreaOptions.map((area) => (
-                        <div key={area} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={area}
-                            checked={formData.curriculum_preferences.focus_areas.includes(area)}
-                            onCheckedChange={() => toggleFocusArea(area)}
-                          />
-                          <Label htmlFor={area} className="text-sm capitalize">{area}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Supplementary Material Ratio</Label>
-                    <OptimizedSlider
-                      value={[formData.curriculum_preferences.supplementary_material_ratio]}
-                      onValueChange={(value) => setFormData(prev => ({
-                        ...prev,
-                        curriculum_preferences: { ...prev.curriculum_preferences, supplementary_material_ratio: value[0] }
-                      }))}
-                      max={1}
-                      min={0}
-                      step={0.1}
-                      className="mt-3"
-                    />
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {Math.round(formData.curriculum_preferences.supplementary_material_ratio * 100)}% supplementary materials
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium">Contemporary vs Classical Balance</Label>
-                    <OptimizedSlider
-                      value={[formData.curriculum_preferences.contemporary_vs_classical]}
-                      onValueChange={(value) => setFormData(prev => ({
-                        ...prev,
-                        curriculum_preferences: { ...prev.curriculum_preferences, contemporary_vs_classical: value[0] }
-                      }))}
-                      max={1}
-                      min={0}
-                      step={0.1}
-                      className="mt-3"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>Classical</span>
-                      <span>Contemporary</span>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="schedule" className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-3 block">Study Days</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {weekDays.map((day) => (
-                        <div key={day} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={day}
-                            checked={formData.schedule.study_days.includes(day)}
-                            onCheckedChange={() => toggleStudyDay(day)}
-                          />
-                          <Label htmlFor={day} className="text-sm capitalize">{day}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
+            <AdvancedConfig
+              formData={curriculumFormData}
+              setFormData={setCurriculumFormData}
+              toggleFocusArea={toggleFocusArea}
+              toggleStudyDay={toggleStudyDay}
+            />
           )}
 
           {/* Submit Section */}
@@ -1076,8 +725,9 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                 disabled={
                   isSubmitting || 
                   !startDate || 
-                  (activeTab === "topic" && !formData.topic) || 
-                  (activeTab === "youtube" && (!youtubeUrl || !youtubeMetadata || !!durationError))
+                  (activeTab === "topic" && !curriculumFormData.topic) || 
+                  (activeTab === "youtube" && (!youtubeUrl || !youtubeMetadata || !!durationError)) ||
+                  (activeTab === "source" && !primaryResource)
                 }
                 className="flex items-center gap-2"
               >

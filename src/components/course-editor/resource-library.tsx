@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { BookCover } from "@/components/ui/book-cover"
@@ -20,10 +19,48 @@ import {
   Loader2,
   AlertCircle,
   GripVertical,
-  RefreshCw
+  RefreshCw,
+  Library,
+  GraduationCap,
+  ExternalLink
 } from "lucide-react"
 import { Resource } from "@/types/course-editor"
 import { searchResources, searchBooks, searchPapers } from "@/lib/search-apis"
+
+// Source configuration
+type SearchSource = 'openlibrary' | 'crossref' | 'zotero'
+
+interface SearchSourceConfig {
+  id: SearchSource
+  name: string
+  icon: React.ComponentType<{ className?: string }>
+  description: string
+  searchTypes: ('books' | 'papers')[]
+}
+
+const SEARCH_SOURCES: SearchSourceConfig[] = [
+  {
+    id: 'openlibrary',
+    name: 'OpenLibrary',
+    icon: Library,
+    description: 'Search millions of books',
+    searchTypes: ['books']
+  },
+  {
+    id: 'crossref',
+    name: 'Crossref',
+    icon: GraduationCap,
+    description: 'Search academic papers',
+    searchTypes: ['papers']
+  },
+  {
+    id: 'zotero',
+    name: 'Zotero',
+    icon: BookOpen,
+    description: 'Search your personal library',
+    searchTypes: ['books', 'papers']
+  }
+]
 
 interface DraggableResourceProps {
   resource: Resource
@@ -60,6 +97,19 @@ function DraggableResource({ resource }: DraggableResourceProps) {
       default:
         return <Globe className="h-4 w-4" />
     }
+  }
+
+  // Get source badge
+  const getSourceBadge = (source?: string) => {
+    const sourceConfig = SEARCH_SOURCES.find(s => s.id === source)
+    if (!sourceConfig) return null
+    
+    return (
+      <Badge variant="outline" className="text-xs bg-muted/50">
+        <sourceConfig.icon className="h-3 w-3 mr-1" />
+        {sourceConfig.name}
+      </Badge>
+    )
   }
 
   return (
@@ -108,6 +158,7 @@ function DraggableResource({ resource }: DraggableResourceProps) {
                 {resource.year}
               </Badge>
             )}
+            {getSourceBadge(resource.source)}
           </div>
           {resource.focus && (
             <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
@@ -149,32 +200,26 @@ function ResourceSkeleton() {
 }
 
 function EmptyState({ 
-  type, 
+  selectedSources,
   hasSearched, 
   onExampleSearch 
 }: { 
-  type: string
+  selectedSources: SearchSource[]
   hasSearched: boolean
   onExampleSearch: (query: string) => void 
 }) {
-  const examples = {
-    books: ['algorithms', 'psychology', 'economics'],
-    papers: ['AI', 'climate', 'quantum'],
-    all: ['data science', 'philosophy', 'biology']
-  }
-
-  const typeExamples = examples[type as keyof typeof examples] || examples.all
+  const examples = ['algorithms', 'psychology', 'economics', 'AI', 'climate', 'quantum']
 
   if (!hasSearched) {
     return (
       <div className="text-center py-6 space-y-3">
         <div className="text-muted-foreground">
           <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-xs font-medium mb-2">Search for {type === 'all' ? 'resources' : type}</p>
+          <p className="text-xs font-medium mb-2">Search for resources</p>
           <p className="text-xs opacity-75">Try searching for:</p>
         </div>
         <div className="flex flex-col gap-1">
-          {typeExamples.map((example) => (
+          {examples.slice(0, 4).map((example) => (
             <Button
               key={example}
               variant="outline"
@@ -193,8 +238,8 @@ function EmptyState({
   return (
     <div className="text-center py-6 text-muted-foreground">
       <AlertCircle className="h-6 w-6 mx-auto mb-2 opacity-50" />
-      <p className="text-xs">No {type === 'all' ? 'resources' : type} found</p>
-      <p className="text-xs opacity-75">Try different keywords</p>
+      <p className="text-xs">No resources found</p>
+      <p className="text-xs opacity-75">Try different keywords or sources</p>
     </div>
   )
 }
@@ -202,14 +247,34 @@ function EmptyState({
 export function ResourceLibrary() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
-  const [selectedType, setSelectedType] = useState<string>("all")
+  const [selectedSources, setSelectedSources] = useState<SearchSource[]>(['openlibrary', 'crossref'])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searchResults, setSearchResults] = useState<{
-    books: Resource[]
-    papers: Resource[]
-  }>({ books: [], papers: [] })
+  const [searchResults, setSearchResults] = useState<Resource[]>([])
   const [hasSearched, setHasSearched] = useState(false)
+  
+  // Zotero integration state
+  const [zoteroEnabled, setZoteroEnabled] = useState(false)
+  const [checkingZotero, setCheckingZotero] = useState(true)
+
+  // Check if Zotero integration is available
+  useEffect(() => {
+    const checkZoteroIntegration = async () => {
+      try {
+        const response = await fetch('/api/integrations/zotero')
+        if (response.ok) {
+          const data = await response.json()
+          setZoteroEnabled(data.is_enabled)
+        }
+      } catch (error) {
+        console.error('Error checking Zotero integration:', error)
+      } finally {
+        setCheckingZotero(false)
+      }
+    }
+
+    checkZoteroIntegration()
+  }, [])
 
   // Debounce search query
   useEffect(() => {
@@ -220,11 +285,59 @@ export function ResourceLibrary() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
+  // Search functions
+  const searchZoteroResources = async (query: string): Promise<Resource[]> => {
+    const params = new URLSearchParams({ q: query, limit: '15' })
+
+    const response = await fetch(`/api/integrations/zotero/search?${params}`)
+    if (!response.ok) {
+      throw new Error('Failed to search Zotero library')
+    }
+
+    const data = await response.json()
+    return data.resources as Resource[]
+  }
+
+  const searchExternalResources = async (query: string, sources: SearchSource[]): Promise<Resource[]> => {
+    const results: Resource[] = []
+    const errors: string[] = []
+
+    // Search OpenLibrary for books (sequential)
+    if (sources.includes('openlibrary')) {
+      try {
+        const books = await searchBooks(query, 10)
+        const booksWithSource = books.map(book => ({ ...book, source: 'openlibrary' as const }))
+        results.push(...booksWithSource)
+      } catch (error) {
+        console.error('OpenLibrary search failed:', error)
+        errors.push(`OpenLibrary: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    }
+
+    // Search Crossref for papers (sequential)
+    if (sources.includes('crossref')) {
+      try {
+        const papers = await searchPapers(query, 10)
+        const papersWithSource = papers.map(paper => ({ ...paper, source: 'crossref' as const }))
+        results.push(...papersWithSource)
+      } catch (error) {
+        console.error('Crossref search failed:', error)
+        errors.push(`Crossref: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new Error(errors.join(' • '))
+    }
+
+    return results
+  }
+
   // Perform search when debounced query changes
   useEffect(() => {
     const performSearch = async () => {
       if (!debouncedQuery.trim()) {
-        setSearchResults({ books: [], papers: [] })
+        setSearchResults([])
         setHasSearched(false)
         setError(null)
         return
@@ -235,48 +348,43 @@ export function ResourceLibrary() {
       setHasSearched(true)
 
       try {
-        let results: { books: Resource[]; papers: Resource[] }
+        const allResults: Resource[] = []
 
-        if (selectedType === 'book') {
-          const books = await searchBooks(debouncedQuery, 15)
-          results = { books, papers: [] }
-        } else if (selectedType === 'paper') {
-          const papers = await searchPapers(debouncedQuery, 15)
-          results = { books: [], papers }
-        } else {
-          const searchResult = await searchResources(debouncedQuery, 'all')
-          results = { books: searchResult.books, papers: searchResult.papers }
-          
-          // Handle partial errors
-          if (searchResult.errors.length > 0) {
-            setError(searchResult.errors.join(' • '))
+        // Search Zotero if selected and enabled
+        if (selectedSources.includes('zotero') && zoteroEnabled) {
+          try {
+            const zoteroResults = await searchZoteroResources(debouncedQuery)
+            allResults.push(...zoteroResults)
+          } catch (err) {
+            console.error('Zotero search error:', err)
+            setError(err instanceof Error ? err.message : 'Zotero search failed')
           }
         }
 
-        setSearchResults(results)
+        // Search external sources
+        const externalSources = selectedSources.filter(s => s !== 'zotero')
+        if (externalSources.length > 0) {
+          try {
+            const externalResults = await searchExternalResources(debouncedQuery, externalSources)
+            allResults.push(...externalResults)
+          } catch (err) {
+            console.error('External search error:', err)
+            setError(err instanceof Error ? err.message : 'External search failed')
+          }
+        }
+
+        setSearchResults(allResults)
       } catch (err) {
         console.error('Search error:', err)
         setError(err instanceof Error ? err.message : 'An error occurred while searching')
-        setSearchResults({ books: [], papers: [] })
+        setSearchResults([])
       } finally {
         setIsLoading(false)
       }
     }
 
     performSearch()
-  }, [debouncedQuery, selectedType])
-
-  const allResources = useMemo(() => [
-    ...searchResults.books,
-    ...searchResults.papers
-  ], [searchResults])
-
-  const resourcesByType = useMemo(() => ({
-    books: searchResults.books,
-    papers: searchResults.papers,
-    videos: [] as Resource[], // Videos not implemented yet
-    other: [] as Resource[]
-  }), [searchResults])
+  }, [debouncedQuery, selectedSources, zoteroEnabled])
 
   const handleExampleSearch = useCallback((query: string) => {
     setSearchQuery(query)
@@ -291,18 +399,23 @@ export function ResourceLibrary() {
     }
   }, [debouncedQuery])
 
-  const getResourceCount = (type: string) => {
-    switch (type) {
-      case 'book':
-        return searchResults.books.length
-      case 'paper':
-        return searchResults.papers.length
-      case 'all':
-        return allResources.length
-      default:
-        return 0
+  const handleSourceToggle = useCallback((sourceId: SearchSource) => {
+    if (sourceId === 'zotero' && !zoteroEnabled) {
+      // Navigate to integrations page
+      window.open('/settings/integrations', '_blank', 'noopener,noreferrer')
+      return
     }
-  }
+
+    setSelectedSources(prev => {
+      if (prev.includes(sourceId)) {
+        // Don't allow deselecting all sources
+        if (prev.length === 1) return prev
+        return prev.filter(s => s !== sourceId)
+      } else {
+        return [...prev, sourceId]
+      }
+    })
+  }, [zoteroEnabled])
 
   return (
     <div className="h-full flex flex-col p-4">
@@ -323,14 +436,46 @@ export function ResourceLibrary() {
           )}
         </div>
 
-        {/* Results Count */}
-        {(hasSearched || getResourceCount(selectedType) > 0) && (
+        {/* Source Selection */}
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              {isLoading ? 'Searching...' : `${getResourceCount(selectedType)} found`}
-            </span>
+            <span className="text-xs font-medium text-muted-foreground">Search Sources:</span>
+            {(hasSearched || searchResults.length > 0) && (
+              <span className="text-xs text-muted-foreground">
+                {isLoading ? 'Searching...' : `${searchResults.length} found`}
+              </span>
+            )}
           </div>
-        )}
+          <div className="flex gap-2 flex-wrap">
+            {SEARCH_SOURCES.map((source) => {
+              const isSelected = selectedSources.includes(source.id)
+              const isZoteroUnavailable = source.id === 'zotero' && !zoteroEnabled
+              
+              return (
+                <Button
+                  key={source.id}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  className={`h-8 text-xs px-2 gap-1 ${
+                    isZoteroUnavailable ? 'opacity-60' : ''
+                  }`}
+                  onClick={() => handleSourceToggle(source.id)}
+                  disabled={checkingZotero && source.id === 'zotero'}
+                >
+                  <source.icon className="h-3 w-3" />
+                  {source.name}
+                  {isZoteroUnavailable && <ExternalLink className="h-3 w-3 ml-1" />}
+                </Button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {selectedSources.length === 0 
+              ? 'Select at least one source'
+              : `Searching ${selectedSources.map(s => SEARCH_SOURCES.find(src => src.id === s)?.name).join(', ')}`
+            }
+          </p>
+        </div>
 
         {/* Error Display */}
         {error && (
@@ -352,104 +497,29 @@ export function ResourceLibrary() {
         )}
       </div>
 
-      {/* Resource Tabs */}
-      <Tabs value={selectedType} onValueChange={setSelectedType} className="flex-1 flex flex-col">
-        <TabsList className="grid w-full grid-cols-3 h-8">
-          <TabsTrigger value="all" className="text-xs">
-            All
-            {getResourceCount('all') > 0 && (
-              <Badge variant="secondary" className="ml-1 h-4 text-xs px-1">
-                {getResourceCount('all')}
-              </Badge>
+      {/* Results */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="space-y-3 pr-2">
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 5 }).map((_, i) => (
+                <ResourceSkeleton key={i} />
+              ))
+            ) : searchResults.length > 0 ? (
+              searchResults.map((resource) => (
+                <DraggableResource key={resource.id} resource={resource} />
+              ))
+            ) : (
+              <EmptyState 
+                selectedSources={selectedSources}
+                hasSearched={hasSearched}
+                onExampleSearch={handleExampleSearch}
+              />
             )}
-          </TabsTrigger>
-          <TabsTrigger value="book" className="text-xs">
-            Books
-            {getResourceCount('book') > 0 && (
-              <Badge variant="secondary" className="ml-1 h-4 text-xs px-1">
-                {getResourceCount('book')}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="paper" className="text-xs">
-            Papers
-            {getResourceCount('paper') > 0 && (
-              <Badge variant="secondary" className="ml-1 h-4 text-xs px-1">
-                {getResourceCount('paper')}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <div className="flex-1 mt-3 overflow-hidden">
-          <TabsContent value="all" className="h-full m-0">
-            <ScrollArea className="h-full">
-              <div className="space-y-3 pr-2">
-                {isLoading ? (
-                  // Loading skeletons
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <ResourceSkeleton key={i} />
-                  ))
-                ) : allResources.length > 0 ? (
-                  allResources.map((resource) => (
-                    <DraggableResource key={resource.id} resource={resource} />
-                  ))
-                ) : (
-                  <EmptyState 
-                    type="all" 
-                    hasSearched={hasSearched}
-                    onExampleSearch={handleExampleSearch}
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="book" className="h-full m-0">
-            <ScrollArea className="h-full">
-              <div className="space-y-3 pr-2">
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <ResourceSkeleton key={i} />
-                  ))
-                ) : resourcesByType.books.length > 0 ? (
-                  resourcesByType.books.map((resource) => (
-                    <DraggableResource key={resource.id} resource={resource} />
-                  ))
-                ) : (
-                  <EmptyState 
-                    type="books" 
-                    hasSearched={hasSearched}
-                    onExampleSearch={handleExampleSearch}
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="paper" className="h-full m-0">
-            <ScrollArea className="h-full">
-              <div className="space-y-3 pr-2">
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <ResourceSkeleton key={i} />
-                  ))
-                ) : resourcesByType.papers.length > 0 ? (
-                  resourcesByType.papers.map((resource) => (
-                    <DraggableResource key={resource.id} resource={resource} />
-                  ))
-                ) : (
-                  <EmptyState 
-                    type="papers" 
-                    hasSearched={hasSearched}
-                    onExampleSearch={handleExampleSearch}
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </div>
-      </Tabs>
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   )
 } 

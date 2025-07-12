@@ -58,6 +58,10 @@ export interface Resource {
   journal?: string
   publisher?: string
   type: 'book' | 'paper' | 'article' | 'video' | 'other'
+  // Source-specific fields
+  source?: 'zotero' | 'local' | 'openlibrary' | 'crossref'
+  zotero_key?: string
+  tags?: string[]
 }
 
 export interface PrimaryResource {
