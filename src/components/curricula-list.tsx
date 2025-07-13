@@ -71,7 +71,7 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
   }, [curricula, dashboardData, completedModules, isHydrated])
 
   // Handle successful import
-  const handleImportSuccess = React.useCallback((_courseId: string) => {
+  const handleImportSuccess = React.useCallback(() => {
     // Invalidate caches to refresh the curricula list
     if (user?.id) {
       curriculumCache.invalidateUserCurricula(user.id)

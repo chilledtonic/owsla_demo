@@ -6,7 +6,7 @@ import {
   deleteUserIntegration,
   deleteZoteroResources
 } from '@/lib/database'
-import { encrypt, decrypt } from '@/lib/encryption'
+import { encrypt } from '@/lib/encryption'
 
 // GET - Fetch user's Zotero integration
 export async function GET() {
@@ -22,6 +22,7 @@ export async function GET() {
     }
 
     // Don't return the encrypted API key
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { api_key_encrypted, ...safeIntegration } = integration
     return NextResponse.json(safeIntegration)
   } catch (error) {
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
     })
 
     // Don't return the encrypted API key
-    const { api_key_encrypted: _, ...safeIntegration } = integration
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { api_key_encrypted: encryptedKey, ...safeIntegration } = integration
     return NextResponse.json(safeIntegration)
   } catch (error) {
     console.error('Error saving Zotero integration:', error)

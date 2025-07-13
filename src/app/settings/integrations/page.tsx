@@ -391,10 +391,10 @@ export default function IntegrationsPage() {
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p>Your API key is encrypted and stored securely. It's only used to access your Zotero library.</p>
+                      <p>Your API key is encrypted and stored securely. It&apos;s only used to access your Zotero library.</p>
                       <p className="mt-1">
-                        To get an API key: visit the link above, give it a descriptive name like "Owsla Integration", 
-                        and ensure "Allow library access" is checked.
+                        To get an API key: visit the link above, give it a descriptive name like &quot;Owsla Integration&quot;, 
+                        and ensure &quot;Allow library access&quot; is checked.
                       </p>
                       {zotero.lastSyncAt && (
                         <p className="mt-1 text-amber-600 dark:text-amber-400">
@@ -459,7 +459,7 @@ export default function IntegrationsPage() {
                 More integrations coming soon
               </CardTitle>
               <CardDescription>
-                We're working on integrations with Google Scholar, JSTOR, and other academic databases.
+                We&apos;re working on integrations with Google Scholar, JSTOR, and other academic databases.
               </CardDescription>
             </CardHeader>
           </Card>

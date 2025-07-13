@@ -21,7 +21,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { 
   Save, 
-  Download, 
   X, 
   Plus, 
   BookOpen, 
@@ -142,7 +141,8 @@ const defaultCourse: CourseData = {
 export function CourseEditor({ 
   onCancel, 
   onSave, 
-  onExport, 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onExport: _onExport, 
   initialCourse,
   isSaving = false
 }: CourseEditorProps) {
@@ -519,9 +519,10 @@ export function CourseEditor({
     }
   }
 
-  const handleExport = () => {
-    onExport?.(course)
-  }
+  // Export functionality is handled by parent component
+  // const handleExport = () => {
+  //   onExport?.(course)
+  // }
 
   return (
     <DndContext

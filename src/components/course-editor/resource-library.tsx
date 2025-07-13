@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useDraggable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { Input } from "@/components/ui/input"
@@ -25,7 +25,7 @@ import {
   ExternalLink
 } from "lucide-react"
 import { Resource } from "@/types/course-editor"
-import { searchResources, searchBooks, searchPapers } from "@/lib/search-apis"
+import { searchBooks, searchPapers } from "@/lib/search-apis"
 
 // Source configuration
 type SearchSource = 'openlibrary' | 'crossref' | 'zotero'
@@ -200,11 +200,9 @@ function ResourceSkeleton() {
 }
 
 function EmptyState({ 
-  selectedSource,
   hasSearched, 
   onExampleSearch 
 }: { 
-  selectedSource: SearchSource
   hasSearched: boolean
   onExampleSearch: (query: string) => void 
 }) {
@@ -497,11 +495,10 @@ export function ResourceLibrary() {
                 <DraggableResource key={resource.id} resource={resource} />
               ))
             ) : (
-              <EmptyState 
-                selectedSource={selectedSource}
-                hasSearched={hasSearched}
-                onExampleSearch={handleExampleSearch}
-              />
+                          <EmptyState
+              hasSearched={hasSearched}
+              onExampleSearch={handleExampleSearch}
+            />
             )}
           </div>
         </ScrollArea>

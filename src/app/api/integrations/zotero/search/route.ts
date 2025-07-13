@@ -10,7 +10,7 @@ const MAX_RETRIES = 3
 const BACKOFF_MULTIPLIER = 2
 
 interface ZoteroCacheEntry {
-  data: any[]
+  data: unknown[]
   version: number
   timestamp: number
   etag?: string
@@ -186,9 +186,10 @@ async function searchZoteroLibraryCached(
     limit: number
     start: number
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   integration: any
 ): Promise<{
-  items: any[]
+  items: unknown[]
   status: number
   fromCache: boolean
   lastModified?: string
@@ -370,10 +371,12 @@ async function fetchWithRateLimit(
 }
 
 // Convert Zotero API item to our Resource format
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function convertZoteroItemToResource(zoteroItem: any): Resource {
   const data = zoteroItem.data
   
   // Extract authors from creators
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authors = data.creators?.map((creator: any) => {
     if (creator.name) return creator.name
     return [creator.firstName, creator.lastName].filter(Boolean).join(' ')
@@ -388,6 +391,7 @@ function convertZoteroItemToResource(zoteroItem: any): Resource {
   const type = data.itemType === 'book' ? 'book' : 'article'
   
   // Extract tags
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tags = data.tags?.map((tag: any) => tag.tag).filter(Boolean) || undefined
   
   return {

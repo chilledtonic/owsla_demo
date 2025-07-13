@@ -5,7 +5,7 @@ import { useUser } from "@stackframe/stack"
 import { useCachedDashboardData } from "@/hooks/use-curriculum-data"
 import { AppLayout } from "@/components/app-layout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
+
 import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
@@ -22,8 +22,9 @@ import {
 import { DashboardCurriculaOverview } from "@/components/dashboard/curricula-overview"
 
 export default function ArchivePage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const user = useUser({ or: "redirect" })
-  const { dashboardData, loading, error, refresh } = useCachedDashboardData()
+  const { dashboardData, loading, error } = useCachedDashboardData()
   const isMobile = useIsMobile()
   const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
   const [isHydrated, setIsHydrated] = useState(false)
@@ -144,7 +145,7 @@ export default function ArchivePage() {
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2">No completed courses yet</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Complete your first course to see it in your archive. Courses appear here when you've completed all modules or when the scheduled end date has passed.
+              Complete your first course to see it in your archive. Courses appear here when you&apos;ve completed all modules or when the scheduled end date has passed.
             </p>
             <Button asChild size={isMobile ? "default" : "lg"}>
               <Link href="/">

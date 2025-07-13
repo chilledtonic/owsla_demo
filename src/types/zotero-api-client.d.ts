@@ -22,6 +22,7 @@ declare module 'zotero-api-client' {
       abstractNote?: string
       tags?: Array<{ tag: string }>
       collections?: string[]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [key: string]: any
     }
   }
@@ -34,6 +35,7 @@ declare module 'zotero-api-client' {
     getData(): {
       userID: number
       username: string
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       access: any
     }
   }
@@ -41,6 +43,7 @@ declare module 'zotero-api-client' {
   interface ZoteroApi {
     library(type: 'user', id: string | number): {
       items(): {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         get(options?: any): Promise<ZoteroApiResponse>
       }
     }
