@@ -249,38 +249,7 @@ export function CourseEditor({
     return null
   }, [])
 
-  const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
 
-  const getYouTubeVideoDuration = async (videoId: string): Promise<number | null> => {
-    try {
-      const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`)
-      if (!response.ok) return null
-      
-      const data = await response.json()
-      if (!data.items?.[0]?.contentDetails?.duration) return null
-      
-      const duration = data.items[0].contentDetails.duration
-      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
-      if (!match) return null
-      
-      const hours = parseInt(match[1] || '0')
-      const minutes = parseInt(match[2] || '0')
-      const seconds = parseInt(match[3] || '0')
-      
-      return hours * 3600 + minutes * 60 + seconds
-    } catch {
-      return null
-    }
-  }
 
   const fetchVideoMetadata = useCallback(async (url: string) => {
     if (!url) {
@@ -293,43 +262,37 @@ export function CourseEditor({
     setMetadataError(null)
     
     try {
-      const videoId = extractYouTubeVideoId(url)
-      if (!videoId) {
-        setMetadataError("Invalid YouTube URL")
-        setVideoMetadata(null)
-        return
+      // Use our internal API route instead of direct external calls
+      const response = await fetch(`/api/youtube/metadata?url=${encodeURIComponent(url)}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Failed to fetch video information")
       }
 
-      const youtube = await import('youtube-metadata-from-url')
-      const basicMetadata = await youtube.metadata(url)
-      const duration = await getYouTubeVideoDuration(videoId)
-      
-      const extendedMetadata: ExtendedYoutubeMetadata = {
-        ...basicMetadata,
-        duration: duration || undefined,
-        durationString: duration ? formatDuration(duration) : undefined
-      }
+      const extendedMetadata: ExtendedYoutubeMetadata = await response.json()
       
       setVideoMetadata(extendedMetadata)
       
       // Auto-populate video fields
       if (course.type === 'video') {
+        const videoId = extractYouTubeVideoId(url)
         setCourse(prev => ({
           ...prev,
           primary_video: {
             ...prev.primary_video,
-            title: basicMetadata.title,
-            channel: basicMetadata.author_name,
+            title: extendedMetadata.title,
+            channel: extendedMetadata.author_name,
             duration: extendedMetadata.durationString || "",
             url: url,
-            video_id: videoId,
+            video_id: videoId || "",
             published: ""
           }
         }))
       }
     } catch (error) {
       console.error('Error fetching video metadata:', error)
-      setMetadataError("Failed to fetch video information")
+      setMetadataError(error instanceof Error ? error.message : "Failed to fetch video information")
       setVideoMetadata(null)
     } finally {
       setFetchingMetadata(false)

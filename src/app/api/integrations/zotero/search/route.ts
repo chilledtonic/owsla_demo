@@ -4,6 +4,21 @@ import { getUserIntegration, upsertUserIntegration } from '@/lib/database'
 import { decrypt } from '@/lib/encryption'
 import { Resource } from '@/types/course-editor'
 
+// CORS headers for API routes
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  })
+}
+
 // Cache settings
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes in milliseconds
 const MAX_RETRIES = 3
@@ -27,7 +42,7 @@ export async function GET(request: NextRequest) {
     const user = await stackServerApp.getUser()
     if (!user) {
       console.log('❌ No user found - unauthorized')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
     
     console.log('✅ User authenticated:', { userId: user.id, email: user.primaryEmail })
@@ -38,7 +53,7 @@ export async function GET(request: NextRequest) {
       console.log('❌ Zotero integration not found or not enabled')
       return NextResponse.json(
         { error: 'Zotero integration not configured' }, 
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -66,7 +81,7 @@ export async function GET(request: NextRequest) {
       console.log('❌ Failed to get user ID from API key')
       return NextResponse.json(
         { error: 'Invalid API key or access denied' }, 
-        { status: 401 }
+        { status: 401, headers: corsHeaders }
       )
     }
 
@@ -86,9 +101,10 @@ export async function GET(request: NextRequest) {
         { error: 'Rate limited. Please try again later.' }, 
         { 
           status: 429,
-          headers: searchResult.retryAfter ? {
-            'Retry-After': searchResult.retryAfter.toString()
-          } : {}
+          headers: {
+            ...corsHeaders,
+            ...(searchResult.retryAfter ? { 'Retry-After': searchResult.retryAfter.toString() } : {})
+          }
         }
       )
     }
@@ -123,13 +139,13 @@ export async function GET(request: NextRequest) {
       cached: response.cached
     })
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, { headers: corsHeaders })
   } catch (error) {
     console.error('❌ Error searching Zotero:', error)
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
       { error: 'Failed to search Zotero library' }, 
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }

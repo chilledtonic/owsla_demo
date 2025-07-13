@@ -3,6 +3,21 @@ import { stackServerApp } from '@/stack'
 import { getUserIntegration } from '@/lib/database'
 import { decrypt } from '@/lib/encryption'
 
+// CORS headers for API routes
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  })
+}
+
 // POST - Test user's Zotero API key and connection
 export async function POST() {
   try {
@@ -11,7 +26,7 @@ export async function POST() {
     const user = await stackServerApp.getUser()
     if (!user) {
       console.log('❌ No user found - unauthorized')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     console.log('✅ User authenticated:', { userId: user.id, email: user.primaryEmail })
@@ -21,7 +36,7 @@ export async function POST() {
       console.log('❌ No Zotero integration found or disabled')
       return NextResponse.json(
         { error: 'Zotero integration not configured or disabled' }, 
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -34,7 +49,7 @@ export async function POST() {
       console.error('❌ Failed to decrypt API key:', error)
       return NextResponse.json(
         { error: 'Invalid API key configuration. Please re-enter your API key.' }, 
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -45,7 +60,7 @@ export async function POST() {
       console.log('❌ Zotero API test failed:', testResult.error)
       return NextResponse.json(
         { error: testResult.error }, 
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -58,13 +73,13 @@ export async function POST() {
       username: testResult.data.username,
       libraryAccess: testResult.data.access?.user?.library,
       lastTested: new Date().toISOString()
-    })
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('❌ Error testing Zotero connection:', error)
     const errorMessage = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
       { error: `Failed to test Zotero connection: ${errorMessage}` }, 
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }

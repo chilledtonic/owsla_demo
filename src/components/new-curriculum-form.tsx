@@ -64,16 +64,6 @@ interface CurriculumFormData {
   }
 }
 
-// Helper function to convert seconds to readable format
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
-  }
-  return `${minutes}m`
-}
 
 // Calculate recommended days based on video duration
 const calculateRecommendedDays = (durationInSeconds: number): number => {
@@ -95,59 +85,7 @@ const calculateRecommendedDays = (durationInSeconds: number): number => {
   }
 }
 
-// Get YouTube video duration using oEmbed and page scraping
-const getYouTubeVideoDuration = async (videoId: string): Promise<number | null> => {
-  try {
-    // Method 1: Try to scrape from YouTube watch page
-    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`
-    const response = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(watchUrl)}`)
-    
-    if (response.ok) {
-      const data = await response.json()
-      
-      // Check if we got duration from oEmbed (some providers include it)
-      if (data.duration) {
-        return parseInt(data.duration, 10)
-      }
-      
-      // Look for duration in the HTML response
-      if (data.html) {
-        const durationMatch = data.html.match(/duration[":=][\s]*['"]*(\d+)['"]*/)
-        if (durationMatch) {
-          return parseInt(durationMatch[1], 10)
-        }
-      }
-    }
-    
-    // Method 2: Try YouTube's own oEmbed endpoint  
-    const youtubeOEmbedResponse = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(watchUrl)}&format=json`)
-    
-    if (youtubeOEmbedResponse.ok) {
-      const youtubeData = await youtubeOEmbedResponse.json()
-      
-      // Parse duration from title if it includes it (some videos have it)
-      if (youtubeData.title) {
-        const titleDurationMatch = youtubeData.title.match(/\((\d+):(\d+)\)|\[(\d+):(\d+)\]/)
-        if (titleDurationMatch) {
-          const minutes = parseInt(titleDurationMatch[1] || titleDurationMatch[3], 10)
-          const seconds = parseInt(titleDurationMatch[2] || titleDurationMatch[4], 10)
-          return minutes * 60 + seconds
-        }
-      }
-    }
-    
-    // Method 3: Estimate based on common patterns or return null for graceful degradation
-    // For now, we'll return a default duration that passes validation so the form isn't blocked
-    // In production, you'd implement a proper YouTube API integration or server-side solution
-    console.warn('Could not determine video duration for', videoId)
-    return 3600 // Default to 1 hour (passes 30-minute minimum)
-    
-  } catch (error) {
-    console.error('Error fetching video duration:', error)
-    // Return default duration to not block the form
-    return 3600 // Default to 1 hour
-  }
-}
+
 
 // Memoized slider component for better performance
 const OptimizedSlider = memo(({ value, onValueChange, ...props }: {
@@ -233,9 +171,8 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
   // Fetch YouTube metadata with duration
   const fetchYoutubeMetadata = useCallback(async (url: string) => {
-    const videoId = extractYouTubeVideoId(url)
-    if (!videoId) {
-      setMetadataError("Invalid YouTube URL. Please check the URL and try again.")
+    if (!url) {
+      setMetadataError("Please enter a YouTube URL.")
       setYoutubeMetadata(null)
       setDurationError(null)
       return
@@ -246,34 +183,26 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
     setDurationError(null)
 
     try {
-      // Fetch basic metadata from oEmbed
-      const oembedResponse = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)
+      // Use our internal API route instead of direct external calls
+      const response = await fetch(`/api/youtube/metadata?url=${encodeURIComponent(url)}`)
       
-      if (!oembedResponse.ok) {
-        throw new Error("Video not found or unavailable")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Failed to fetch video information")
       }
 
-      const metadata: YoutubeMetadata = await oembedResponse.json()
-      
-      // Fetch duration separately
-      const duration = await getYouTubeVideoDuration(videoId)
-      
-      const extendedMetadata: ExtendedYoutubeMetadata = {
-        ...metadata,
-        duration: duration || undefined,
-        durationString: duration ? formatDuration(duration) : undefined
-      }
+      const extendedMetadata: ExtendedYoutubeMetadata = await response.json()
 
       // Validate duration
-      if (duration && duration < 30 * 60) { // Less than 30 minutes
+      if (extendedMetadata.duration && extendedMetadata.duration < 30 * 60) { // Less than 30 minutes
         setDurationError("Video must be at least 30 minutes long for curriculum creation")
       } else {
         setDurationError(null)
       }
 
       // Auto-adjust length of study based on video duration
-      if (duration && activeTab === "youtube") {
-        const recommendedDays = calculateRecommendedDays(duration)
+      if (extendedMetadata.duration && activeTab === "youtube") {
+        const recommendedDays = calculateRecommendedDays(extendedMetadata.duration)
         setLengthOfStudy([recommendedDays])
         if (isAdvanced) {
           setCurriculumFormData(prev => ({
@@ -289,13 +218,13 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
       setYoutubeMetadata(extendedMetadata)
     } catch (error) {
       console.error('Error fetching YouTube metadata:', error)
-      setMetadataError("Failed to fetch video information. Please check the URL and try again.")
+      setMetadataError(error instanceof Error ? error.message : "Failed to fetch video information. Please check the URL and try again.")
       setYoutubeMetadata(null)
       setDurationError(null)
     } finally {
       setFetchingMetadata(false)
     }
-  }, [extractYouTubeVideoId, activeTab, isAdvanced])
+  }, [activeTab, isAdvanced])
 
   // Debounce YouTube URL changes with useCallback
   useEffect(() => {
