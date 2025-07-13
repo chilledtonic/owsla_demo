@@ -22,28 +22,85 @@ import { useState, useEffect } from "react"
 interface DashboardCurriculaOverviewProps {
   curricula: CurriculumData[]
   dailyModules: DailyModule[]
+  showCompleted?: boolean // New prop to control whether to show completed courses
 }
 
 export const DashboardCurriculaOverview = React.memo(function DashboardCurriculaOverview({
   curricula,
-  dailyModules
+  dailyModules,
+  showCompleted = false // Default to false for dashboard behavior
 }: DashboardCurriculaOverviewProps) {
   const isMobile = useIsMobile()
+  const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
+  const [isHydrated, setIsHydrated] = useState(false)
 
-  if (curricula.length === 0) {
+  // Load completed modules from localStorage for proper filtering
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("module-completion")
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          setCompletedModules(new Set(parsed))
+        } catch {}
+      }
+      setIsHydrated(true)
+    }
+  }, [])
+
+  // Filter curricula based on completion status
+  const filteredCurricula = React.useMemo(() => {
+    if (!isHydrated) return curricula
+    
+    if (showCompleted) {
+      // For archive page - show all passed curricula (they're already filtered)
+      return curricula
+    }
+    
+    // For dashboard - filter out completed curricula
+    return curricula.filter(curriculum => {
+      const curriculumModules = dailyModules.filter(m => m.curriculumId === curriculum.id)
+      const { currentDay } = calculateCurrentCurriculumDay(curriculumModules)
+      const totalDays = curriculumModules.length
+      
+      // Calculate date-based progress percentage
+      const dateProgressPercentage = totalDays > 0 ? Math.round((currentDay / totalDays) * 100) : 0
+      
+      // Calculate manual completion progress percentage
+      const manuallyCompletedModules = curriculumModules.filter(module => 
+        completedModules.has(`${module.curriculumId}-${module.day}`)
+      )
+      const manualProgressPercentage = totalDays > 0 ? Math.round((manuallyCompletedModules.length / totalDays) * 100) : 0
+      
+      // Course is NOT completed if NONE of these are true:
+      // 1. Date-based progress is 100% (past end date)
+      // 2. Manual completion is 100% (all modules marked complete)
+      // 3. Manual completion is 80%+ (mostly complete)
+      return !(dateProgressPercentage >= 100 || manualProgressPercentage >= 100 || manualProgressPercentage >= 80)
+    })
+  }, [curricula, dailyModules, completedModules, isHydrated, showCompleted])
+
+  if (filteredCurricula.length === 0) {
     return (
       <div className={cn("text-center py-8", isMobile && "py-6")}>
         <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-        <h3 className="font-medium mb-2">No curricula yet</h3>
+        <h3 className="font-medium mb-2">
+          {showCompleted ? "No completed curricula" : "No curricula yet"}
+        </h3>
         <p className="text-sm text-muted-foreground mb-4">
-          {isMobile ? "Create your first curriculum to get started" : "Start your learning journey by creating your first curriculum"}
+          {showCompleted 
+            ? "Complete some courses to see them here" 
+            : (isMobile ? "Create your first curriculum to get started" : "Start your learning journey by creating your first curriculum")
+          }
         </p>
-        <Button asChild size={isMobile ? "default" : "lg"}>
-          <Link href="/new-curriculum">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Curriculum
-          </Link>
-        </Button>
+        {!showCompleted && (
+          <Button asChild size={isMobile ? "default" : "lg"}>
+            <Link href="/new-curriculum">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Curriculum
+            </Link>
+          </Button>
+        )}
       </div>
     )
   }
@@ -52,15 +109,19 @@ export const DashboardCurriculaOverview = React.memo(function DashboardCurricula
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <TrendingUp className="h-5 w-5 text-green-600" />
-        <h2 className={cn("font-semibold", isMobile ? "text-lg" : "text-xl")}>Your Curricula</h2>
-        <Badge variant="outline">{curricula.length} active</Badge>
+        <h2 className={cn("font-semibold", isMobile ? "text-lg" : "text-xl")}>
+          {showCompleted ? "Completed Curricula" : "Your Curricula"}
+        </h2>
+        <Badge variant="outline">
+          {filteredCurricula.length} {showCompleted ? "completed" : "active"}
+        </Badge>
       </div>
       
       <div className={cn(
         "grid gap-4",
         isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
       )}>
-        {curricula.map((curriculum) => (
+        {filteredCurricula.map((curriculum) => (
           <DashboardCurriculumCard
             key={curriculum.id}
             curriculum={curriculum}
@@ -91,13 +152,20 @@ const DashboardCurriculumCard = React.memo(function DashboardCurriculumCard({
     setIsHydrated(true)
   }, [])
   
-  // Calculate progress status based on current day
+  // Calculate progress status based on current day and actual day
   const totalDays = curriculumModules.length
+  const { actualDay } = calculateCurrentCurriculumDay(curriculumModules)
   const progressPercentage = totalDays > 0 ? Math.round((currentDay / totalDays) * 100) : 0
   
   let progressStatus = 'upcoming'
-  if (progressPercentage >= 100) progressStatus = 'completed'
-  else if (progressPercentage > 0) progressStatus = 'in-progress'
+  // If actualDay is 0, the course hasn't started yet (future start date)
+  if (actualDay === 0) {
+    progressStatus = 'upcoming'
+  } else if (progressPercentage >= 100) {
+    progressStatus = 'completed'
+  } else if (progressPercentage > 0) {
+    progressStatus = 'in-progress'
+  }
   
   const statusColor = {
     'completed': 'text-green-600',

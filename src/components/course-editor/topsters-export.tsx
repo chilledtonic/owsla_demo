@@ -4,7 +4,6 @@ import { useRef, useCallback, useState, useEffect } from "react"
 import { snapdom } from "@zumer/snapdom";
 import { deduplicateBooks } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { BookCover } from "@/components/ui/book-cover"
 import { 
   Download,
@@ -14,7 +13,8 @@ import {
   BookOpen,
   Calendar,
   Target,
-  Lightbulb
+  Lightbulb,
+  Loader2
 } from "lucide-react"
 import { CourseData } from "@/types/course-editor"
 
@@ -89,6 +89,29 @@ function getYouTubeThumbnailUrl(videoId: string, quality: 'default' | 'medium' |
   return `https://img.youtube.com/vi/${videoId}/${quality}default.jpg`
 }
 
+// Helper function to create and download zip file
+async function downloadAsZip(files: { name: string; blob: Blob }[], zipName: string) {
+  // Dynamic import of JSZip
+  const JSZip = (await import('jszip')).default
+  const zip = new JSZip()
+  
+  // Add files to zip
+  files.forEach(file => {
+    zip.file(file.name, file.blob)
+  })
+  
+  // Generate zip and download
+  const zipBlob = await zip.generateAsync({ type: 'blob' })
+  const url = URL.createObjectURL(zipBlob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = zipName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 export function TopstersExport({ 
   course, 
   onClose,
@@ -96,9 +119,12 @@ export function TopstersExport({
   customVideoThumbnail,
   customSupplementaryCovers
 }: TopstersExportProps) {
-  const exportRef = useRef<HTMLDivElement>(null)
+  const card1Ref = useRef<HTMLDivElement>(null)
+  const card2Ref = useRef<HTMLDivElement>(null)
   const [videoThumbnailUrl, setVideoThumbnailUrl] = useState<string | null>(null)
   const [thumbnailError, setThumbnailError] = useState(false)
+  const [isExportingZip, setIsExportingZip] = useState(false)
+  const [isExportingJson, setIsExportingJson] = useState(false)
 
   const isVideoCourse = course.type === 'video' || course.primary_video
   const deduplicatedBooks = prepareResourcesForDeduplication(course)
@@ -110,48 +136,6 @@ export function TopstersExport({
   const allPapers = course.daily_modules.flatMap(module => 
     module.supplementary_readings?.filter(reading => reading.type === 'paper') || []
   )
-
-  // Calculate dynamic height based on content
-  const calculateExportHeight = () => {
-    // Base components heights (more accurate measurements)
-    const headerHeight = 220 // Course title, stats, executive overview
-    const primaryResourceHeight = isVideoCourse ? 180 : 280 // Video thumbnail or book cover area
-    const supplementaryBooksHeight = supplementaryBooks.length > 0 ? Math.ceil(supplementaryBooks.length / 6) * 100 + 40 : 0
-    const papersHeight = allPapers.length > 0 ? Math.ceil(allPapers.length / 2) * 70 + 40 : 0
-    const footerHeight = 50
-    const sectionSpacing = 30 // Reduced spacing between major sections
-    
-    // Daily modules section
-    const moduleCount = course.daily_modules.length
-    const fullRows = Math.floor(moduleCount / 3)
-    const remainingModules = moduleCount % 3
-    
-    // Each module card is approximately 320px tall with content + spacing
-    const moduleRowHeight = 340
-    const fullRowsHeight = fullRows * moduleRowHeight
-    
-    // Remaining modules in centered layout (same height but fewer cards)
-    const remainingRowHeight = remainingModules > 0 ? moduleRowHeight : 0
-    
-    const dailyModulesHeaderHeight = 50
-    const totalModulesHeight = dailyModulesHeaderHeight + fullRowsHeight + remainingRowHeight
-    
-    // Minimal padding for safety
-    const safetyPadding = 40
-    
-    const totalHeight = headerHeight + 
-                       primaryResourceHeight + 
-                       supplementaryBooksHeight + 
-                       papersHeight + 
-                       sectionSpacing + 
-                       totalModulesHeight + 
-                       footerHeight + 
-                       safetyPadding
-    
-    return totalHeight
-  }
-
-  const exportHeight = calculateExportHeight()
 
   // Extract and set video thumbnail URL
   useEffect(() => {
@@ -206,145 +190,275 @@ export function TopstersExport({
     }
   }, [course.primary_video, customVideoThumbnail])
 
-  const exportAsPNG = useCallback(async () => {
-    if (exportRef.current === null) return
+  const exportCard = useCallback(async (cardRef: React.RefObject<HTMLDivElement | null>) => {
+    if (cardRef.current === null) return null
 
     try {
       // Ensure all content is rendered before capturing
       await new Promise(resolve => setTimeout(resolve, 200))
       
       // Create the PNG image using snapdom
-      const result = await snapdom(exportRef.current, {
+      const result = await snapdom(cardRef.current, {
         backgroundColor: '#ffffff',
         width: 1200,
+        height: 800,
         format: 'png',
         useProxy: 'https://api.allorigins.win/raw?url='
       })
       
-      // Download the image
-      const courseType = isVideoCourse ? 'video' : 'book'
-      const filename = `owsla_${courseType}_${course.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
-      
-      await result.download({ filename })
+      return result.toBlob()
       
     } catch (error) {
-      console.error('Error exporting image:', error)
-      alert('Export failed. Please try again.')
+      console.error('Error exporting card:', error)
+      return null
     }
-  }, [course, isVideoCourse, exportHeight])
+  }, [])
 
-  // Render video course export
-  if (isVideoCourse) {
-    return (
-      <div className="space-y-4">
-        {/* Export Actions */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold">Export Video Course</h2>
-            <p className="text-sm text-muted-foreground">Compact visual overview with learning objectives</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={exportAsPNG} size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export PNG
-            </Button>
-            {onClose && (
-              <Button onClick={onClose} size="sm" variant="ghost">
-                Close
-              </Button>
-            )}
-          </div>
+  // Function to export course data as JSON (.owsla file)
+  const exportCourseJson = useCallback(async () => {
+    setIsExportingJson(true)
+    try {
+      const courseData = {
+        ...course,
+        export_timestamp: new Date().toISOString(),
+        export_version: "1.0"
+      }
+      
+      const jsonString = JSON.stringify(courseData, null, 2)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      
+      const courseType = isVideoCourse ? 'video' : 'book'
+      const filename = `owsla_${courseType}_${course.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.owsla`
+      
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+    } catch (error) {
+      console.error('Error exporting JSON:', error)
+      alert('JSON export failed. Please try again.')
+    } finally {
+      setIsExportingJson(false)
+    }
+  }, [course, isVideoCourse])
+
+  const exportBothCards = useCallback(async () => {
+    setIsExportingZip(true)
+    try {
+      const [card1Blob, card2Blob] = await Promise.all([
+        exportCard(card1Ref),
+        exportCard(card2Ref)
+      ])
+      
+      if (!card1Blob || !card2Blob) {
+        alert('Export failed. Please try again.')
+        return
+      }
+      
+      const courseType = isVideoCourse ? 'video' : 'book'
+      const baseFilename = `owsla_${courseType}_${course.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`
+      
+      // Create course data JSON for inclusion in zip
+      const courseData = {
+        ...course,
+        export_timestamp: new Date().toISOString(),
+        export_version: "1.0"
+      }
+      const jsonString = JSON.stringify(courseData, null, 2)
+      const jsonBlob = new Blob([jsonString], { type: 'application/json' })
+      
+      const files = [
+        { name: `${baseFilename}_overview.png`, blob: card1Blob },
+        { name: `${baseFilename}_schedule.png`, blob: card2Blob },
+        { name: `${baseFilename}.owsla`, blob: jsonBlob }
+      ]
+      
+      await downloadAsZip(files, `${baseFilename}_syllabus.zip`)
+      
+    } catch (error) {
+      console.error('Error creating zip:', error)
+      alert('Export failed. Please try again.')
+    } finally {
+      setIsExportingZip(false)
+    }
+  }, [exportCard, course, isVideoCourse])
+
+  const cardStyle = {
+    width: '1200px',
+    height: '800px',
+    fontFamily: 'var(--font-sans)',
+    backgroundColor: '#ffffff',
+    color: '#111827'
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Export Actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold">Export Course Pack</h2>
+          <p className="text-sm text-muted-foreground">Visual syllabus cards + course data (.owsla file)</p>
         </div>
+        <div className="flex gap-2">
+          <Button onClick={exportCourseJson} size="sm" variant="outline" disabled={isExportingJson}>
+            {isExportingJson ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            {isExportingJson ? 'Exporting...' : 'Export Course File'}
+          </Button>
+          <Button onClick={exportBothCards} size="sm" disabled={isExportingZip}>
+            {isExportingZip ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {isExportingZip ? 'Exporting...' : 'Export Full Pack'}
+          </Button>
+          {onClose && (
+            <Button onClick={onClose} size="sm" variant="ghost">
+              Close
+            </Button>
+          )}
+        </div>
+      </div>
 
-        {/* Video Course Pack Visual */}
-        <div className="flex justify-center">
-                  <div 
-          ref={exportRef}
-          className="w-[1200px] max-w-none bg-white text-gray-900 p-6"
-          style={{ 
-            fontFamily: 'var(--font-sans)'
-          }}
+      <div className="space-y-6 flex flex-col items-center">
+        {/* Card 1: Course Overview with Books, Papers, and Description */}
+        <div 
+          ref={card1Ref}
+          className="max-w-none border border-gray-200 rounded-lg overflow-hidden shadow-lg"
+          style={cardStyle}
         >
-            {/* Header Section */}
-            <div className="flex gap-6 mb-4">
-              {/* Left Column: Video + Primary Info */}
-              <div className="w-80 space-y-3">
-                {/* Video Thumbnail */}
-                {videoThumbnailUrl && !thumbnailError ? (
-                  <div className="w-full h-44 relative rounded-lg overflow-hidden shadow-lg">
-                    <img 
-                      src={videoThumbnailUrl} 
-                      alt="Video thumbnail"
-                      className="w-full h-full object-cover"
-                      onError={() => setThumbnailError(true)}
-                    />
-                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                      <Play className="h-10 w-10 text-white drop-shadow-lg" />
+          <div className="p-6 h-full flex flex-col">
+            {/* Header with Title and Branding */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <img 
+                    src="/logo.png" 
+                    alt="Owsla" 
+                    className="h-8 w-8"
+                  />
+                  <span className="text-xl font-bold text-gray-800">owsla.io</span>
+                </div>
+                <h1 className="text-3xl font-bold leading-tight mb-2">{course.title}</h1>
+                <div className="flex items-center gap-6 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {course.daily_modules.length} Days
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4" />
+                    {deduplicatedBooks.length} Books
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <FileText className="h-4 w-4" />
+                    {allPapers.length} Papers
+                  </span>
+                  {isVideoCourse && course.primary_video && (
+                    <span className="flex items-center gap-1">
+                      <Play className="h-4 w-4" />
+                      {course.primary_video.duration}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Primary Resource Cover - Larger */}
+              <div className="ml-6">
+                {isVideoCourse ? (
+                  videoThumbnailUrl && !thumbnailError ? (
+                    <div className="w-64 h-36 relative rounded-lg overflow-hidden shadow-lg">
+                      <img 
+                        src={videoThumbnailUrl} 
+                        alt="Video thumbnail"
+                        className="w-full h-full object-cover"
+                        onError={() => setThumbnailError(true)}
+                      />
+                      <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                        <Play className="h-8 w-8 text-white drop-shadow-lg" />
+                      </div>
                     </div>
-                  </div>
-                ) : course.primary_video ? (
-                  <div className="w-full h-44 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <div className="text-white text-center">
-                      <Play className="h-10 w-10 mx-auto mb-2" />
-                      <div className="text-sm opacity-90">{course.primary_video.channel}</div>
-                      <div className="text-xs opacity-75 mt-1">{course.primary_video.duration}</div>
+                  ) : (
+                    <div className="w-64 h-36 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <div className="text-white text-center">
+                        <Play className="h-8 w-8 mx-auto mb-2" />
+                        <div className="text-sm">Video Course</div>
+                      </div>
                     </div>
-                  </div>
+                  )
                 ) : (
-                  <div className="w-full h-44 bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <div className="text-white text-center">
-                      <Play className="h-10 w-10 mx-auto mb-2" />
-                      <div className="text-sm">Video Course</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Compact Primary Video Info */}
-                {course.primary_video && (
-                  <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                    <div className="text-xs text-gray-500 uppercase tracking-wide">Primary Video</div>
-                    <div className="font-semibold text-sm leading-snug">{course.primary_video.title}</div>
-                    <div className="text-xs text-gray-600">{course.primary_video.channel}</div>
-                    <div className="text-xs text-gray-500">
-                      {course.primary_video.duration} • {course.daily_modules.length} days
-                    </div>
-                  </div>
+                  course.primary_resource?.title && (
+                    customBookCover ? (
+                      <img 
+                        src={customBookCover} 
+                        alt="Primary resource cover"
+                        className="h-48 w-36 object-cover rounded-lg border shadow-lg"
+                      />
+                    ) : course.primary_resource.isbn ? (
+                      <BookCover 
+                        isbn={course.primary_resource.isbn}
+                        title={course.primary_resource.title}
+                        className="h-48 w-36 shadow-lg"
+                      />
+                    ) : (
+                      <div className="h-48 w-36 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                        <div className="text-white text-center p-3">
+                          <BookOpen className="h-6 w-6 mx-auto mb-2" />
+                          <div className="text-sm font-medium text-center leading-tight">
+                            {course.primary_resource.title.substring(0, 40)}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )
                 )}
               </div>
+            </div>
 
-              {/* Center/Right: Course Info & Books */}
-              <div className="flex-1 space-y-3">
-                {/* Course Title & Stats */}
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold leading-tight">{course.title}</h1>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {course.daily_modules.length} Days
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-3 w-3" />
-                      {supplementaryBooks.length} Books
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {course.primary_video?.duration || 'Video Course'}
-                    </span>
+            {/* Course Overview - Compact */}
+            {course.executive_overview && (
+              <div className="mb-4">
+                <h2 className="text-base font-semibold mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Course Overview
+                </h2>
+                <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">
+                  {course.executive_overview}
+                </p>
+              </div>
+            )}
+
+            <div className="flex-1 flex gap-6">
+              {/* Books Section - More Visual */}
+              <div className="flex-1">
+                <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Required Reading
+                </h2>
+                
+                {/* Primary Resource Info */}
+                {course.primary_resource && (
+                  <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="text-xs text-blue-600 font-medium uppercase tracking-wide mb-1">Primary Text</div>
+                    <div className="font-semibold text-sm text-gray-900">{course.primary_resource.title}</div>
+                    <div className="text-xs text-gray-600">{course.primary_resource.author}</div>
                   </div>
-                </div>
-
-                {course.executive_overview && (
-                  <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">
-                    {course.executive_overview}
-                  </p>
                 )}
 
-                {/* Supplementary Books */}
+                {/* Supplementary Books - Larger and More Prominent */}
                 {supplementaryBooks.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Supplementary Reading</div>
-                    <div className="grid grid-cols-6 gap-3">
-                      {supplementaryBooks.map((book, index) => {
+                  <div>
+                    <div className="text-sm font-medium text-gray-700 mb-2">Supplementary Texts</div>
+                    <div className="grid grid-cols-8 gap-2">
+                      {supplementaryBooks.slice(0, 16).map((book, index) => {
                         const resourceId = book.id || `${book.title}-${book.author}`
                         const customCover = customSupplementaryCovers?.get(resourceId)
                         
@@ -355,416 +469,46 @@ export function TopstersExport({
                                 <img 
                                   src={customCover} 
                                   alt="Book cover"
-                                  className="h-20 w-14 object-cover rounded border shadow-sm mx-auto"
+                                  className="h-24 w-16 object-cover rounded border shadow-md mx-auto hover:shadow-lg transition-shadow"
                                 />
                               ) : (
                                 <BookCover 
                                   isbn={book.isbn}
                                   title={book.title}
-                                  className="h-20 w-14 shadow-sm mx-auto"
+                                  className="h-24 w-16 shadow-md mx-auto hover:shadow-lg transition-shadow"
                                 />
                               )
                             ) : (
-                              <div className="h-20 w-14 bg-blue-100 border border-blue-200 rounded flex items-center justify-center mx-auto">
-                                <BookOpen className="h-3 w-3 text-blue-600" />
+                              <div className="h-24 w-16 bg-gradient-to-br from-blue-100 to-blue-200 border border-blue-300 rounded flex items-center justify-center mx-auto shadow-md">
+                                <BookOpen className="h-4 w-4 text-blue-600" />
                               </div>
                             )}
-                            <div className="text-xs text-gray-600 mt-1 leading-tight">
-                              {book.title}
-                            </div>
-                            <div className="text-xs text-gray-500 leading-tight">
-                              {book.author}
+                            <div className="text-xs text-gray-600 mt-1 leading-tight font-medium">
+                              {book.title.length > 12 ? book.title.substring(0, 12) + '...' : book.title}
                             </div>
                           </div>
                         )
                       })}
                     </div>
+                    {supplementaryBooks.length > 16 && (
+                      <div className="text-xs text-gray-500 text-center mt-2">
+                        +{supplementaryBooks.length - 16} more books
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Daily Learning Path - 3 Column Grid */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Target className="h-4 w-4" />
-                Daily Learning Path
-              </h2>
-              
-              <div className="space-y-4">
-                {/* Main grid for full rows */}
-                <div className="grid grid-cols-3 gap-4">
-                  {course.daily_modules.slice(0, Math.floor(course.daily_modules.length / 3) * 3).map((module, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 space-y-3 flex flex-col">
-                      {/* Day header */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xl font-bold text-gray-800">Day {module.day}</span>
-                          {module.video_segment && (
-                            <Badge variant="outline" className="text-xs px-1 py-0">
-                              {module.video_segment.start}-{module.video_segment.end}
-                            </Badge>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-semibold text-gray-900 leading-tight">{module.title}</h3>
-                      </div>
-
-                      {/* Watch section */}
-                      {module.video_segment?.chapters && module.video_segment.chapters.length > 0 && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <Play className="h-4 w-4" />
-                            Watch
-                          </div>
-                          <div className="space-y-1">
-                            {module.video_segment.chapters.slice(0, 3).map((chapter, idx) => (
-                              <div key={idx} className="text-sm text-gray-700 leading-tight">
-                                • {chapter}
-                              </div>
-                            ))}
-                            {module.video_segment.chapters.length > 3 && (
-                              <div className="text-sm text-gray-500">+{module.video_segment.chapters.length - 3} more</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Read section */}
-                      {module.supplementary_readings && module.supplementary_readings.length > 0 && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <BookOpen className="h-4 w-4" />
-                            Read
-                          </div>
-                          <div className="space-y-1">
-                            {module.supplementary_readings.slice(0, 3).map((reading, idx) => (
-                              <div key={idx} className="text-sm text-gray-700 leading-tight">
-                                • {reading.title}
-                              </div>
-                            ))}
-                            {module.supplementary_readings.length > 3 && (
-                              <div className="text-sm text-gray-500">+{module.supplementary_readings.length - 3} more</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Reading focus */}
-                      {module.primary_reading_focus && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <BookOpen className="h-4 w-4" />
-                            Focus
-                          </div>
-                          <div className="text-sm text-gray-700 leading-tight">
-                            {module.primary_reading_focus}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Key takeaway */}
-                      {module.key_insights && module.key_insights.length > 0 && (
-                        <div className="space-y-1 flex-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <Lightbulb className="h-4 w-4" />
-                            Key Takeaway
-                          </div>
-                          <div className="text-sm text-gray-700 leading-tight">
-                            {module.key_insights[0]}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Time allocation */}
-                      {module.time_allocation && (
-                        <div className="mt-auto pt-2 border-t border-gray-200">
-                          <div className="text-sm text-gray-500 text-center flex items-center justify-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {module.time_allocation.total}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Centered remaining modules */}
-                {course.daily_modules.length % 3 !== 0 && (
-                  <div className={`flex justify-center gap-4`}>
-                    {course.daily_modules.slice(Math.floor(course.daily_modules.length / 3) * 3).map((module, index) => (
-                      <div key={index + Math.floor(course.daily_modules.length / 3) * 3} className="bg-gray-50 rounded-lg p-4 space-y-3 flex flex-col w-80">
-                        {/* Day header */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl font-bold text-gray-800">Day {module.day}</span>
-                            {module.video_segment && (
-                              <Badge variant="outline" className="text-xs px-1 py-0">
-                                {module.video_segment.start}-{module.video_segment.end}
-                              </Badge>
-                            )}
-                          </div>
-                          <h3 className="text-sm font-semibold text-gray-900 leading-tight">{module.title}</h3>
-                        </div>
-
-                        {/* Watch section */}
-                        {module.video_segment?.chapters && module.video_segment.chapters.length > 0 && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                              <Play className="h-4 w-4" />
-                              Watch
-                            </div>
-                            <div className="space-y-1">
-                              {module.video_segment.chapters.slice(0, 3).map((chapter, idx) => (
-                                <div key={idx} className="text-sm text-gray-700 leading-tight">
-                                  • {chapter}
-                                </div>
-                              ))}
-                              {module.video_segment.chapters.length > 3 && (
-                                <div className="text-sm text-gray-500">+{module.video_segment.chapters.length - 3} more</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Read section */}
-                        {module.supplementary_readings && module.supplementary_readings.length > 0 && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                              <BookOpen className="h-4 w-4" />
-                              Read
-                            </div>
-                            <div className="space-y-1">
-                              {module.supplementary_readings.slice(0, 3).map((reading, idx) => (
-                                <div key={idx} className="text-sm text-gray-700 leading-tight">
-                                  • {reading.title}
-                                </div>
-                              ))}
-                              {module.supplementary_readings.length > 3 && (
-                                <div className="text-sm text-gray-500">+{module.supplementary_readings.length - 3} more</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Reading focus */}
-                        {module.primary_reading_focus && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                              <BookOpen className="h-4 w-4" />
-                              Focus
-                            </div>
-                            <div className="text-sm text-gray-700 leading-tight">
-                              {module.primary_reading_focus}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Key takeaway */}
-                        {module.key_insights && module.key_insights.length > 0 && (
-                          <div className="space-y-1 flex-1">
-                            <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                              <Lightbulb className="h-4 w-4" />
-                              Key Takeaway
-                            </div>
-                            <div className="text-sm text-gray-700 leading-tight">
-                              {module.key_insights[0]}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Time allocation */}
-                        {module.time_allocation && (
-                          <div className="mt-auto pt-2 border-t border-gray-200">
-                            <div className="text-sm text-gray-500 text-center flex items-center justify-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              {module.time_allocation.total}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-2 pt-2 border-t border-gray-200 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <img 
-                  src="/logo.png" 
-                  alt="Owsla" 
-                  className="h-4 w-4"
-                />
-                <span className="text-sm font-semibold">owsla.io</span>
-              </div>
-              <div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Render book course export
-  return (
-    <div className="space-y-4">
-      {/* Export Actions */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold">Export Course Pack</h2>
-          <p className="text-sm text-muted-foreground">Compact visual overview with learning objectives</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={exportAsPNG} size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export PNG
-          </Button>
-          {onClose && (
-            <Button onClick={onClose} size="sm" variant="ghost">
-              Close
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Course Pack Visual */}
-      <div className="flex justify-center">
-        <div 
-          ref={exportRef}
-          className="w-[1200px] max-w-none bg-white text-gray-900 p-6"
-          style={{ 
-            fontFamily: 'var(--font-sans)'
-          }}
-        >
-          {/* Header Section */}
-          <div className="flex gap-6 mb-4">
-            {/* Left Column: Primary Book + Info */}
-            <div className="w-72 space-y-3">
-              {/* Primary Resource Cover */}
-              {course.primary_resource?.title && (
-                customBookCover ? (
-                  <img 
-                    src={customBookCover} 
-                    alt="Primary resource cover"
-                    className="h-64 w-48 object-cover rounded-lg border shadow-lg mx-auto"
-                  />
-                ) : course.primary_resource.isbn ? (
-                  <BookCover 
-                    isbn={course.primary_resource.isbn}
-                    title={course.primary_resource.title}
-                    className="h-64 w-48 shadow-lg mx-auto"
-                  />
-                ) : (
-                  <div className="h-64 w-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg mx-auto">
-                    <div className="text-white text-center p-4">
-                      <BookOpen className="h-10 w-10 mx-auto mb-2" />
-                      <div className="text-sm font-medium text-center leading-tight">
-                        {course.primary_resource.title}
-                      </div>
-                    </div>
-                  </div>
-                )
-              )}
-
-              {/* Compact Primary Resource Info */}
-              {course.primary_resource && (
-                <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                  <div className="text-xs text-gray-500 uppercase tracking-wide">Primary Resource</div>
-                  <div className="font-bold text-base leading-snug">{course.primary_resource.title}</div>
-                  <div className="text-sm text-gray-600 leading-snug">{course.primary_resource.author}</div>
-                  <div className="text-xs text-gray-500">
-                    {course.primary_resource.publisher} • {course.primary_resource.year}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Center/Right: Course Info & All Books */}
-            <div className="flex-1 space-y-3">
-              {/* Course Title & Stats */}
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold leading-tight">{course.title}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {course.daily_modules.length} Days
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="h-4 w-4" />
-                    {supplementaryBooks.length} Books
-                  </span>
-                  <span className="flex items-center gap-1">
+              {/* Papers Section - Compact */}
+              {allPapers.length > 0 && (
+                <div className="w-80">
+                  <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
                     <FileText className="h-4 w-4" />
-                    {allPapers.length} Papers
-                  </span>
-                </div>
-              </div>
-              
-              {course.executive_overview && (
-                <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
-                  {course.executive_overview}
-                </p>
-              )}
-
-              {/* Supplementary Books */}
-              {supplementaryBooks.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Supplementary Reading</div>
-                  <div className="grid grid-cols-6 gap-3">
-                    {supplementaryBooks.map((book, index) => {
-                      const resourceId = book.id || `${book.title}-${book.author}`
-                      const customCover = customSupplementaryCovers?.get(resourceId)
-                      
-                      return (
-                        <div key={index} className="text-center">
-                          {customCover || book.isbn ? (
-                            customCover ? (
-                              <img 
-                                src={customCover} 
-                                alt="Book cover"
-                                className="h-28 w-20 object-cover rounded border shadow-sm mx-auto"
-                              />
-                            ) : (
-                              <BookCover 
-                                isbn={book.isbn}
-                                title={book.title}
-                                className="h-28 w-20 shadow-sm mx-auto"
-                              />
-                            )
-                          ) : (
-                            <div className="h-28 w-20 bg-blue-100 border border-blue-200 rounded flex items-center justify-center mx-auto">
-                              <BookOpen className="h-4 w-4 text-blue-600" />
-                            </div>
-                          )}
-                          <div className="text-xs text-gray-600 mt-1 leading-tight">
-                            {book.title}
-                          </div>
-                          <div className="text-xs text-gray-500 leading-tight">
-                            {book.author}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Academic Papers - Full Width 3 Column Grid */}
-          {allPapers.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Academic Papers
-              </h2>
-              <div className="grid grid-cols-3 gap-4">
-                {allPapers.map((paper, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="flex items-start gap-2">
-                      <div className="text-xs text-gray-600 mt-1">•</div>
-                      <div className="space-y-1">
+                    Academic Papers ({allPapers.length})
+                  </h2>
+                  <div className="space-y-1 max-h-80 overflow-y-auto">
+                    {allPapers.map((paper, index) => (
+                      <div key={index} className="border-l-2 border-green-200 pl-2 py-1">
                         <div className="text-xs font-medium text-gray-800 leading-tight">
                           {paper.title}
                         </div>
@@ -778,174 +522,210 @@ export function TopstersExport({
                           </div>
                         )}
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-4 pt-2 border-t border-gray-200 flex justify-between items-center">
+              <div className="text-xs text-gray-500">Course Syllabus • Page 1 of 2</div>
+              <div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Daily Learning Schedule - Horizontal Layout */}
+        <div 
+          ref={card2Ref}
+          className="max-w-none border border-gray-200 rounded-lg overflow-hidden shadow-lg"
+          style={cardStyle}
+        >
+          <div className="p-6 h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <img 
+                    src="/logo.png" 
+                    alt="Owsla" 
+                    className="h-6 w-6"
+                  />
+                  <span className="text-lg font-bold text-gray-800">owsla.io</span>
+                </div>
+                <h1 className="text-2xl font-bold leading-tight">{course.title}</h1>
+                <div className="text-sm text-gray-600">{course.daily_modules.length}-Day Learning Schedule</div>
               </div>
             </div>
-          )}
 
-          {/* Daily Learning Plan - 3 Column Grid */}
-          <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Daily Learning Plan
-            </h2>
-            
-            <div className="space-y-4">
-              {/* Main grid for full rows */}
-              <div className="grid grid-cols-3 gap-4">
-                {course.daily_modules.slice(0, Math.floor(course.daily_modules.length / 3) * 3).map((module, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4 space-y-3 flex flex-col">
-                    {/* Day header */}
-                    <div className="space-y-1">
-                      <span className="text-xl font-bold text-gray-800">Day {module.day}</span>
-                      <h3 className="text-sm font-semibold text-gray-900 leading-tight">{module.title}</h3>
+            {/* Daily Modules - Horizontal Timeline Layout */}
+            <div className="flex-1 overflow-hidden">
+              {/* Days Timeline */}
+              <div className="grid gap-2 h-full" style={{ gridTemplateColumns: `repeat(${Math.min(course.daily_modules.length, 5)}, 1fr)` }}>
+                {course.daily_modules.map((module, index) => (
+                  <div key={index} className="bg-gray-50 rounded-lg p-3 flex flex-col min-h-0">
+                    <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                      <span className="text-base font-bold text-gray-800">Day {module.day}</span>
+                      {module.time_allocation && (
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {module.time_allocation.total}
+                        </span>
+                      )}
                     </div>
+                    
+                    <h3 className="text-sm font-semibold text-gray-900 leading-tight mb-2 flex-shrink-0">
+                      {module.title.length > 50 ? module.title.substring(0, 50) + '...' : module.title}
+                    </h3>
 
-                    {/* Reading focus */}
-                    {module.primary_reading_focus && (
-                      <div className="space-y-1">
-                        <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                          <BookOpen className="h-4 w-4" />
-                          Focus
-                        </div>
-                        <div className="text-sm text-gray-700 leading-tight">
-                          {module.primary_reading_focus}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Resources to review */}
-                    {module.supplementary_readings && module.supplementary_readings.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                          <FileText className="h-4 w-4" />
-                          Review
-                        </div>
-                        <div className="space-y-1">
-                          {module.supplementary_readings.slice(0, 3).map((reading, idx) => (
-                            <div key={idx} className="text-sm text-gray-700 leading-tight">
-                              • {reading.title}
+                    <div className="flex-1 overflow-y-auto space-y-2">
+                      {/* Video segment for video courses */}
+                      {isVideoCourse && module.video_segment && (
+                        <div>
+                          <div className="text-xs text-gray-600 font-medium flex items-center gap-1 mb-1">
+                            <Play className="h-3 w-3" />
+                            {module.video_segment.start}-{module.video_segment.end}
+                          </div>
+                          {module.video_segment.chapters && module.video_segment.chapters.length > 0 && (
+                            <div className="text-xs text-gray-700 leading-tight">
+                              {module.video_segment.chapters.slice(0, 2).join(', ')}
+                              {module.video_segment.chapters.length > 2 && ` +${module.video_segment.chapters.length - 2}`}
                             </div>
-                          ))}
-                          {module.supplementary_readings.length > 3 && (
-                            <div className="text-sm text-gray-500">+{module.supplementary_readings.length - 3} more</div>
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Key takeaway */}
-                    {module.key_insights && module.key_insights.length > 0 && (
-                      <div className="space-y-1 flex-1">
-                        <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                          <Lightbulb className="h-4 w-4" />
-                          Key Takeaway
-                        </div>
-                        <div className="text-sm text-gray-700 leading-tight">
-                          {module.key_insights[0]}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Time allocation */}
-                    {module.time_allocation && (
-                      <div className="mt-auto pt-2 border-t border-gray-200">
-                        <div className="text-sm text-gray-500 text-center flex items-center justify-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {module.time_allocation.total}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Centered remaining modules */}
-              {course.daily_modules.length % 3 !== 0 && (
-                <div className={`flex justify-center gap-4`}>
-                  {course.daily_modules.slice(Math.floor(course.daily_modules.length / 3) * 3).map((module, index) => (
-                    <div key={index + Math.floor(course.daily_modules.length / 3) * 3} className="bg-gray-50 rounded-lg p-4 space-y-3 flex flex-col w-80">
-                      {/* Day header */}
-                      <div className="space-y-1">
-                        <span className="text-xl font-bold text-gray-800">Day {module.day}</span>
-                        <h3 className="text-sm font-semibold text-gray-900 leading-tight">{module.title}</h3>
-                      </div>
+                      )}
 
                       {/* Reading focus */}
                       {module.primary_reading_focus && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <BookOpen className="h-4 w-4" />
+                        <div>
+                          <div className="text-xs text-gray-600 font-medium flex items-center gap-1 mb-1">
+                            <BookOpen className="h-3 w-3" />
                             Focus
                           </div>
-                          <div className="text-sm text-gray-700 leading-tight">
-                            {module.primary_reading_focus}
+                          <div className="text-xs text-gray-700 leading-tight">
+                            {module.primary_reading_focus.length > 60 ? 
+                              module.primary_reading_focus.substring(0, 60) + '...' : 
+                              module.primary_reading_focus}
                           </div>
                         </div>
                       )}
 
-                      {/* Resources to review */}
+                      {/* Supplementary readings */}
                       {module.supplementary_readings && module.supplementary_readings.length > 0 && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <FileText className="h-4 w-4" />
-                            Review
+                        <div>
+                          <div className="text-xs text-gray-600 font-medium flex items-center gap-1 mb-1">
+                            <FileText className="h-3 w-3" />
+                            Materials ({module.supplementary_readings.length})
                           </div>
-                          <div className="space-y-1">
-                            {module.supplementary_readings.slice(0, 3).map((reading, idx) => (
-                              <div key={idx} className="text-sm text-gray-700 leading-tight">
-                                • {reading.title}
-                              </div>
-                            ))}
-                            {module.supplementary_readings.length > 3 && (
-                              <div className="text-sm text-gray-500">+{module.supplementary_readings.length - 3} more</div>
-                            )}
+                          <div className="text-xs text-gray-700 leading-tight">
+                            {module.supplementary_readings.slice(0, 2).map(r => {
+                              const shortTitle = r.title.length > 25 ? r.title.substring(0, 25) + '...' : r.title
+                              return shortTitle
+                            }).join(', ')}
+                            {module.supplementary_readings.length > 2 && ` +${module.supplementary_readings.length - 2}`}
                           </div>
                         </div>
                       )}
 
-                      {/* Key takeaway */}
+                      {/* Key insight */}
                       {module.key_insights && module.key_insights.length > 0 && (
-                        <div className="space-y-1 flex-1">
-                          <div className="text-sm text-gray-700 font-medium flex items-center gap-1">
-                            <Lightbulb className="h-4 w-4" />
+                        <div>
+                          <div className="text-xs text-gray-600 font-medium flex items-center gap-1 mb-1">
+                            <Lightbulb className="h-3 w-3" />
                             Key Takeaway
                           </div>
-                          <div className="text-sm text-gray-700 leading-tight">
-                            {module.key_insights[0]}
+                          <div className="text-xs text-gray-700 leading-tight">
+                            {module.key_insights[0].length > 80 ? 
+                              module.key_insights[0].substring(0, 80) + '...' : 
+                              module.key_insights[0]}
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                      {/* Time allocation */}
-                      {module.time_allocation && (
-                        <div className="mt-auto pt-2 border-t border-gray-200">
-                          <div className="text-sm text-gray-500 text-center flex items-center justify-center gap-1">
-                            <Clock className="h-4 w-4" />
+              {/* Additional rows for courses with more than 5 days */}
+              {course.daily_modules.length > 5 && (
+                <div className="mt-2 grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(course.daily_modules.length - 5, 5)}, 1fr)` }}>
+                  {course.daily_modules.slice(5, 10).map((module, index) => (
+                    <div key={index + 5} className="bg-gray-50 rounded-lg p-3 flex flex-col min-h-0">
+                      <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                        <span className="text-base font-bold text-gray-800">Day {module.day}</span>
+                        {module.time_allocation && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
                             {module.time_allocation.total}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h3 className="text-sm font-semibold text-gray-900 leading-tight mb-2 flex-shrink-0">
+                        {module.title.length > 50 ? module.title.substring(0, 50) + '...' : module.title}
+                      </h3>
+
+                      <div className="flex-1 overflow-y-auto space-y-2">
+                        {/* Condensed content similar to above */}
+                        {isVideoCourse && module.video_segment && (
+                          <div className="text-xs text-gray-700">
+                            <span className="font-medium">Watch:</span> {module.video_segment.start}-{module.video_segment.end}
                           </div>
-                        </div>
-                      )}
+                        )}
+
+                        {module.primary_reading_focus && (
+                          <div className="text-xs text-gray-700">
+                            <span className="font-medium">Focus:</span> {module.primary_reading_focus.substring(0, 40)}...
+                          </div>
+                        )}
+
+                        {module.key_insights && module.key_insights.length > 0 && (
+                          <div className="text-xs text-gray-700">
+                            <span className="font-medium">Key:</span> {module.key_insights[0].substring(0, 60)}...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Third row for courses with more than 10 days */}
+              {course.daily_modules.length > 10 && (
+                <div className="mt-2 grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(course.daily_modules.length - 10, 5)}, 1fr)` }}>
+                  {course.daily_modules.slice(10, 15).map((module, index) => (
+                    <div key={index + 10} className="bg-gray-50 rounded-lg p-3 flex flex-col min-h-0">
+                      <div className="flex items-center justify-between mb-1 flex-shrink-0">
+                        <span className="text-base font-bold text-gray-800">Day {module.day}</span>
+                        {module.time_allocation && (
+                          <span className="text-xs text-gray-500">{module.time_allocation.total}</span>
+                        )}
+                      </div>
+                      
+                      <h3 className="text-sm font-semibold text-gray-900 leading-tight mb-2 flex-shrink-0">
+                        {module.title.length > 40 ? module.title.substring(0, 40) + '...' : module.title}
+                      </h3>
+
+                      <div className="flex-1 text-xs text-gray-700 space-y-1">
+                        {module.primary_reading_focus && (
+                          <div>{module.primary_reading_focus.substring(0, 35)}...</div>
+                        )}
+                        {module.key_insights && module.key_insights.length > 0 && (
+                          <div className="italic">{module.key_insights[0].substring(0, 45)}...</div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <img 
-                src="/logo.png" 
-                alt="Owsla" 
-                className="h-4 w-4"
-              />
-              <span className="text-sm font-semibold">owsla.io</span>
+            {/* Footer */}
+            <div className="mt-4 pt-2 border-t border-gray-200 flex justify-between items-center">
+              <div className="text-xs text-gray-500">Learning Schedule • Page 2 of 2</div>
+              <div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div>
             </div>
-            <div className="text-xs text-gray-500">{new Date().toLocaleDateString()}</div>
           </div>
         </div>
       </div>

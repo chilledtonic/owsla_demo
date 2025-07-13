@@ -3,7 +3,7 @@
 import React from "react"
 import { useUser } from "@stackframe/stack"
 import { useCachedDashboardData } from "@/hooks/use-curriculum-data"
-import { deduplicateBooks } from "@/lib/utils"
+import { deduplicateBooks, calculateCurrentCurriculumDay } from "@/lib/utils"
 import { AppLayout } from "@/components/app-layout"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -11,32 +11,9 @@ import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
 import { useState, useCallback, useMemo, useEffect } from "react"
-import dynamic from "next/dynamic"
 
-// Dynamically import dashboard components to prevent hydration issues
-const TodaysFocus = dynamic(
-  () => import("@/components/dashboard").then(mod => ({ default: mod.TodaysFocus })),
-  { 
-    ssr: true,
-    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />
-  }
-)
-
-const UpcomingSchedule = dynamic(
-  () => import("@/components/dashboard").then(mod => ({ default: mod.UpcomingSchedule })),
-  { 
-    ssr: true,
-    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />
-  }
-)
-
-const DashboardCurriculaOverview = dynamic(
-  () => import("@/components/dashboard").then(mod => ({ default: mod.DashboardCurriculaOverview })),
-  { 
-    ssr: true,
-    loading: () => <div className="animate-pulse h-32 bg-muted rounded" />
-  }
-)
+// Import dashboard components directly to fix webpack issues
+import { TodaysFocus, UpcomingSchedule, DashboardCurriculaOverview } from "@/components/dashboard"
 
 import { 
   BookOpen, 
@@ -185,7 +162,29 @@ function DashboardContent() {
 
   // Split stats calculation to reduce complexity
   const statsData = useMemo(() => {
-    if (!dashboardData || !calculatedData) return null
+    if (!dashboardData || !calculatedData || !isHydrated) return null
+
+    // Filter out completed curricula for stats
+    const activeCurricula = dashboardData.curricula.filter(curriculum => {
+      const curriculumModules = dashboardData.dailyModules.filter(m => m.curriculumId === curriculum.id)
+      const { currentDay } = calculateCurrentCurriculumDay(curriculumModules)
+      const totalDays = curriculumModules.length
+      
+      // Calculate date-based progress percentage
+      const dateProgressPercentage = totalDays > 0 ? Math.round((currentDay / totalDays) * 100) : 0
+      
+      // Calculate manual completion progress percentage
+      const manuallyCompletedModules = curriculumModules.filter(module => 
+        completedModules.has(`${module.curriculumId}-${module.day}`)
+      )
+      const manualProgressPercentage = totalDays > 0 ? Math.round((manuallyCompletedModules.length / totalDays) * 100) : 0
+      
+      // Course is NOT completed if NONE of these are true:
+      // 1. Date-based progress is 100% (past end date)
+      // 2. Manual completion is 100% (all modules marked complete)
+      // 3. Manual completion is 80%+ (mostly complete)
+      return !(dateProgressPercentage >= 100 || manualProgressPercentage >= 100 || manualProgressPercentage >= 80)
+    })
 
     const recentModules = dashboardData.dailyModules.filter(module => {
       const moduleDate = new Date(module.date)
@@ -194,19 +193,27 @@ function DashboardContent() {
       return daysDiff > 0 && daysDiff <= 7
     }).slice(0, 5)
 
-    const totalStudyTime = dashboardData.dailyModules.reduce((acc, module) => {
-      const time = parseInt(module.totalTime.replace(/\D/g, '')) || 60
-      return acc + time
-    }, 0)
+    // Only count study time from active curricula
+    const totalStudyTime = dashboardData.dailyModules
+      .filter(module => activeCurricula.some(curriculum => curriculum.id === module.curriculumId))
+      .reduce((acc, module) => {
+        const time = parseInt(module.totalTime.replace(/\D/g, '')) || 60
+        return acc + time
+      }, 0)
 
-    const uniqueBookCount = deduplicateBooks(dashboardData.bookResources).length
+    // Only count books from active curricula
+    const activeBooks = dashboardData.bookResources.filter(book =>
+      activeCurricula.some(curriculum => curriculum.id === book.curriculumId)
+    )
+    const uniqueBookCount = deduplicateBooks(activeBooks).length
 
     return {
       recentModules,
       totalStudyTime,
-      uniqueBookCount
+      uniqueBookCount,
+      activeCurriculaCount: activeCurricula.length
     }
-  }, [dashboardData, calculatedData])
+  }, [dashboardData, calculatedData, completedModules, isHydrated])
 
   const totalCompletedToday = useMemo(() => {
     if (!calculatedData || !isHydrated) return 0
@@ -318,7 +325,7 @@ function DashboardContent() {
               <div className="flex items-center justify-center mb-1">
                 <Circle className="h-4 w-4 text-blue-600" />
               </div>
-              <div className="text-lg font-semibold">{dashboardData.curricula.length}</div>
+              <div className="text-lg font-semibold">{statsData.activeCurriculaCount}</div>
               <div className="text-xs text-muted-foreground">Active Curricula</div>
             </div>
             <div className="text-center p-3 rounded-lg border">

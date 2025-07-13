@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor, Plus, Edit, Plug } from "lucide-react"
+import { Settings, LogOut, User, BookOpen, LayoutDashboard, Users, Moon, Sun, Monitor, Plus, Edit, Plug, Archive } from "lucide-react"
 import { useUser } from "@stackframe/stack"
 import { useTheme } from "next-themes"
 import Link from "next/link"
@@ -72,6 +72,12 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
       icon: Users, 
       href: "/experts",
       isActive: pathname === "/experts"
+    },
+    {
+      title: "Archive",
+      icon: Archive,
+      href: "/archive",
+      isActive: pathname === "/archive"
     }
   ]
 

@@ -714,7 +714,7 @@ export async function submitSourceCurriculum(payload: {
   console.log('📚 Submitting source-based curriculum request...')
   
   try {
-    const webhookUrl = 'https://owslaio.app.n8n.cloud/webhook-test/45fc3a28-2646-49af-ab25-b6b3f3c60f01'
+    const webhookUrl = 'https://owslaio.app.n8n.cloud/webhook/45fc3a28-2646-49af-ab25-b6b3f3c60f01'
     const hookUser = process.env.HOOK_USER
     const hookPass = process.env.HOOK_PASS
 
