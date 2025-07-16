@@ -1,6 +1,6 @@
-const CACHE_NAME = 'owsla-v1';
-const API_CACHE_NAME = 'owsla-api-v1';
-const STATIC_CACHE_NAME = 'owsla-static-v1';
+const CACHE_NAME = 'owsla-app-v1';
+const API_CACHE_NAME = 'owsla-app-api-v1';
+const STATIC_CACHE_NAME = 'owsla-app-static-v1';
 
 const urlsToCache = [
   '/',
@@ -13,17 +13,21 @@ const urlsToCache = [
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing on:', self.location.origin);
   event.waitUntil(
     Promise.all([
       caches.open(STATIC_CACHE_NAME).then((cache) => {
-        console.log('Opened static cache');
+        console.log('Opened static cache:', STATIC_CACHE_NAME);
         return cache.addAll(urlsToCache);
       }),
       caches.open(API_CACHE_NAME).then((cache) => {
-        console.log('Opened API cache');
+        console.log('Opened API cache:', API_CACHE_NAME);
         return Promise.resolve();
       })
-    ])
+    ]).catch(error => {
+      console.error('Service Worker installation failed:', error);
+      throw error;
+    })
   );
   // Force immediate activation
   self.skipWaiting();
@@ -112,6 +116,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Only handle requests from the same origin to avoid CORS issues
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Skip caching for Next.js hot-reload and dev resources
   if (
     url.pathname.startsWith('/_next/webpack-hmr') ||
@@ -184,15 +193,19 @@ self.addEventListener('activate', (event) => {
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      console.log('Found existing caches:', cacheNames);
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (!cacheWhitelist.includes(cacheName)) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
+          } else {
+            console.log('Keeping cache:', cacheName);
           }
         })
       );
     }).then(() => {
+      console.log('Service Worker activated on:', self.location.origin);
       // Claim all clients immediately
       return self.clients.claim();
     })
