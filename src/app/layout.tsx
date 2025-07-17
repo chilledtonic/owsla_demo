@@ -4,7 +4,7 @@ import { stackServerApp } from "../stack";
 import type { Metadata, Viewport } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CurriculumCacheProvider } from "@/lib/curriculum-cache"
-import { ServiceWorkerRegister } from "@/components/service-worker-register"
+
 import { PWAInstallBanner } from "@/components/pwa-install-banner"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -60,7 +60,6 @@ export default function RootLayout({
             <StackTheme>
               <CurriculumCacheProvider>
                 {children}
-                <ServiceWorkerRegister />
                 <PWAInstallBanner />
               </CurriculumCacheProvider>
             </StackTheme>

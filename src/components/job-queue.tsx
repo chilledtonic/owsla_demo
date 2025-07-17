@@ -54,14 +54,26 @@ export const JobQueue = React.memo(function JobQueue({ userId }: JobQueueProps) 
             console.error('Failed to revalidate server cache:', error)
           }
           
-          // 3. Service worker cache invalidation
-          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-              type: 'CACHE_INVALIDATE',
-              cacheKey: 'user-curricula',
-              userId: userId
-            })
-            console.log('Invalidated service worker caches after job completion')
+          // 3. Service worker cache invalidation (next-pwa handles this automatically)
+          // Clear browser caches that might contain stale data
+          if ('caches' in window) {
+            try {
+              // Clear relevant caches that next-pwa manages
+              const cacheNames = await caches.keys()
+              const apiCaches = cacheNames.filter(name => 
+                name.includes('apis') || name.includes('next-data') || name.includes('others')
+              )
+              await Promise.all(
+                apiCaches.map(cacheName => 
+                  caches.open(cacheName).then(cache => cache.keys().then(keys => 
+                    Promise.all(keys.map(key => cache.delete(key)))
+                  ))
+                )
+              )
+              console.log('Cleared relevant browser caches after job completion')
+            } catch (error) {
+              console.error('Failed to clear browser caches:', error)
+            }
           }
         }
         
