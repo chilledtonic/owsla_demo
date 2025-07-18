@@ -135,7 +135,6 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
   const { curriculum, loading, error } = useCachedCurriculum(curriculumId || 0)
   const [curriculumData, setCurriculumData] = useState<{ curriculum: ReturnType<typeof transformDatabaseVideoCurriculum> } | null>(null)
   const [currentDay, setCurrentDay] = useState(1)
-  const [actualDay, setActualDay] = useState(1) // User's actual progress day
 
   useEffect(() => {
     async function initParams() {
@@ -156,11 +155,10 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
       })
       
       // Intelligently calculate the current day based on today's date
-      const { currentDay: calculatedCurrentDay, actualDay: calculatedActualDay } = 
+      const { currentDay: calculatedCurrentDay } = 
         calculateCurrentCurriculumDay(transformedCurriculum.daily_modules)
       
       setCurrentDay(calculatedCurrentDay)
-      setActualDay(calculatedActualDay)
     }
   }, [curriculum])
 
@@ -540,7 +538,6 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
               currentDay={currentDay}
               onPreviousDay={handlePreviousDay}
               onNextDay={handleNextDay}
-              actualDay={actualDay}
               curriculumId={curriculum?.id || curriculumId || 0}
             />
           </div>

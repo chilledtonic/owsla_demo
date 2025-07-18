@@ -102,8 +102,9 @@ function transformDatabaseCurriculum(dbCurriculum: {
   }
 }
 
-export default async function CurriculumPage({ params }: { params: { id: string } }) {
-  const id = parseInt(params.id)
+export default async function CurriculumPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const id = parseInt(resolvedParams.id)
   if (isNaN(id)) {
     return (
       <AppLayout>

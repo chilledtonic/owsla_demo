@@ -73,7 +73,6 @@ interface VideoCurriculumContentProps {
   currentDay: number
   onPreviousDay: () => void
   onNextDay: () => void
-  actualDay: number
   curriculumId: number
 }
 
@@ -126,7 +125,6 @@ export function VideoCurriculumContent({
   currentDay, 
   onPreviousDay, 
   onNextDay,
-  actualDay,
   curriculumId
 }: VideoCurriculumContentProps) {
   const user = useUser()
