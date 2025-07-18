@@ -129,6 +129,31 @@ export function VideoCurriculumContent({
   const [completedModules, setCompletedModules] = useState<number[]>([])
   const [loadingCompletion, setLoadingCompletion] = useState(false)
   
+  // Defensive programming - ensure daily_modules exists and currentDay is valid
+  if (!curriculum?.daily_modules || curriculum.daily_modules.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">No Content Available</h1>
+          <p className="text-muted-foreground">This curriculum has no modules available.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentDay < 1 || currentDay > curriculum.daily_modules.length) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Invalid Module</h1>
+          <p className="text-muted-foreground">
+            Module {currentDay} does not exist. This curriculum has {curriculum.daily_modules.length} modules.
+          </p>
+        </div>
+      </div>
+    )
+  }
+  
   const currentModule = curriculum.daily_modules[currentDay - 1]
   const totalModules = curriculum.daily_modules.length
   const completedCount = completedModules.length
@@ -147,8 +172,8 @@ export function VideoCurriculumContent({
     }
   }
   
-  const videoId = extractYouTubeVideoId(curriculum.primary_video.url) || curriculum.primary_video.video_id
-  const startTime = timeToSeconds(currentModule.video_segment.start)
+  const videoId = extractYouTubeVideoId(curriculum.primary_video?.url || '') || curriculum.primary_video?.video_id || ''
+  const startTime = timeToSeconds(currentModule.video_segment?.start || '0:00')
   
   // YouTube iframe embed URL with start time
   const embedUrl = videoId 
@@ -362,17 +387,17 @@ export function VideoCurriculumContent({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-primary" />
-              <h2 className="text-lg lg:text-xl font-semibold">Module {currentModule.day}: {currentModule.title}</h2>
+              <h2 className="text-lg lg:text-xl font-semibold">Module {currentModule.day || currentDay}: {currentModule.title || 'Untitled Module'}</h2>
             </div>
             <div className="text-sm text-muted-foreground">
               <Timer className="h-4 w-4 inline mr-1" />
-              {currentModule.video_segment.duration} segment
+              {currentModule.video_segment?.duration || 'Unknown'} segment
             </div>
           </div>
           
           {/* Pre-Viewing Primer */}
           <div className="p-4 bg-muted/30 rounded-lg mb-4">
-            <p className="text-sm leading-relaxed">{currentModule.pre_viewing_primer}</p>
+            <p className="text-sm leading-relaxed">{currentModule.pre_viewing_primer || 'No primer available.'}</p>
           </div>
         </div>
 
@@ -384,7 +409,7 @@ export function VideoCurriculumContent({
               <Video className="h-5 w-5" />
               <h3 className="text-lg font-semibold">Video Segment</h3>
               <Badge variant="outline" className="text-xs">
-                {currentModule.video_segment.start} - {currentModule.video_segment.end}
+                {currentModule.video_segment?.start || '0:00'} - {currentModule.video_segment?.end || '0:00'}
               </Badge>
             </div>
             
@@ -392,7 +417,7 @@ export function VideoCurriculumContent({
               <div className="aspect-video w-full rounded-lg overflow-hidden border bg-black">
                 <iframe
                   src={embedUrl}
-                  title={curriculum.primary_video.title}
+                  title={curriculum.primary_video?.title || 'Video'}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -412,24 +437,24 @@ export function VideoCurriculumContent({
               <Button 
                 size="sm" 
                 variant="outline"
-                onClick={() => jumpToTime(currentModule.video_segment.start)}
+                onClick={() => jumpToTime(currentModule.video_segment?.start || '0:00')}
                 className="flex items-center gap-1"
               >
                 <Play className="h-3 w-3" />
-                Start ({currentModule.video_segment.start})
+                Start ({currentModule.video_segment?.start || '0:00'})
               </Button>
             </div>
           </div>
 
           {/* Supplementary Materials - Next to video on large screens */}
-          {currentModule.supplementary_readings.length > 0 && (
+          {(currentModule.supplementary_readings?.length || 0) > 0 && (
             <div className="lg:col-span-1 xl:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen className="h-5 w-5" />
                 <h3 className="text-lg font-semibold">Required Readings</h3>
               </div>
               <div className="space-y-4 mb-6">
-                {currentModule.supplementary_readings.map((reading, index) => (
+                {(currentModule.supplementary_readings || []).map((reading, index) => (
                   <div 
                     key={index} 
                     className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
@@ -458,11 +483,11 @@ export function VideoCurriculumContent({
               </div>
 
               {/* Key Video Segments - Simple links under readings */}
-              {currentModule.video_segment.rewatch_segments.length > 0 && (
+              {(currentModule.video_segment?.rewatch_segments?.length || 0) > 0 && (
                 <div>
                   <h4 className="text-sm font-medium mb-3 text-muted-foreground">Key Video Segments</h4>
                   <ul className="space-y-1 text-sm">
-                    {currentModule.video_segment.rewatch_segments.map((segment, index) => {
+                    {(currentModule.video_segment?.rewatch_segments || []).map((segment, index) => {
                       // Parse the segment - handle different formats:
                       // Format 1: "28:23-29:33: Program synthesis analogy" 
                       // Format 2: "16:13 - 16:45 (Language control)"
@@ -522,7 +547,7 @@ export function VideoCurriculumContent({
               <h3 className="font-medium text-sm">Key Insights</h3>
             </div>
             <ul className="space-y-2">
-              {currentModule.key_insights.map((insight, index) => (
+              {(currentModule.key_insights || []).map((insight, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 flex-shrink-0" />
                   <span className="leading-relaxed">{insight}</span>
@@ -538,7 +563,7 @@ export function VideoCurriculumContent({
               <h3 className="font-medium text-sm">Core Concepts</h3>
             </div>
             <ul className="space-y-2">
-              {currentModule.core_concepts.map((concept, index) => (
+              {(currentModule.core_concepts || []).map((concept, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
                   <CheckCircle className="h-3 w-3 text-blue-500 mt-1 flex-shrink-0" />
                   <span className="leading-relaxed">{concept}</span>
@@ -556,19 +581,19 @@ export function VideoCurriculumContent({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Time:</span>
-                <span className="font-medium">{currentModule.time_allocation.total}</span>
+                <span className="font-medium">{currentModule.time_allocation?.total || 'Unknown'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Video:</span>
-                <span>{currentModule.time_allocation.video_viewing}</span>
+                <span>{currentModule.time_allocation?.video_viewing || 'Unknown'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reading:</span>
-                <span>{currentModule.time_allocation.supplementary_materials}</span>
+                <span>{currentModule.time_allocation?.supplementary_materials || 'Unknown'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Synthesis:</span>
-                <span>{currentModule.time_allocation.synthesis}</span>
+                <span>{currentModule.time_allocation?.synthesis || 'Unknown'}</span>
               </div>
             </div>
           </div>
@@ -578,7 +603,7 @@ export function VideoCurriculumContent({
         <div>
           <h2 className="text-lg font-semibold mb-4">Learning Objectives</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {Object.entries(currentModule.knowledge_benchmark).map(([key, value]) => (
+            {Object.entries(currentModule.knowledge_benchmark || {}).map(([key, value]) => (
               <div key={key} className="space-y-2">
                 <div className="font-medium text-sm capitalize bg-muted/50 px-3 py-1 rounded-full text-center">
                   {key}
@@ -593,7 +618,7 @@ export function VideoCurriculumContent({
         <div>
           <h3 className="text-lg font-semibold mb-3">Post-Viewing Reflection</h3>
           <div className="p-4 bg-muted/30 rounded-lg">
-            <p className="text-sm leading-relaxed">{currentModule.post_viewing_synthesis}</p>
+            <p className="text-sm leading-relaxed">{currentModule.post_viewing_synthesis || 'No reflection notes available.'}</p>
           </div>
         </div>
 
@@ -611,7 +636,7 @@ export function VideoCurriculumContent({
           
           <div className="text-center">
             <div className="text-sm text-muted-foreground">Day {currentDay} of {totalModules}</div>
-            <div className="font-medium">{currentModule.title}</div>
+            <div className="font-medium">{currentModule.title || 'Untitled Module'}</div>
           </div>
           
           <Button 
