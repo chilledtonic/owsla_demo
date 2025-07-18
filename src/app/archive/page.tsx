@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
 import { useMemo, useState, useEffect } from "react"
-import { filterCompletedCourses, getCourseCompletionStatuses, calculateCurrentCurriculumDay } from "@/lib/utils"
+import { filterCompletedCourses } from "@/lib/utils"
 import { 
   Archive,
   BookOpen,

@@ -25,8 +25,7 @@ import {
 import { toast } from "sonner"
 import { useUser } from "@stackframe/stack"
 import { BookCover } from "@/components/ui/book-cover"
-import { fetchModuleCompletions } from "@/lib/actions"
-import { useEffect } from "react"
+
 
 // This type should be kept in sync with the transformation logic
 type TransformedCurriculum = {
@@ -83,7 +82,7 @@ export function CurriculumView({ initialCurriculum, initialCurrentDay, initialAc
   const isMobile = useIsMobile()
   
   const [curriculumData] = useState({ curriculum: initialCurriculum });
-  const [currentDay, setCurrentDay] = useState(initialCurrentDay)
+  const [currentDay] = useState(initialCurrentDay)
   const [actualDay] = useState(initialActualDay)
   const [isForking, setIsForking] = useState(false)
   

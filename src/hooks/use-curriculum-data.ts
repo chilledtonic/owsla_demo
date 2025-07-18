@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useUser } from '@stackframe/stack'
 import { useCurriculumCache } from '@/lib/curriculum-cache'
-import { CurriculumData } from '@/lib/database'
+import { CurriculumData, ModuleCompletion } from '@/lib/database'
 import { DailyModule, BookResource, OtherResource } from '@/lib/actions'
 
 /**
@@ -60,7 +60,7 @@ export function useCachedUserCurricula(forceRefresh = false) {
     }
     
     load()
-  }, [user?.id])
+  }, [user?.id, updateCurricula])
 
   const invalidate = useCallback(() => {
     if (user?.id) {
@@ -104,7 +104,7 @@ export function useCachedUserCurricula(forceRefresh = false) {
       
       load()
     }
-  }, [user?.id, forceRefresh]) // Only run when user or forceRefresh changes
+  }, [user?.id, forceRefresh, updateCurricula]) // Only run when user or forceRefresh changes
 
   // Reset when user changes
   useEffect(() => {
@@ -202,7 +202,7 @@ export function useCachedDashboardData(forceRefresh = false) {
     dailyModules: DailyModule[]
     bookResources: BookResource[]
     otherResources: OtherResource[]
-    moduleCompletions: any[]
+    moduleCompletions: ModuleCompletion[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

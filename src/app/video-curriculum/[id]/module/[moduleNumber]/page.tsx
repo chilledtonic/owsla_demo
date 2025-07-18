@@ -67,36 +67,40 @@ function transformDatabaseCurriculum(dbCurriculum: {
     supplementary_readings?: unknown[];
   }>;
 }, rawCurriculumData?: CurriculumData) {
-  const dailyModules = (dbCurriculum.daily_modules || []).map((module: any) => ({
-    day: module.day || 1,
-    date: module.date || new Date().toISOString().split('T')[0],
+  const dailyModules = (dbCurriculum.daily_modules || []).map((module: Record<string, unknown>) => {
+    const videoSegment = module.video_segment as Record<string, unknown> | undefined
+    const timeAllocation = module.time_allocation as Record<string, unknown> | undefined
+    
+    return {
+    day: (module.day as number) || 1,
+    date: String(module.date) || new Date().toISOString().split('T')[0],
     title: String(module.title || "Untitled Module"),
     video_segment: {
-      start: module.video_segment?.start || "00:00",
-      end: module.video_segment?.end || "10:00",
-      duration: module.video_segment?.duration || "10:00",
-      chapters: module.video_segment?.chapters || [],
-      rewatch_segments: module.video_segment?.rewatch_segments || []
+      start: videoSegment?.start as string || "00:00",
+      end: videoSegment?.end as string || "10:00",
+      duration: videoSegment?.duration as string || "10:00",
+      chapters: videoSegment?.chapters as string[] || [],
+      rewatch_segments: videoSegment?.rewatch_segments as string[] || []
     },
-    key_insights: module.key_insights || ["Key insights for this module"],
-    core_concepts: module.core_concepts || ["Core concepts to master"],
+    key_insights: (module.key_insights as string[]) || ["Key insights for this module"],
+    core_concepts: (module.core_concepts as string[]) || ["Core concepts to master"],
     time_allocation: {
-      total: module.time_allocation?.total || "3 hours",
-      video_viewing: module.time_allocation?.video_viewing || "90 minutes",
-      preparation: module.time_allocation?.preparation || "30 minutes",
-      supplementary_materials: module.time_allocation?.supplementary_materials || "45 minutes",
-      synthesis: module.time_allocation?.synthesis || "15 minutes"
+      total: timeAllocation?.total as string || "3 hours",
+      video_viewing: timeAllocation?.video_viewing as string || "90 minutes",
+      preparation: timeAllocation?.preparation as string || "30 minutes",
+      supplementary_materials: timeAllocation?.supplementary_materials as string || "45 minutes",
+      synthesis: timeAllocation?.synthesis as string || "15 minutes"
     },
     knowledge_benchmark: {
-      connect: module.knowledge_benchmark?.connect || "Connect concepts to real-world applications",
-      explain: module.knowledge_benchmark?.explain || "Explain key concepts in your own words",
-      awareness: module.knowledge_benchmark?.awareness || "Be aware of the broader context and significance",
-      recognize: module.knowledge_benchmark?.recognize || "Recognize patterns and relationships",
-      understand: module.knowledge_benchmark?.understand || "Understand fundamental principles"
+      connect: (module.knowledge_benchmark as Record<string, unknown>)?.connect as string || "Connect concepts to real-world applications",
+      explain: (module.knowledge_benchmark as Record<string, unknown>)?.explain as string || "Explain key concepts in your own words",
+      awareness: (module.knowledge_benchmark as Record<string, unknown>)?.awareness as string || "Be aware of the broader context and significance",
+      recognize: (module.knowledge_benchmark as Record<string, unknown>)?.recognize as string || "Recognize patterns and relationships",
+      understand: (module.knowledge_benchmark as Record<string, unknown>)?.understand as string || "Understand fundamental principles"
     },
-    pre_viewing_primer: module.pre_viewing_primer || "Prepare for this segment by reviewing the following concepts",
-    primary_reading_focus: module.primary_reading_focus || "Focus on understanding the core concepts",
-    post_viewing_synthesis: module.post_viewing_synthesis || "Reflect on the key points and consider their applications",
+    pre_viewing_primer: String(module.pre_viewing_primer) || "Prepare for this segment by reviewing the following concepts",
+    primary_reading_focus: String(module.primary_reading_focus) || "Focus on understanding the core concepts",
+    post_viewing_synthesis: String(module.post_viewing_synthesis) || "Reflect on the key points and consider their applications",
     supplementary_readings: (module.supplementary_readings || []) as Array<{
       title: string
       author: string
@@ -105,7 +109,8 @@ function transformDatabaseCurriculum(dbCurriculum: {
       isbn?: string
       doi?: string
     }>
-  }))
+  }
+  })
 
   return {
     title: String(dbCurriculum.title || "Untitled Video Curriculum"),

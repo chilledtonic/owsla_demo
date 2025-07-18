@@ -1,4 +1,4 @@
-import { getCurriculumById, getAllModuleCompletions } from "@/lib/database"
+import { getCurriculumById } from "@/lib/database"
 import { redirect } from "next/navigation"
 import { CurriculumView } from "@/components/curriculum-view"
 import { AppLayout } from "@/components/app-layout"

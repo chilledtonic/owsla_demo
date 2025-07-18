@@ -180,7 +180,7 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
         setCurrentDay(1)
       }
     }
-  }, [curriculum])
+  }, [curriculum, user?.id])
 
   const handlePreviousDay = () => {
     setCurrentDay(prev => Math.max(1, prev - 1))

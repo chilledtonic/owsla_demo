@@ -129,6 +129,17 @@ export function VideoCurriculumContent({
   const [completedModules, setCompletedModules] = useState<number[]>([])
   const [loadingCompletion, setLoadingCompletion] = useState(false)
   
+  // Fetch module completion status on mount
+  useEffect(() => {
+    if (!user?.id) return
+    
+    fetchModuleCompletions(user.id, curriculumId).then(result => {
+      if (result.success && result.data) {
+        setCompletedModules(result.data.map(c => c.module_number))
+      }
+    })
+  }, [user?.id, curriculumId])
+  
   // Defensive programming - ensure daily_modules exists and currentDay is valid
   if (!curriculum?.daily_modules || curriculum.daily_modules.length === 0) {
     return (
@@ -179,17 +190,6 @@ export function VideoCurriculumContent({
   const embedUrl = videoId 
     ? `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=0&rel=0&modestbranding=1`
     : null
-
-  // Fetch module completion status on mount
-  useEffect(() => {
-    if (!user?.id) return
-    
-    fetchModuleCompletions(user.id, curriculumId).then(result => {
-      if (result.success && result.data) {
-        setCompletedModules(result.data.map(c => c.module_number))
-      }
-    })
-  }, [user?.id, curriculumId])
 
   const handleToggleComplete = async (moduleNumber: number) => {
     if (!user?.id || loadingCompletion) return
