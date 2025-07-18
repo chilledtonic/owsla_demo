@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { getLatestCurriculumByUserId, getCurriculumsByUserId, getCurriculumById, deleteCurriculumById, getActiveJobsByUserId, getAllJobsByUserId, createCurriculum, updateCurriculum, getModuleCompletions, toggleModuleCompletion, markModuleComplete, markModuleIncomplete, getCurriculumProgress } from './database'
+import { getLatestCurriculumByUserId, getCurriculumsByUserId, getCurriculumById, deleteCurriculumById, getActiveJobsByUserId, getAllJobsByUserId, createCurriculum, updateCurriculum, getModuleCompletions, toggleModuleCompletion, markModuleComplete, markModuleIncomplete, getCurriculumProgress, getAllModuleCompletions } from './database'
 import type { CurriculumData } from './database'
 import type { CourseData } from '@/types/course-editor'
 
@@ -798,6 +798,18 @@ export async function fetchModuleCompletions(userId: string, curriculumId: numbe
   } catch (error) {
     console.error('Error fetching module completions:', error)
     return { success: false, error: 'Failed to fetch module completions' }
+  }
+}
+
+export async function fetchAllModuleCompletions(userId: string) {
+  'use server'
+  
+  try {
+    const completions = await getAllModuleCompletions(userId)
+    return { success: true, data: completions }
+  } catch (error) {
+    console.error('Error fetching all module completions:', error)
+    return { success: false, error: 'Failed to fetch all module completions' }
   }
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useUser } from '@stackframe/stack'
 import { useCurriculumCache } from '@/lib/curriculum-cache'
 import { CurriculumData } from '@/lib/database'
@@ -15,46 +15,124 @@ export function useCachedUserCurricula(forceRefresh = false) {
   const [curricula, setCurricula] = useState<CurriculumData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const loadingRef = useRef(false)
+  const lastUserIdRef = useRef<string | null>(null)
+  const lastDataHashRef = useRef<string>('')
+  const cacheRef = useRef(cache)
 
-  const loadCurricula = useCallback(async (refresh = false) => {
-    if (!user?.id) {
-      setLoading(false)
-      return
-    }
+  // Update cache ref when cache changes
+  useEffect(() => {
+    cacheRef.current = cache
+  }, [cache])
 
-    try {
-      setError(null)
-      const data = await cache.getCachedUserCurricula(user.id, refresh)
+  // Helper function to safely update curricula only if data changed
+  const updateCurricula = useCallback((data: CurriculumData[]) => {
+    // Create hash inline to avoid dependency issues
+    const dataHash = JSON.stringify(data.map(c => ({ id: c.id, title: c.title, updated_at: c.updated_at })))
+    if (dataHash !== lastDataHashRef.current) {
+      console.log('📝 Setting curricula in hook:', data.length, 'curricula (data changed)')
       setCurricula(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load curricula')
-      console.error('Error loading curricula:', err)
-    } finally {
-      setLoading(false)
+      lastDataHashRef.current = dataHash
+    } else {
+      console.log('🔄 Skipping curricula update (data unchanged)', data.length, 'curricula')
     }
-  }, [user?.id, cache])
+  }, [])
 
   const refresh = useCallback(() => {
+    if (!user?.id) return
+    
     setLoading(true)
-    loadCurricula(true)
-  }, [loadCurricula])
+    loadingRef.current = true
+    
+    const load = async () => {
+             try {
+         setError(null)
+         const data = await cacheRef.current.getCachedUserCurricula(user.id, true)
+         updateCurricula(data)
+       } catch (err) {
+        console.log('💥 Error in refresh:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load curricula')
+        console.error('Error refreshing curricula:', err)
+      } finally {
+        setLoading(false)
+        loadingRef.current = false
+      }
+    }
+    
+    load()
+  }, [user?.id])
 
   const invalidate = useCallback(() => {
     if (user?.id) {
-      cache.invalidateUserCurricula(user.id)
+      cacheRef.current.invalidateUserCurricula(user.id)
     }
-  }, [user?.id, cache])
+  }, [user?.id])
 
+  // Only load curricula when user changes or on mount/forceRefresh
   useEffect(() => {
-    loadCurricula(forceRefresh)
-  }, [loadCurricula, forceRefresh])
+    if (user?.id && (user.id !== lastUserIdRef.current || forceRefresh)) {
+      console.log('🔄 useCachedUserCurricula effect triggered:', { 
+        forceRefresh, 
+        userChanged: user.id !== lastUserIdRef.current 
+      })
+      lastUserIdRef.current = user.id
+      
+      // Call loadCurricula directly to avoid dependency issues
+      const load = async () => {
+        if (loadingRef.current && !forceRefresh) {
+          console.log('🚫 Already loading curricula, skipping duplicate request')
+          return
+        }
+
+        console.log('🚀 loadCurricula called:', { userId: user.id, refresh: forceRefresh })
+        loadingRef.current = true
+        
+                 try {
+           setError(null)
+           const data = await cacheRef.current.getCachedUserCurricula(user.id, forceRefresh)
+           updateCurricula(data)
+         } catch (err) {
+          console.log('💥 Error in loadCurricula:', err)
+          setError(err instanceof Error ? err.message : 'Failed to load curricula')
+          console.error('Error loading curricula:', err)
+        } finally {
+          console.log('🏁 Setting loading to false in hook')
+          setLoading(false)
+          loadingRef.current = false
+        }
+      }
+      
+      load()
+    }
+  }, [user?.id, forceRefresh]) // Only run when user or forceRefresh changes
+
+  // Reset when user changes
+  useEffect(() => {
+    if (!user?.id) {
+      setCurricula([])
+      setLoading(false)
+      setError(null)
+      lastUserIdRef.current = null
+      loadingRef.current = false
+      lastDataHashRef.current = ''
+    }
+  }, [user?.id])
 
   // Get loading state from cache
-  const cacheLoading = user?.id ? cache.isLoadingUserCurricula(user.id) : false
+  const cacheLoading = user?.id ? cacheRef.current.isLoadingUserCurricula(user.id) : false
 
+  const finalLoading = loading || cacheLoading
+  console.log('📊 useCachedUserCurricula returning:', { 
+    curriculaLength: curricula.length, 
+    loading, 
+    cacheLoading, 
+    finalLoading,
+    error: !!error
+  })
+  
   return {
     curricula,
-    loading: loading || cacheLoading,
+    loading: finalLoading,
     error,
     refresh,
     invalidate
@@ -124,6 +202,7 @@ export function useCachedDashboardData(forceRefresh = false) {
     dailyModules: DailyModule[]
     bookResources: BookResource[]
     otherResources: OtherResource[]
+    moduleCompletions: any[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

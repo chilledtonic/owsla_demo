@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
 import { CurriculumData } from './database'
-import { fetchUserCurricula, fetchCurriculumById, DailyModule, BookResource, OtherResource } from './actions'
+import { fetchUserCurricula, fetchCurriculumById, fetchAllModuleCompletions, DailyModule, BookResource, OtherResource } from './actions'
+import { ModuleCompletion } from './utils'
 
 interface CachedCurriculumData {
   data: CurriculumData[]
@@ -23,6 +24,7 @@ interface CachedDashboardData {
   dailyModules: DailyModule[]
   bookResources: BookResource[]
   otherResources: OtherResource[]
+  moduleCompletions: ModuleCompletion[]
   timestamp: number
   loading: boolean
   isOfflineData?: boolean
@@ -37,6 +39,7 @@ interface CurriculumCacheContextType {
     dailyModules: DailyModule[]
     bookResources: BookResource[]
     otherResources: OtherResource[]
+    moduleCompletions: ModuleCompletion[]
     isOfflineData?: boolean
   }>
   
@@ -76,7 +79,10 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   
   // Force re-render when cache updates
   const [, forceUpdate] = useState({})
-  const triggerUpdate = useCallback(() => forceUpdate({}), [])
+  const triggerUpdate = useCallback(() => {
+    console.log('🔔 triggerUpdate called - forcing re-render')
+    forceUpdate({})
+  }, [])
 
   // Service worker communication
   const sendMessageToSW = useCallback((message: Record<string, unknown>) => {
@@ -167,7 +173,7 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   }, [triggerUpdate, sendMessageToSW])
 
   // Helper function to process dashboard data from curricula
-  const processDashboardData = useCallback((curricula: CurriculumData[], isOfflineData = false) => {
+  const processDashboardData = useCallback((curricula: CurriculumData[], moduleCompletions: ModuleCompletion[] = [], isOfflineData = false) => {
     const dailyModules: DailyModule[] = []
     const bookResources: BookResource[] = []
     const otherResources: OtherResource[] = []
@@ -187,7 +193,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       }
 
       // Extract daily modules and resources from full_curriculum_data
-      if (curriculum.full_curriculum_data?.daily_modules) {
+      if (curriculum.full_curriculum_data?.daily_modules && Array.isArray(curriculum.full_curriculum_data.daily_modules)) {
+        console.log(`📚 Processing ${curriculum.full_curriculum_data.daily_modules.length} modules for curriculum ${curriculum.id}: ${curriculum.title}`)
         curriculum.full_curriculum_data.daily_modules.forEach((module: {
           day: number
           date: string
@@ -283,6 +290,13 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
             })
           }
         })
+      } else {
+        console.warn(`⚠️ Curriculum ${curriculum.id} (${curriculum.title}) has no valid daily modules data:`, {
+          hasFullData: !!curriculum.full_curriculum_data,
+          hasDailyModules: !!curriculum.full_curriculum_data?.daily_modules,
+          isArray: Array.isArray(curriculum.full_curriculum_data?.daily_modules),
+          dataType: typeof curriculum.full_curriculum_data?.daily_modules
+        })
       }
     })
 
@@ -294,6 +308,7 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       dailyModules,
       bookResources,
       otherResources,
+      moduleCompletions,
       isOfflineData
     }
   }, [])
@@ -302,34 +317,59 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
 
   const getCachedUserCurricula = useCallback(async (userId: string, forceRefresh = false): Promise<CurriculumData[]> => {
     const cached = userCurriculaCache.current.get(userId)
+    console.log('🔍 getCachedUserCurricula called:', { 
+      userId, 
+      forceRefresh, 
+      hasCached: !!cached, 
+      cachedDataLength: cached?.data?.length || 0,
+      isLoading: cached?.loading,
+      cacheTimestamp: cached?.timestamp,
+      isValid: cached ? isCacheValid(cached.timestamp) : false
+    })
     
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && cached && isCacheValid(cached.timestamp) && !cached.loading) {
+      console.log('✅ Returning valid cached data:', cached.data.length, 'curricula')
       return cached.data
     }
 
     // Return cached data if currently loading (prevent duplicate requests)
     if (cached?.loading) {
+      console.log('⏳ Already loading, returning existing data:', cached.data?.length || 0, 'curricula')
       return cached.data || []
     }
 
     // If offline and we have cached data, use it regardless of TTL
     if (!isOnline && cached?.data) {
+      console.log('📴 Offline mode, using cached data:', cached.data.length, 'curricula')
       return cached.data
     }
 
-    // Set loading state
+    // Set loading state while preserving existing data to prevent flickering
+    console.log('🔄 Setting loading state for user curricula:', {
+      userId,
+      existingDataLength: cached?.data?.length || 0,
+      willTriggerUpdate: !cached?.data || cached.data.length === 0
+    })
     userCurriculaCache.current.set(userId, {
       data: cached?.data || [],
       timestamp: cached?.timestamp || 0,
       loading: true,
       isOfflineData: cached?.isOfflineData
     })
-    triggerUpdate()
+    // Only trigger update if we don't have existing data to prevent flicker
+    if (!cached?.data || cached.data.length === 0) {
+      console.log('🔔 Triggering update due to no existing data')
+      triggerUpdate()
+    } else {
+      console.log('🛡️ Skipping update to prevent flicker (have existing data)')
+    }
 
     try {
+      console.log('🌐 Fetching user curricula from server...', userId)
       const result = await fetchUserCurricula(userId)
       if (result.success && result.data) {
+        console.log('✅ Successfully fetched curricula:', result.data.length, 'curricula')
         const newCacheEntry: CachedCurriculumData = {
           data: result.data,
           timestamp: Date.now(),
@@ -342,7 +382,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         // Also update dashboard cache if it exists
         const dashboardCached = dashboardDataCache.current.get(userId)
         if (dashboardCached) {
-          const dashboardData = processDashboardData(result.data, false)
+          console.log('🔄 Updating dashboard cache with new curricula data')
+          const dashboardData = processDashboardData(result.data, [], false)
           dashboardDataCache.current.set(userId, {
             ...dashboardData,
             timestamp: Date.now(),
@@ -350,11 +391,14 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
           })
         }
         
+        console.log('🔔 Triggering update after successful fetch')
         triggerUpdate()
         return result.data
       } else {
+        console.log('❌ Failed to fetch curricula:', result.error)
         // If we have cached data on error, use it
         if (cached?.data) {
+          console.log('🔄 Using cached data on error:', cached.data.length, 'curricula')
           userCurriculaCache.current.set(userId, {
             ...cached,
             loading: false,
@@ -364,6 +408,7 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
           return cached.data
         }
         
+        console.log('🗑️ Clearing cache on error (no cached data available)')
         // Clear loading state on error
         userCurriculaCache.current.set(userId, {
           data: [],
@@ -416,14 +461,17 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
       return cached.data
     }
 
-    // Set loading state
+    // Set loading state while preserving existing data to prevent flickering
     individualCurriculumCache.current.set(id, {
       data: cached?.data as CurriculumData,
       timestamp: cached?.timestamp || 0,
       loading: true,
       isOfflineData: cached?.isOfflineData
     })
-    triggerUpdate()
+    // Only trigger update if we don't have existing data to prevent flicker
+    if (!cached?.data) {
+      triggerUpdate()
+    }
 
     try {
       const result = await fetchCurriculumById(id)
@@ -475,8 +523,8 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   }, [triggerUpdate, isOnline])
 
   const getCachedDashboardData = useCallback(async (userId: string, forceRefresh = false) => {
-    const cached = dashboardDataCache.current.get(userId)
-    
+    const cached = dashboardDataCache.current.get(userId);
+
     // Return cached data if valid and not forcing refresh
     if (!forceRefresh && cached && isCacheValid(cached.timestamp) && !cached.loading) {
       return {
@@ -484,48 +532,63 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         dailyModules: cached.dailyModules,
         bookResources: cached.bookResources,
         otherResources: cached.otherResources,
+        moduleCompletions: cached.moduleCompletions,
         isOfflineData: cached.isOfflineData
-      }
+      };
     }
 
-    // Return cached data if currently loading (prevent duplicate requests)
-    if (cached?.loading) {
+    // If dashboard data is already loading, or if curricula data is loading,
+    // return the current data to avoid inconsistent states.
+    const userCurriculaLoading = userCurriculaCache.current.get(userId)?.loading;
+    if ((cached?.loading && !forceRefresh) || (userCurriculaLoading && !forceRefresh)) {
+      console.log('⏳ Already loading dashboard or curricula data, returning existing data:', cached?.curricula?.length || 0, 'curricula');
       return {
-        curricula: cached.curricula || [],
-        dailyModules: cached.dailyModules || [],
-        bookResources: cached.bookResources || [],
-        otherResources: cached.otherResources || [],
-        isOfflineData: cached.isOfflineData
-      }
+        curricula: cached?.curricula || userCurriculaCache.current.get(userId)?.data || [],
+        dailyModules: cached?.dailyModules || [],
+        bookResources: cached?.bookResources || [],
+        otherResources: cached?.otherResources || [],
+        moduleCompletions: cached?.moduleCompletions || [],
+        isOfflineData: cached?.isOfflineData
+      };
     }
 
     // If offline and we have cached data, use it regardless of TTL
     if (!isOnline && cached) {
       return {
-        curricula: cached.curricula || [],
-        dailyModules: cached.dailyModules || [],
-        bookResources: cached.bookResources || [],
-        otherResources: cached.otherResources || [],
-        isOfflineData: true
-      }
+        curricula: cached.curricula,
+        dailyModules: cached.dailyModules,
+        bookResources: cached.bookResources,
+        otherResources: cached.otherResources,
+        moduleCompletions: cached.moduleCompletions,
+        isOfflineData: cached.isOfflineData
+      };
     }
 
-    // Set loading state
+    // Set loading state while preserving existing data to prevent flickering
     dashboardDataCache.current.set(userId, {
       curricula: cached?.curricula || [],
       dailyModules: cached?.dailyModules || [],
       bookResources: cached?.bookResources || [],
       otherResources: cached?.otherResources || [],
+      moduleCompletions: cached?.moduleCompletions || [],
       timestamp: cached?.timestamp || 0,
       loading: true,
       isOfflineData: cached?.isOfflineData
     })
-    triggerUpdate()
+    // Only trigger update if we don't have existing data to prevent flicker
+    if (!cached?.curricula || cached.curricula.length === 0) {
+      triggerUpdate()
+    }
 
     try {
       // Get curricula data (this will use the user curricula cache)
       const curricula = await getCachedUserCurricula(userId, forceRefresh)
-      const dashboardData = processDashboardData(curricula, false)
+      
+      // Fetch module completions
+      const moduleCompletionsResult = await fetchAllModuleCompletions(userId)
+      const moduleCompletions = moduleCompletionsResult.success ? moduleCompletionsResult.data : []
+      
+      const dashboardData = processDashboardData(curricula, moduleCompletions, false)
       
       const newCacheEntry: CachedDashboardData = {
         ...dashboardData,
@@ -545,6 +608,7 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
           dailyModules: cached.dailyModules || [],
           bookResources: cached.bookResources || [],
           otherResources: cached.otherResources || [],
+          moduleCompletions: cached.moduleCompletions || [],
           isOfflineData: true
         }
         
@@ -563,6 +627,7 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
         dailyModules: [],
         bookResources: [],
         otherResources: [],
+        moduleCompletions: [],
         timestamp: 0,
         loading: false,
         isOfflineData: false
@@ -573,7 +638,9 @@ export function CurriculumCacheProvider({ children }: CurriculumCacheProviderPro
   }, [getCachedUserCurricula, processDashboardData, triggerUpdate, isOnline])
 
   const isLoadingUserCurricula = useCallback((userId: string): boolean => {
-    return userCurriculaCache.current.get(userId)?.loading || false
+    const isLoading = userCurriculaCache.current.get(userId)?.loading || false
+    console.log('🔍 isLoadingUserCurricula check:', { userId, isLoading })
+    return isLoading
   }, [])
 
   const isLoadingCurriculum = useCallback((id: number): boolean => {

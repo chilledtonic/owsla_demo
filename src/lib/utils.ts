@@ -268,3 +268,126 @@ export function getRelativeDateInfo(moduleDate: string): {
     })
   }
 }
+
+// Course completion utilities
+export interface ModuleCompletion {
+  id: number
+  user_id: string
+  curriculum_id: number
+  module_number: number
+  completed_at: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CourseCompletionStatus {
+  curriculumId: number
+  totalModules: number
+  completedModules: number
+  completionPercentage: number
+  isFullyCompleted: boolean
+}
+
+/**
+ * Calculate completion status for a curriculum based on module completions
+ */
+export function calculateCourseCompletion(
+  curriculumId: number,
+  totalModules: number,
+  moduleCompletions: ModuleCompletion[]
+): CourseCompletionStatus {
+  const curriculumCompletions = moduleCompletions.filter(
+    completion => completion.curriculum_id === curriculumId
+  )
+  
+  const completedModules = curriculumCompletions.length
+  const completionPercentage = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0
+  
+  // FIXED: If totalModules is 0, the course cannot be fully completed
+  // This prevents courses from being filtered out when module counting fails
+  const isFullyCompleted = totalModules > 0 && completedModules === totalModules
+  
+  console.log(`📊 Course ${curriculumId} completion calculation:`, {
+    curriculumId,
+    totalModules,
+    completedModules,
+    completionPercentage,
+    isFullyCompleted,
+    availableCompletions: curriculumCompletions.map(c => c.module_number)
+  })
+  
+  return {
+    curriculumId,
+    totalModules,
+    completedModules,
+    completionPercentage,
+    isFullyCompleted
+  }
+}
+
+/**
+ * Filter curricula to only include active (not fully completed) courses
+ */
+export function filterActiveCourses<T extends { id: number }>(
+  courses: T[],
+  moduleCompletions: ModuleCompletion[],
+  moduleCounts: Map<number, number>
+): T[] {
+  return courses.filter(course => {
+    const totalModules = moduleCounts.get(course.id) || 0
+    
+    // DEFENSIVE: If totalModules is 0, always keep the course (it might be a data issue)
+    if (totalModules === 0) {
+      console.warn(`⚠️ Course ${course.id} has 0 total modules - keeping course by default`)
+      return true
+    }
+    
+    const completion = calculateCourseCompletion(course.id, totalModules, moduleCompletions)
+    
+    // Debug logging for each course
+    console.log(`🔍 Course ${course.id} filtering:`, {
+      courseId: course.id,
+      totalModules,
+      completedModules: completion.completedModules,
+      completionPercentage: completion.completionPercentage,
+      isFullyCompleted: completion.isFullyCompleted,
+      willKeep: !completion.isFullyCompleted
+    })
+    
+    return !completion.isFullyCompleted
+  })
+}
+
+/**
+ * Filter curricula to only include completed courses
+ */
+export function filterCompletedCourses<T extends { id: number }>(
+  courses: T[],
+  moduleCompletions: ModuleCompletion[],
+  moduleCounts: Map<number, number>
+): T[] {
+  return courses.filter(course => {
+    const totalModules = moduleCounts.get(course.id) || 0
+    const completion = calculateCourseCompletion(course.id, totalModules, moduleCompletions)
+    return completion.isFullyCompleted
+  })
+}
+
+/**
+ * Get completion status for all provided courses
+ */
+export function getCourseCompletionStatuses(
+  courses: { id: number }[],
+  moduleCompletions: ModuleCompletion[],
+  moduleCounts: Map<number, number>
+): Map<number, CourseCompletionStatus> {
+  const statusMap = new Map<number, CourseCompletionStatus>()
+  
+  courses.forEach(course => {
+    const totalModules = moduleCounts.get(course.id) || 0
+    const status = calculateCourseCompletion(course.id, totalModules, moduleCompletions)
+    statusMap.set(course.id, status)
+  })
+  
+  return statusMap
+}

@@ -8,7 +8,7 @@ import React, { useState, useMemo, useEffect } from "react"
 import { CurriculumData } from "@/lib/database"
 import { useCachedUserCurricula, useCachedDashboardData } from "@/hooks/use-curriculum-data"
 import { useUser } from "@stackframe/stack"
-import { calculateCurrentCurriculumDay } from "@/lib/utils"
+import { filterActiveCourses } from "@/lib/utils"
 import { OwslaFileDropZone } from "./owsla-file-drop-zone"
 import { useCurriculumCache } from "@/lib/curriculum-cache"
 
@@ -27,48 +27,60 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
   const { dashboardData } = useCachedDashboardData()
   const curriculumCache = useCurriculumCache()
   const [deleteError] = useState<string | null>(null)
-  const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Load completed modules from localStorage
+  // Handle hydration to prevent SSR/client mismatch
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("module-completion")
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          setCompletedModules(new Set(parsed))
-        } catch {}
-      }
-      setIsHydrated(true)
-    }
+    console.log('💧 CurriculaList hydrated')
+    setIsHydrated(true)
   }, [])
 
-  // Filter out completed curricula for sidebar display
-  const activeCurricula = useMemo(() => {
-    if (!dashboardData || !isHydrated) return curricula
-    
-    return curricula.filter(curriculum => {
-      const curriculumModules = dashboardData.dailyModules.filter(m => m.curriculumId === curriculum.id)
-      const { currentDay } = calculateCurrentCurriculumDay(curriculumModules)
-      const totalDays = curriculumModules.length
-      
-      // Calculate date-based progress percentage
-      const dateProgressPercentage = totalDays > 0 ? Math.round((currentDay / totalDays) * 100) : 0
-      
-      // Calculate manual completion progress percentage
-      const manuallyCompletedModules = curriculumModules.filter(module => 
-        completedModules.has(`${module.curriculumId}-${module.day}`)
-      )
-      const manualProgressPercentage = totalDays > 0 ? Math.round((manuallyCompletedModules.length / totalDays) * 100) : 0
-      
-      // Course is NOT completed if NONE of these are true:
-      // 1. Date-based progress is 100% (past end date)
-      // 2. Manual completion is 100% (all modules marked complete)
-      // 3. Manual completion is 80%+ (mostly complete)
-      return !(dateProgressPercentage >= 100 || manualProgressPercentage >= 100 || manualProgressPercentage >= 80)
+  // Log state changes
+  useEffect(() => {
+    console.log('📋 CurriculaList state update:', {
+      curriculaLength: curricula.length,
+      loading,
+      error: !!error,
+      isHydrated,
+      hasDashboardData: !!dashboardData,
+      userId: user?.id
     })
-  }, [curricula, dashboardData, completedModules, isHydrated])
+  }, [curricula, loading, error, isHydrated, dashboardData, user?.id])
+
+  // Filter out completed curricula for sidebar display using the new completion logic
+  const activeCurricula = useMemo(() => {
+    console.log('🔍 Filtering active curricula:', {
+      curriculaLength: curricula.length,
+      hasDashboardData: !!dashboardData,
+      isHydrated
+    })
+    
+    if (!dashboardData || !isHydrated) {
+      console.log('📝 Using raw curricula (no dashboard data or not hydrated)')
+      return curricula
+    }
+    
+    // Create a map of curriculum ID to total module count
+    const moduleCounts = new Map<number, number>()
+    dashboardData.dailyModules.forEach(module => {
+      moduleCounts.set(module.curriculumId, (moduleCounts.get(module.curriculumId) || 0) + 1)
+    })
+
+    // Filter to only show active (non-completed) courses
+    const filtered = filterActiveCourses(
+      curricula, 
+      dashboardData.moduleCompletions || [], 
+      moduleCounts
+    )
+    
+    console.log('🎯 Filtered active curricula:', {
+      originalLength: curricula.length,
+      filteredLength: filtered.length,
+      moduleCompletionsCount: dashboardData.moduleCompletions?.length || 0
+    })
+    
+    return filtered
+  }, [curricula, dashboardData, isHydrated])
 
   // Handle successful import
   const handleImportSuccess = React.useCallback(() => {
@@ -79,7 +91,9 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
     }
   }, [user?.id, curriculumCache])
 
-  if (loading) {
+  // Show loading state during hydration or actual loading
+  if (!isHydrated || loading) {
+    console.log('⏳ CurriculaList showing loading state:', { isHydrated, loading })
     return (
       <div className="space-y-4">
         <SidebarMenu>
@@ -99,6 +113,7 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
   }
 
   if (error || deleteError) {
+    console.log('❌ CurriculaList showing error state:', { error, deleteError })
     return (
       <div className="space-y-4">
         <SidebarMenu>
@@ -118,6 +133,7 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
   }
 
   if (activeCurricula.length === 0) {
+    console.log('🚫 CurriculaList showing no curricula state')
     return (
       <div className="space-y-4">
         <SidebarMenu>
@@ -149,6 +165,8 @@ export const CurriculaList = React.memo(function CurriculaList({ activeCurriculu
     )
   }
 
+  console.log('✅ CurriculaList rendering curricula:', activeCurricula.length)
+  
   return (
     <div className="space-y-4">
       <SidebarMenu>

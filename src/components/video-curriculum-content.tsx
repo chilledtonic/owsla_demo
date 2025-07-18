@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import { useUser } from "@stackframe/stack"
 import { toggleModuleCompletionAction, fetchModuleCompletions } from "@/lib/actions"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface VideoSegment {
   start: string
@@ -71,8 +72,6 @@ interface VideoCurriculum {
 interface VideoCurriculumContentProps {
   curriculum: VideoCurriculum
   currentDay: number
-  onPreviousDay: () => void
-  onNextDay: () => void
   curriculumId: number
 }
 
@@ -123,11 +122,10 @@ function extractYouTubeVideoId(url: string): string | null {
 export function VideoCurriculumContent({ 
   curriculum, 
   currentDay, 
-  onPreviousDay, 
-  onNextDay,
   curriculumId
 }: VideoCurriculumContentProps) {
   const user = useUser()
+  const router = useRouter()
   const [completedModules, setCompletedModules] = useState<number[]>([])
   const [loadingCompletion, setLoadingCompletion] = useState(false)
   
@@ -135,6 +133,19 @@ export function VideoCurriculumContent({
   const totalModules = curriculum.daily_modules.length
   const completedCount = completedModules.length
   const progressPercentage = (completedCount / totalModules) * 100
+
+  // Navigation functions
+  const handlePreviousDay = () => {
+    if (currentDay > 1) {
+      router.push(`/video-curriculum/${curriculumId}/module/${currentDay - 1}`)
+    }
+  }
+
+  const handleNextDay = () => {
+    if (currentDay < totalModules) {
+      router.push(`/video-curriculum/${curriculumId}/module/${currentDay + 1}`)
+    }
+  }
   
   const videoId = extractYouTubeVideoId(curriculum.primary_video.url) || curriculum.primary_video.video_id
   const startTime = timeToSeconds(currentModule.video_segment.start)
@@ -260,7 +271,7 @@ export function VideoCurriculumContent({
           <Button
             variant="outline"
             size="sm"
-            onClick={onPreviousDay}
+            onClick={handlePreviousDay}
             disabled={currentDay === 1}
             className="flex-1"
           >
@@ -270,7 +281,7 @@ export function VideoCurriculumContent({
           <Button
             variant="outline"
             size="sm"
-            onClick={onNextDay}
+            onClick={handleNextDay}
             disabled={currentDay === totalModules}
             className="flex-1"
           >
@@ -290,7 +301,7 @@ export function VideoCurriculumContent({
             <Button
               variant="outline"
               size="sm"
-              onClick={onPreviousDay}
+              onClick={handlePreviousDay}
               disabled={currentDay === 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -299,7 +310,7 @@ export function VideoCurriculumContent({
             <Button
               variant="outline"
               size="sm"
-              onClick={onNextDay}
+              onClick={handleNextDay}
               disabled={currentDay === totalModules}
             >
               Next
@@ -590,7 +601,7 @@ export function VideoCurriculumContent({
         <div className="flex items-center justify-between pt-6 border-t">
           <Button 
             variant="outline" 
-            onClick={onPreviousDay}
+            onClick={handlePreviousDay}
             disabled={currentDay <= 1}
             className="flex items-center gap-2"
           >
@@ -605,7 +616,7 @@ export function VideoCurriculumContent({
           
           <Button 
             variant="outline" 
-            onClick={onNextDay}
+            onClick={handleNextDay}
             disabled={currentDay >= totalModules}
             className="flex items-center gap-2"
           >

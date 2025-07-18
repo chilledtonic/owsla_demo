@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
 import { useMemo, useState, useEffect } from "react"
-import { calculateCurrentCurriculumDay } from "@/lib/utils"
+import { filterCompletedCourses, getCourseCompletionStatuses, calculateCurrentCurriculumDay } from "@/lib/utils"
 import { 
   Archive,
   BookOpen,
@@ -26,48 +26,30 @@ export default function ArchivePage() {
   const user = useUser({ or: "redirect" })
   const { dashboardData, loading, error } = useCachedDashboardData()
   const isMobile = useIsMobile()
-  const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
   const [isHydrated, setIsHydrated] = useState(false)
 
-  // Load completed modules from localStorage
+  // Set hydrated state for SSR compatibility
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("module-completion")
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          setCompletedModules(new Set(parsed))
-        } catch {}
-      }
-      setIsHydrated(true)
-    }
+    setIsHydrated(true)
   }, [])
 
-  // Filter completed curricula - considering both date-based progress AND manual completion
+  // Filter completed curricula - only show courses with ALL modules marked as completed
   const completedCurricula = useMemo(() => {
     if (!dashboardData || !isHydrated) return []
     
-    return dashboardData.curricula.filter(curriculum => {
-      const curriculumModules = dashboardData.dailyModules.filter(m => m.curriculumId === curriculum.id)
-      const { currentDay } = calculateCurrentCurriculumDay(curriculumModules)
-      const totalDays = curriculumModules.length
-      
-      // Calculate date-based progress percentage
-      const dateProgressPercentage = totalDays > 0 ? Math.round((currentDay / totalDays) * 100) : 0
-      
-      // Calculate manual completion progress percentage
-      const manuallyCompletedModules = curriculumModules.filter(module => 
-        completedModules.has(`${module.curriculumId}-${module.day}`)
-      )
-      const manualProgressPercentage = totalDays > 0 ? Math.round((manuallyCompletedModules.length / totalDays) * 100) : 0
-      
-      // Course is completed if EITHER:
-      // 1. Date-based progress is 100% (past end date), OR
-      // 2. Manual completion is 100% (all modules marked complete), OR
-      // 3. Manual completion is 80%+ (mostly complete)
-      return dateProgressPercentage >= 100 || manualProgressPercentage >= 100 || manualProgressPercentage >= 80
+    // Create a map of curriculum ID to total module count
+    const moduleCounts = new Map<number, number>()
+    dashboardData.dailyModules.forEach(module => {
+      moduleCounts.set(module.curriculumId, (moduleCounts.get(module.curriculumId) || 0) + 1)
     })
-  }, [dashboardData, completedModules, isHydrated])
+
+    // Filter to only show fully completed courses
+    return filterCompletedCourses(
+      dashboardData.curricula, 
+      dashboardData.moduleCompletions || [], 
+      moduleCounts
+    )
+  }, [dashboardData, isHydrated])
 
   // Calculate archive statistics
   const archiveStats = useMemo(() => {
@@ -145,7 +127,7 @@ export default function ArchivePage() {
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2">No completed courses yet</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Complete your first course to see it in your archive. Courses appear here when you&apos;ve completed all modules or when the scheduled end date has passed.
+              Complete your first course to see it in your archive. Courses appear here when you&apos;ve marked all modules as completed.
             </p>
             <Button asChild size={isMobile ? "default" : "lg"}>
               <Link href="/">

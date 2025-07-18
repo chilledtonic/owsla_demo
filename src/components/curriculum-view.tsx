@@ -25,6 +25,8 @@ import {
 import { toast } from "sonner"
 import { useUser } from "@stackframe/stack"
 import { BookCover } from "@/components/ui/book-cover"
+import { fetchModuleCompletions } from "@/lib/actions"
+import { useEffect } from "react"
 
 // This type should be kept in sync with the transformation logic
 type TransformedCurriculum = {
@@ -84,14 +86,19 @@ export function CurriculumView({ initialCurriculum, initialCurrentDay, initialAc
   const [currentDay, setCurrentDay] = useState(initialCurrentDay)
   const [actualDay] = useState(initialActualDay)
   const [isForking, setIsForking] = useState(false)
+  
+  // Note: We no longer auto-navigate to incomplete modules since we use URL-based navigation
+  // The current module is determined by the URL parameter, not by completion status
 
   const handlePreviousDay = () => {
-    setCurrentDay(prev => Math.max(1, prev - 1))
+    if (currentDay > 1) {
+      router.push(`/curriculum/${rawCurriculum.id}/module/${currentDay - 1}`)
+    }
   }
 
   const handleNextDay = () => {
-    if (curriculumData) {
-      setCurrentDay(prev => Math.min(curriculumData.curriculum.daily_modules.length, prev + 1))
+    if (curriculumData && currentDay < curriculumData.curriculum.daily_modules.length) {
+      router.push(`/curriculum/${rawCurriculum.id}/module/${currentDay + 1}`)
     }
   }
 

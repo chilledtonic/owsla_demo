@@ -1,4 +1,4 @@
-import { getCurriculumById, getAllModuleCompletions } from "@/lib/database"
+import { getCurriculumById } from "@/lib/database"
 import { redirect } from "next/navigation"
 import { CurriculumView } from "@/components/curriculum-view"
 import { AppLayout } from "@/components/app-layout"
@@ -101,16 +101,22 @@ function transformDatabaseCurriculum(dbCurriculum: {
   }
 }
 
-export default async function CurriculumPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CurriculumModulePage({ 
+  params 
+}: { 
+  params: Promise<{ id: string; moduleNumber: string }> 
+}) {
   const resolvedParams = await params
   const id = parseInt(resolvedParams.id)
-  if (isNaN(id)) {
+  const moduleNumber = parseInt(resolvedParams.moduleNumber)
+  
+  if (isNaN(id) || isNaN(moduleNumber)) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Error</h1>
-            <p className="text-muted-foreground">Invalid curriculum ID.</p>
+            <p className="text-muted-foreground">Invalid curriculum ID or module number.</p>
           </div>
         </div>
       </AppLayout>
@@ -120,21 +126,21 @@ export default async function CurriculumPage({ params }: { params: Promise<{ id:
   const curriculum = await getCurriculumById(id)
 
   if (!curriculum) {
-  return (
+    return (
       <AppLayout>
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold mb-2">Curriculum Not Found</h1>
-              <p className="text-muted-foreground">The requested curriculum could not be found.</p>
-            </div>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-2">Curriculum Not Found</h1>
+            <p className="text-muted-foreground">The requested curriculum could not be found.</p>
           </div>
+        </div>
       </AppLayout>
     )
   }
 
   // Redirect to video curriculum page if this is a video curriculum
   if (curriculum.curriculum_type === 'video') {
-    redirect(`/video-curriculum/${curriculum.id}`)
+    redirect(`/video-curriculum/${curriculum.id}/module/${moduleNumber}`)
   }
   
   if (!curriculum.full_curriculum_data) {
@@ -146,22 +152,33 @@ export default async function CurriculumPage({ params }: { params: Promise<{ id:
             <p className="text-muted-foreground">Curriculum data is missing.</p>
           </div>
         </div>
-    </AppLayout>
+      </AppLayout>
     )
   }
   
   const transformedCurriculum = transformDatabaseCurriculum(curriculum.full_curriculum_data, curriculum)
   
-  // For server-side rendering, we'll start with the first module
-  // The client-side component will determine the correct module based on completion status
-  const initialCurrentDay = 1
-  const initialActualDay = 1
+  // Validate module number
+  if (moduleNumber < 1 || moduleNumber > transformedCurriculum.daily_modules.length) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-2">Module Not Found</h1>
+            <p className="text-muted-foreground">
+              Module {moduleNumber} does not exist. This curriculum has {transformedCurriculum.daily_modules.length} modules.
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <CurriculumView
       initialCurriculum={transformedCurriculum}
-      initialCurrentDay={initialCurrentDay}
-      initialActualDay={initialActualDay}
+      initialCurrentDay={moduleNumber}
+      initialActualDay={moduleNumber}
       rawCurriculum={curriculum}
     />
   )

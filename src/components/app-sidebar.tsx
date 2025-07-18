@@ -259,7 +259,7 @@ export function AppSidebar({ activeCurriculumId }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Curricula</SidebarGroupLabel>
+          <SidebarGroupLabel>Active Courses</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>

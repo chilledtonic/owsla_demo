@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
 import { useState, useMemo, useEffect } from "react"
+import { filterActiveCourses, getCourseCompletionStatuses } from "@/lib/utils"
 
 // Import dashboard components
 import { CourseModuleStack } from "@/components/dashboard"
@@ -78,16 +79,60 @@ function DashboardContent() {
     setIsMounted(true)
   }, [])
 
+  // Force re-render when dashboardData is updated
+  useEffect(() => {
+    // This effect ensures the component re-renders when dashboardData is available
+  }, [dashboardData])
+
   // Organize curricula and modules data
   const organizedData = useMemo(() => {
     if (!dashboardData) return null
 
-    // Group modules by curriculum
+    // Create a map of curriculum ID to total module count
+    const moduleCounts = new Map<number, number>()
+    dashboardData.dailyModules.forEach(module => {
+      moduleCounts.set(module.curriculumId, (moduleCounts.get(module.curriculumId) || 0) + 1)
+    })
+
+    // Debug logging for module counts and completions
+    console.log('🔍 Dashboard Debug:', {
+      totalCurricula: dashboardData.curricula.length,
+      totalDailyModules: dashboardData.dailyModules.length,
+      totalCompletions: dashboardData.moduleCompletions?.length || 0,
+      moduleCounts: Object.fromEntries(moduleCounts),
+      curricula: dashboardData.curricula.map(c => ({ id: c.id, title: c.title })),
+      completions: dashboardData.moduleCompletions?.map(c => ({ curriculumId: c.curriculum_id, moduleNumber: c.module_number }))
+    })
+
+    // Filter out completed courses to show only active ones
+    const activeCurricula = filterActiveCourses(
+      dashboardData.curricula, 
+      dashboardData.moduleCompletions || [], 
+      moduleCounts
+    )
+
+    console.log('🎯 Filtering Result:', {
+      originalCount: dashboardData.curricula.length,
+      activeCount: activeCurricula.length,
+      filtered: dashboardData.curricula.filter(c => !activeCurricula.includes(c)).map(c => ({ id: c.id, title: c.title }))
+    })
+
+    // Get completion statuses for active curricula
+    const completionStatuses = getCourseCompletionStatuses(
+      activeCurricula,
+      dashboardData.moduleCompletions || [],
+      moduleCounts
+    )
+
+    // Group modules by curriculum (only for active curricula)
     const modulesByCurriculum = dashboardData.dailyModules.reduce((acc, module) => {
-      if (!acc[module.curriculumId]) {
-        acc[module.curriculumId] = []
+      // Only include modules for active curricula
+      if (activeCurricula.some(c => c.id === module.curriculumId)) {
+        if (!acc[module.curriculumId]) {
+          acc[module.curriculumId] = []
+        }
+        acc[module.curriculumId].push(module)
       }
-      acc[module.curriculumId].push(module)
       return acc
     }, {} as Record<number, typeof dashboardData.dailyModules>)
 
@@ -96,15 +141,18 @@ function DashboardContent() {
       modules.sort((a, b) => a.day - b.day)
     })
 
-    // Calculate stats
-    const totalModules = dashboardData.dailyModules.length
-    const totalStudyTime = dashboardData.dailyModules.reduce((acc, module) => {
+    // Calculate stats (only for active curricula)
+    const activeModules = dashboardData.dailyModules.filter(module => 
+      activeCurricula.some(c => c.id === module.curriculumId)
+    )
+    const totalModules = activeModules.length
+    const totalStudyTime = activeModules.reduce((acc, module) => {
       const time = parseInt(module.totalTime.replace(/\D/g, '')) || 60
       return acc + time
     }, 0)
 
-    const videoCourses = dashboardData.curricula.filter(c => c.curriculum_type === 'video').length
-    const textCourses = dashboardData.curricula.filter(c => c.curriculum_type === 'text').length
+    const videoCourses = activeCurricula.filter(c => c.curriculum_type === 'video').length
+    const textCourses = activeCurricula.filter(c => c.curriculum_type === 'text').length
 
     return {
       modulesByCurriculum,
@@ -112,9 +160,24 @@ function DashboardContent() {
       totalStudyTime,
       videoCourses,
       textCourses,
-      totalCourses: dashboardData.curricula.length
+      totalCourses: activeCurricula.length,
+      activeCurricula,
+      completionStatuses
     }
   }, [dashboardData])
+
+  // Debug: Log whenever organizedData changes to understand the flow
+  useEffect(() => {
+    if (organizedData) {
+      console.log('✅ organizedData updated:', {
+        totalCourses: organizedData.totalCourses,
+        activeCurriculaCount: organizedData.activeCurricula.length,
+        activeCurriculaIds: organizedData.activeCurricula.map(c => c.id)
+      })
+    } else {
+      console.log('❌ organizedData is null')
+    }
+  }, [organizedData])
 
   // Early return for SSR to prevent hydration mismatches
   if (!isMounted) {
@@ -249,7 +312,7 @@ function DashboardContent() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Your Courses</h2>
             <div className="space-y-4">
-              {dashboardData.curricula.map((curriculum) => (
+              {organizedData.activeCurricula.map((curriculum) => (
                 <CourseModuleStack
                   key={curriculum.id}
                   curriculum={curriculum}
@@ -408,7 +471,7 @@ function DashboardContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {dashboardData.curricula.map((curriculum) => (
+            {organizedData.activeCurricula.map((curriculum) => (
               <CourseModuleStack
                 key={curriculum.id}
                 curriculum={curriculum}

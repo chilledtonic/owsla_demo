@@ -678,4 +678,18 @@ export async function getCurriculumProgress(userId: string, curriculumId: number
   }
 }
 
+export async function getAllModuleCompletions(userId: string): Promise<ModuleCompletion[]> {
+  try {
+    const result = await sql`
+      SELECT * FROM module_completions 
+      WHERE user_id = ${userId}
+      ORDER BY curriculum_id, module_number
+    `
+    return result as ModuleCompletion[]
+  } catch (error) {
+    console.error('Error fetching all module completions:', error)
+    throw new Error('Failed to fetch all module completions')
+  }
+}
+
  

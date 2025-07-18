@@ -31,56 +31,8 @@ export const DashboardCurriculaOverview = React.memo(function DashboardCurricula
   showCompleted = false // Default to false for dashboard behavior
 }: DashboardCurriculaOverviewProps) {
   const isMobile = useIsMobile()
-  const [completedModules, setCompletedModules] = useState<Set<string>>(new Set())
-  const [isHydrated, setIsHydrated] = useState(false)
-
-  // Load completed modules from localStorage for proper filtering
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("module-completion")
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          setCompletedModules(new Set(parsed))
-        } catch {}
-      }
-      setIsHydrated(true)
-    }
-  }, [])
-
-  // Filter curricula based on completion status
-  const filteredCurricula = React.useMemo(() => {
-    if (!isHydrated) return curricula
-    
-    if (showCompleted) {
-      // For archive page - show all passed curricula (they're already filtered)
-      return curricula
-    }
-    
-    // For dashboard - filter out completed curricula
-    return curricula.filter(curriculum => {
-      const curriculumModules = dailyModules.filter(m => m.curriculumId === curriculum.id)
-      const { currentDay } = calculateCurrentCurriculumDay(curriculumModules)
-      const totalDays = curriculumModules.length
-      
-      // Calculate date-based progress percentage
-      const dateProgressPercentage = totalDays > 0 ? Math.round((currentDay / totalDays) * 100) : 0
-      
-      // Calculate manual completion progress percentage
-      const manuallyCompletedModules = curriculumModules.filter(module => 
-        completedModules.has(`${module.curriculumId}-${module.day}`)
-      )
-      const manualProgressPercentage = totalDays > 0 ? Math.round((manuallyCompletedModules.length / totalDays) * 100) : 0
-      
-      // Course is NOT completed if NONE of these are true:
-      // 1. Date-based progress is 100% (past end date)
-      // 2. Manual completion is 100% (all modules marked complete)
-      // 3. Manual completion is 80%+ (mostly complete)
-      return !(dateProgressPercentage >= 100 || manualProgressPercentage >= 100 || manualProgressPercentage >= 80)
-    })
-  }, [curricula, dailyModules, completedModules, isHydrated, showCompleted])
-
-  if (filteredCurricula.length === 0) {
+  // Since curricula are now pre-filtered by parent components, just display them
+  if (curricula.length === 0) {
     return (
       <div className={cn("text-center py-8", isMobile && "py-6")}>
         <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
@@ -113,7 +65,7 @@ export const DashboardCurriculaOverview = React.memo(function DashboardCurricula
           {showCompleted ? "Completed Curricula" : "Your Curricula"}
         </h2>
         <Badge variant="outline">
-          {filteredCurricula.length} {showCompleted ? "completed" : "active"}
+          {curricula.length} {showCompleted ? "completed" : "active"}
         </Badge>
       </div>
       
@@ -121,7 +73,7 @@ export const DashboardCurriculaOverview = React.memo(function DashboardCurricula
         "grid gap-4",
         isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
       )}>
-        {filteredCurricula.map((curriculum) => (
+        {curricula.map((curriculum) => (
           <DashboardCurriculumCard
             key={curriculum.id}
             curriculum={curriculum}

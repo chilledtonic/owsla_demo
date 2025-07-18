@@ -124,8 +124,8 @@ export function CourseModuleStack({ curriculum, modules, className }: CourseModu
   const completedCount = completedModules.length
   const progressPercentage = Math.round((completedCount / modules.length) * 100)
   const curriculumPath = curriculum.curriculum_type === 'video' 
-    ? `/video-curriculum/${curriculum.id}` 
-    : `/curriculum/${curriculum.id}`
+    ? `/video-curriculum/${curriculum.id}/module/${currentModule.day}` 
+    : `/curriculum/${curriculum.id}/module/${currentModule.day}`
 
   return (
     <div className={cn("border rounded-lg bg-background", className)}>

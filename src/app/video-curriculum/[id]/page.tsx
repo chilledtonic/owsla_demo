@@ -5,9 +5,10 @@ import { VideoCurriculumContent } from "@/components/video-curriculum-content"
 import { deleteCurriculum } from "@/lib/actions"
 import { useCachedCurriculum } from "@/hooks/use-curriculum-data"
 import { CurriculumData } from "@/lib/database"
-import { calculateCurrentCurriculumDay } from "@/lib/utils"
+import { fetchModuleCompletions } from "@/lib/actions"
 import { useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
+import { useUser } from "@stackframe/stack"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -130,6 +131,7 @@ function transformDatabaseVideoCurriculum(dbCurriculum: {
 
 export default function VideoCurriculumPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const user = useUser()
   const isMobile = useIsMobile()
   const [curriculumId, setCurriculumId] = useState<number | null>(null)
   const { curriculum, loading, error } = useCachedCurriculum(curriculumId || 0)
@@ -154,11 +156,29 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
         curriculum: transformedCurriculum
       })
       
-      // Intelligently calculate the current day based on today's date
-      const { currentDay: calculatedCurrentDay } = 
-        calculateCurrentCurriculumDay(transformedCurriculum.daily_modules)
-      
-      setCurrentDay(calculatedCurrentDay)
+      // Determine the first incomplete module instead of using date-based logic
+      if (user?.id) {
+        fetchModuleCompletions(user.id, curriculum.id).then(result => {
+          if (result.success && result.data) {
+            const completedModules = result.data.map(c => c.module_number)
+            
+            // Find the first incomplete module
+            const firstIncomplete = transformedCurriculum.daily_modules.findIndex(module => 
+              !completedModules.includes(module.day)
+            )
+            
+            // If we found an incomplete module, navigate to it; otherwise stay on the last module
+            const targetDay = firstIncomplete !== -1 ? firstIncomplete + 1 : transformedCurriculum.daily_modules.length
+            setCurrentDay(targetDay)
+          } else {
+            // Default to first module if no completion data
+            setCurrentDay(1)
+          }
+        })
+      } else {
+        // Default to first module if no user
+        setCurrentDay(1)
+      }
     }
   }, [curriculum])
 
