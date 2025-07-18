@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { getLatestCurriculumByUserId, getCurriculumsByUserId, getCurriculumById, deleteCurriculumById, getActiveJobsByUserId, getAllJobsByUserId, createCurriculum, updateCurriculum } from './database'
+import { getLatestCurriculumByUserId, getCurriculumsByUserId, getCurriculumById, deleteCurriculumById, getActiveJobsByUserId, getAllJobsByUserId, createCurriculum, updateCurriculum, getModuleCompletions, toggleModuleCompletion, markModuleComplete, markModuleIncomplete, getCurriculumProgress } from './database'
 import type { CurriculumData } from './database'
 import type { CourseData } from '@/types/course-editor'
 
@@ -766,6 +766,116 @@ export async function revalidateCurriculumCache(userId: string) {
   } catch (error) {
     console.error('Error revalidating cache:', error)
     return { success: false, error: 'Failed to revalidate cache' }
+  }
+}
+
+export async function revalidateServerCache(userId: string) {
+  try {
+    // Path-based revalidation
+    revalidatePath('/', 'layout')
+    revalidatePath('/curriculum/[id]', 'layout')
+    revalidatePath('/video-curriculum/[id]', 'layout')
+    
+    // Tag-based revalidation for user-specific data
+    revalidateTag('user-curricula')
+    revalidateTag(`user-${userId}-curricula`)
+    
+    console.log(`Server cache revalidated for user: ${userId}`)
+    return { success: true }
+  } catch (error) {
+    console.error('Error revalidating cache:', error)
+    return { success: false, error: 'Failed to revalidate cache' }
+  }
+}
+
+// Module completion actions
+export async function fetchModuleCompletions(userId: string, curriculumId: number) {
+  'use server'
+  
+  try {
+    const completions = await getModuleCompletions(userId, curriculumId)
+    return { success: true, data: completions }
+  } catch (error) {
+    console.error('Error fetching module completions:', error)
+    return { success: false, error: 'Failed to fetch module completions' }
+  }
+}
+
+export async function toggleModuleCompletionAction(
+  userId: string,
+  curriculumId: number,
+  moduleNumber: number
+) {
+  'use server'
+  
+  try {
+    const result = await toggleModuleCompletion(userId, curriculumId, moduleNumber)
+    
+    // Revalidate curriculum pages
+    revalidatePath(`/curriculum/${curriculumId}`)
+    revalidatePath(`/video-curriculum/${curriculumId}`)
+    revalidatePath('/', 'layout')
+    
+    return { success: true, completed: result.completed }
+  } catch (error) {
+    console.error('Error toggling module completion:', error)
+    return { success: false, error: 'Failed to toggle module completion' }
+  }
+}
+
+export async function markModuleCompleteAction(
+  userId: string,
+  curriculumId: number,
+  moduleNumber: number
+) {
+  'use server'
+  
+  try {
+    await markModuleComplete(userId, curriculumId, moduleNumber)
+    
+    // Revalidate curriculum pages
+    revalidatePath(`/curriculum/${curriculumId}`)
+    revalidatePath(`/video-curriculum/${curriculumId}`)
+    revalidatePath('/', 'layout')
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error marking module complete:', error)
+    return { success: false, error: 'Failed to mark module complete' }
+  }
+}
+
+export async function markModuleIncompleteAction(
+  userId: string,
+  curriculumId: number,
+  moduleNumber: number
+) {
+  'use server'
+  
+  try {
+    await markModuleIncomplete(userId, curriculumId, moduleNumber)
+    
+    // Revalidate curriculum pages
+    revalidatePath(`/curriculum/${curriculumId}`)
+    revalidatePath(`/video-curriculum/${curriculumId}`)
+    revalidatePath('/', 'layout')
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error marking module incomplete:', error)
+    return { success: false, error: 'Failed to mark module incomplete' }
+  }
+}
+
+export async function fetchCurriculumProgress(userId: string, curriculumId: number) {
+  'use server'
+  
+  try {
+    const progress = await getCurriculumProgress(userId, curriculumId)
+    return { success: true, data: progress }
+  } catch (error) {
+    console.error('Error fetching curriculum progress:', error)
+    return { success: false, error: 'Failed to fetch curriculum progress' }
   }
 }
 

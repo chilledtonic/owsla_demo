@@ -5,8 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Target, Lightbulb, CheckCircle, MapPin, Calendar, Timer, ChevronLeft, ChevronRight } from "lucide-react"
-import { handleResourceClick, getCurriculumProgressStatus, getRelativeDateInfo } from "@/lib/utils"
+import { Target, Lightbulb, CheckCircle, MapPin, Timer, ChevronLeft, ChevronRight, CheckSquare, Square } from "lucide-react"
+import { handleResourceClick } from "@/lib/utils"
+import { useState, useEffect } from "react"
+import { useUser } from "@stackframe/stack"
+import { toggleModuleCompletionAction, fetchModuleCompletions } from "@/lib/actions"
+import { toast } from "sonner"
 
 interface DailyModule {
   day: number
@@ -56,17 +60,55 @@ interface CurriculumProps {
   onNextDay: () => void
 }
 
-export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviousDay, onNextDay }: CurriculumProps) {
-  const totalDays = curriculum.daily_modules.length
-  const actualProgress = (actualDay / totalDays) * 100
+interface CurriculumContentProps extends CurriculumProps {
+  curriculumId: number
+}
+
+export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviousDay, onNextDay, curriculumId }: CurriculumContentProps) {
+  const user = useUser()
+  const [completedModules, setCompletedModules] = useState<number[]>([])
+  const [loadingCompletion, setLoadingCompletion] = useState(false)
+  
+  const totalModules = curriculum.daily_modules.length
+  const completedCount = completedModules.length
+  const progressPercentage = (completedCount / totalModules) * 100
 
   const currentModule = curriculum.daily_modules[currentDay - 1]
   const nextModule = currentDay < curriculum.daily_modules.length 
     ? curriculum.daily_modules[currentDay] 
     : null
 
-  const progressStatus = getCurriculumProgressStatus(currentDay, actualDay, currentModule.date)
-  const currentDateInfo = getRelativeDateInfo(currentModule.date)
+  // Fetch module completion status on mount
+  useEffect(() => {
+    if (!user?.id) return
+    
+    fetchModuleCompletions(user.id, curriculumId).then(result => {
+      if (result.success && result.data) {
+        setCompletedModules(result.data.map(c => c.module_number))
+      }
+    })
+  }, [user?.id, curriculumId])
+
+  const handleToggleComplete = async (moduleNumber: number) => {
+    if (!user?.id || loadingCompletion) return
+    
+    setLoadingCompletion(true)
+    const result = await toggleModuleCompletionAction(user.id, curriculumId, moduleNumber)
+    
+    if (result.success) {
+      if (result.completed) {
+        setCompletedModules([...completedModules, moduleNumber])
+        toast.success(`Module ${moduleNumber} marked as complete`)
+      } else {
+        setCompletedModules(completedModules.filter(m => m !== moduleNumber))
+        toast.success(`Module ${moduleNumber} marked as incomplete`)
+      }
+    } else {
+      toast.error("Failed to update module completion")
+    }
+    
+    setLoadingCompletion(false)
+  }
 
   const handleSupplementaryClick = (reading: { title: string; author: string; isbn?: string; doi?: string }) => {
     handleResourceClick(reading)
@@ -77,23 +119,30 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
       {/* Mobile Header - Only visible on mobile */}
       <div className="lg:hidden border-b bg-background p-4">
         <div className="flex items-center justify-between mb-3">
-          <div>
+          <div className="flex-1">
             <h1 className="text-lg font-bold">{curriculum.title}</h1>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Day {currentDay} of {totalDays}</span>
-                <Badge variant={progressStatus.variant} className="text-xs">
-                  {progressStatus.status === 'on-schedule' ? 'Current' : 
-                   progressStatus.status === 'preview' ? 'Preview' : 
-                   progressStatus.status === 'ahead' ? 'Ahead' : 'Behind'}
-                </Badge>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {currentDateInfo.formattedDate}
-                {currentDateInfo.isToday && (
-                  <span className="ml-1 text-primary font-medium">• Today</span>
+                <span>Module {currentDay} of {totalModules}</span>
+                {completedModules.includes(currentDay) && (
+                  <Badge variant="secondary" className="text-xs">
+                    Completed
+                  </Badge>
                 )}
               </div>
+              <Button
+                size="sm"
+                variant={completedModules.includes(currentDay) ? "secondary" : "outline"}
+                onClick={() => handleToggleComplete(currentDay)}
+                disabled={loadingCompletion}
+                className="h-7"
+              >
+                {completedModules.includes(currentDay) ? (
+                  <CheckSquare className="h-3 w-3" />
+                ) : (
+                  <Square className="h-3 w-3" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -101,13 +150,10 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium">Progress</span>
           <span className="text-sm text-muted-foreground">
-            {Math.round(actualProgress)}%
+            {completedCount}/{totalModules} modules ({Math.round(progressPercentage)}%)
           </span>
         </div>
-        <Progress value={actualProgress} className="h-2 mb-1" />
-        <div className="text-xs text-muted-foreground mb-3">
-          {progressStatus.message}
-        </div>
+        <Progress value={progressPercentage} className="h-2 mb-3" />
         
         <div className="flex gap-2">
           <Button
@@ -124,7 +170,7 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
             variant="outline"
             size="sm"
             onClick={onNextDay}
-            disabled={currentDay === totalDays}
+            disabled={currentDay === totalModules}
             className="flex-1"
           >
             Next
@@ -153,7 +199,7 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
               variant="outline"
               size="sm"
               onClick={onNextDay}
-              disabled={currentDay === totalDays}
+              disabled={currentDay === totalModules}
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -163,20 +209,38 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
         
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Your Progress</span>
-            <Badge variant={progressStatus.variant}>
-              {progressStatus.status === 'on-schedule' ? 'Current' : 
-               progressStatus.status === 'preview' ? 'Preview' : 
-               progressStatus.status === 'ahead' ? 'Ahead' : 'Behind'} Day {currentDay}
-            </Badge>
+            <span className="text-sm font-medium">Module Progress</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Module {currentDay} of {totalModules}</span>
+              {completedModules.includes(currentDay) && (
+                <Badge variant="secondary" className="text-xs">
+                  Completed
+                </Badge>
+              )}
+            </div>
           </div>
-          <span className="text-sm text-muted-foreground">
-            Completed {actualDay} of {totalDays} days
-          </span>
+          <Button
+            size="sm"
+            variant={completedModules.includes(currentDay) ? "secondary" : "outline"}
+            onClick={() => handleToggleComplete(currentDay)}
+            disabled={loadingCompletion}
+          >
+            {completedModules.includes(currentDay) ? (
+              <>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Completed
+              </>
+            ) : (
+              <>
+                <Square className="h-4 w-4 mr-2" />
+                Mark Complete
+              </>
+            )}
+          </Button>
         </div>
-        <Progress value={actualProgress} className="h-2" />
+        <Progress value={progressPercentage} className="h-2" />
         <div className="text-xs text-muted-foreground mt-1">
-          {progressStatus.message}
+          {completedCount} of {totalModules} modules completed
         </div>
       </div>
 
@@ -186,14 +250,12 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              <h2 className="text-lg lg:text-xl font-semibold">Day {currentModule.day}: {currentModule.title}</h2>
+              <CheckCircle className="h-5 w-5 text-primary" />
+              <h2 className="text-lg lg:text-xl font-semibold">Module {currentModule.day}: {currentModule.title}</h2>
             </div>
             <div className="text-sm text-muted-foreground">
-              {currentDateInfo.formattedDate}
-              {currentDateInfo.isToday && (
-                <span className="ml-1 text-primary font-medium">• Today</span>
-              )}
+              <Timer className="h-4 w-4 inline mr-1" />
+              {currentModule.time_allocation.total}
             </div>
           </div>
           
@@ -397,7 +459,7 @@ export function CurriculumContent({ curriculum, currentDay, actualDay, onPreviou
           </div>
         )}
         
-        {currentDay === totalDays && (
+        {currentDay === totalModules && (
           <div className="p-4 lg:p-6 border rounded-lg bg-green-50/50 dark:bg-green-950/20">
             <div className="text-center">
               <h3 className="font-medium text-green-700 dark:text-green-300 mb-1">Course Complete!</h3>

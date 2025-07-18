@@ -4,8 +4,12 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookCover } from "@/components/ui/book-cover"
-import { Target, Lightbulb, CheckCircle, Calendar, Timer, ChevronLeft, ChevronRight, Play, Video, BookOpen } from "lucide-react"
-import { getRelativeDateInfo, getCurriculumProgressStatus, handleResourceClick } from "@/lib/utils"
+import { Target, Lightbulb, CheckCircle, Timer, ChevronLeft, ChevronRight, Play, Video, BookOpen, CheckSquare, Square } from "lucide-react"
+import { handleResourceClick } from "@/lib/utils"
+import { useState, useEffect } from "react"
+import { useUser } from "@stackframe/stack"
+import { toggleModuleCompletionAction, fetchModuleCompletions } from "@/lib/actions"
+import { toast } from "sonner"
 
 interface VideoSegment {
   start: string
@@ -70,6 +74,7 @@ interface VideoCurriculumContentProps {
   onPreviousDay: () => void
   onNextDay: () => void
   actualDay: number
+  curriculumId: number
 }
 
 // Helper function to convert time string to seconds
@@ -121,13 +126,17 @@ export function VideoCurriculumContent({
   currentDay, 
   onPreviousDay, 
   onNextDay,
-  actualDay 
+  actualDay,
+  curriculumId
 }: VideoCurriculumContentProps) {
-
+  const user = useUser()
+  const [completedModules, setCompletedModules] = useState<number[]>([])
+  const [loadingCompletion, setLoadingCompletion] = useState(false)
   
   const currentModule = curriculum.daily_modules[currentDay - 1]
-  const totalDays = curriculum.daily_modules.length
-  const actualProgress = (actualDay / totalDays) * 100
+  const totalModules = curriculum.daily_modules.length
+  const completedCount = completedModules.length
+  const progressPercentage = (completedCount / totalModules) * 100
   
   const videoId = extractYouTubeVideoId(curriculum.primary_video.url) || curriculum.primary_video.video_id
   const startTime = timeToSeconds(currentModule.video_segment.start)
@@ -137,8 +146,37 @@ export function VideoCurriculumContent({
     ? `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=0&rel=0&modestbranding=1`
     : null
 
-  const progressStatus = getCurriculumProgressStatus(currentDay, actualDay, currentModule.date)
-  const dateInfo = getRelativeDateInfo(currentModule.date)
+  // Fetch module completion status on mount
+  useEffect(() => {
+    if (!user?.id) return
+    
+    fetchModuleCompletions(user.id, curriculumId).then(result => {
+      if (result.success && result.data) {
+        setCompletedModules(result.data.map(c => c.module_number))
+      }
+    })
+  }, [user?.id, curriculumId])
+
+  const handleToggleComplete = async (moduleNumber: number) => {
+    if (!user?.id || loadingCompletion) return
+    
+    setLoadingCompletion(true)
+    const result = await toggleModuleCompletionAction(user.id, curriculumId, moduleNumber)
+    
+    if (result.success) {
+      if (result.completed) {
+        setCompletedModules([...completedModules, moduleNumber])
+        toast.success(`Module ${moduleNumber} marked as complete`)
+      } else {
+        setCompletedModules(completedModules.filter(m => m !== moduleNumber))
+        toast.success(`Module ${moduleNumber} marked as incomplete`)
+      }
+    } else {
+      toast.error("Failed to update module completion")
+    }
+    
+    setLoadingCompletion(false)
+  }
 
   const jumpToTime = (timeStr: string) => {
     const iframe = document.querySelector('iframe') as HTMLIFrameElement
@@ -184,23 +222,30 @@ export function VideoCurriculumContent({
       {/* Mobile Header - Only visible on mobile */}
       <div className="lg:hidden border-b bg-background p-4">
         <div className="flex items-center justify-between mb-3">
-          <div>
+          <div className="flex-1">
             <h1 className="text-lg font-bold">{curriculum.title}</h1>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Day {currentDay} of {totalDays}</span>
-                <Badge variant={progressStatus.variant} className="text-xs">
-                  {progressStatus.status === 'on-schedule' ? 'Current' : 
-                   progressStatus.status === 'preview' ? 'Preview' : 
-                   progressStatus.status === 'ahead' ? 'Ahead' : 'Behind'}
-                </Badge>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {dateInfo.formattedDate}
-                {dateInfo.isToday && (
-                  <span className="ml-1 text-primary font-medium">• Today</span>
+                <span>Module {currentDay} of {totalModules}</span>
+                {completedModules.includes(currentDay) && (
+                  <Badge variant="secondary" className="text-xs">
+                    Completed
+                  </Badge>
                 )}
               </div>
+              <Button
+                size="sm"
+                variant={completedModules.includes(currentDay) ? "secondary" : "outline"}
+                onClick={() => handleToggleComplete(currentDay)}
+                disabled={loadingCompletion}
+                className="h-7"
+              >
+                {completedModules.includes(currentDay) ? (
+                  <CheckSquare className="h-3 w-3" />
+                ) : (
+                  <Square className="h-3 w-3" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -208,13 +253,10 @@ export function VideoCurriculumContent({
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium">Progress</span>
           <span className="text-sm text-muted-foreground">
-            {Math.round(actualProgress)}%
+            {completedCount}/{totalModules} modules ({Math.round(progressPercentage)}%)
           </span>
         </div>
-        <Progress value={actualProgress} className="h-2 mb-1" />
-        <div className="text-xs text-muted-foreground mb-3">
-          {progressStatus.message}
-        </div>
+        <Progress value={progressPercentage} className="h-2 mb-3" />
         
         <div className="flex gap-2">
           <Button
@@ -231,7 +273,7 @@ export function VideoCurriculumContent({
             variant="outline"
             size="sm"
             onClick={onNextDay}
-            disabled={currentDay === totalDays}
+            disabled={currentDay === totalModules}
             className="flex-1"
           >
             Next
@@ -260,7 +302,7 @@ export function VideoCurriculumContent({
               variant="outline"
               size="sm"
               onClick={onNextDay}
-              disabled={currentDay === totalDays}
+              disabled={currentDay === totalModules}
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
@@ -270,37 +312,52 @@ export function VideoCurriculumContent({
         
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Your Progress</span>
-            <Badge variant={progressStatus.variant}>
-              {progressStatus.status === 'on-schedule' ? 'Current' : 
-               progressStatus.status === 'preview' ? 'Preview' : 
-               progressStatus.status === 'ahead' ? 'Ahead' : 'Behind'} Day {currentDay}
-            </Badge>
+            <span className="text-sm font-medium">Module Progress</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Module {currentDay} of {totalModules}</span>
+              {completedModules.includes(currentDay) && (
+                <Badge variant="secondary" className="text-xs">
+                  Completed
+                </Badge>
+              )}
+            </div>
           </div>
-          <span className="text-sm text-muted-foreground">
-            Completed {actualDay} of {totalDays} days
-          </span>
+          <Button
+            size="sm"
+            variant={completedModules.includes(currentDay) ? "secondary" : "outline"}
+            onClick={() => handleToggleComplete(currentDay)}
+            disabled={loadingCompletion}
+          >
+            {completedModules.includes(currentDay) ? (
+              <>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Completed
+              </>
+            ) : (
+              <>
+                <Square className="h-4 w-4 mr-2" />
+                Mark Complete
+              </>
+            )}
+          </Button>
         </div>
-        <Progress value={actualProgress} className="h-2" />
+        <Progress value={progressPercentage} className="h-2" />
         <div className="text-xs text-muted-foreground mt-1">
-          {progressStatus.message}
+          {completedCount} of {totalModules} modules completed
         </div>
       </div>
 
       {/* Main Content */}
       <div className="p-4 lg:p-6 space-y-6">
-        {/* Today's Focus Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              <h2 className="text-lg lg:text-xl font-semibold">Day {currentModule.day}: {currentModule.title}</h2>
+              <CheckCircle className="h-5 w-5 text-primary" />
+              <h2 className="text-lg lg:text-xl font-semibold">Module {currentModule.day}: {currentModule.title}</h2>
             </div>
             <div className="text-sm text-muted-foreground">
-              {dateInfo.formattedDate}
-              {dateInfo.isToday && (
-                <span className="ml-1 text-primary font-medium">• Today</span>
-              )}
+              <Timer className="h-4 w-4 inline mr-1" />
+              {currentModule.video_segment.duration} segment
             </div>
           </div>
           
@@ -544,14 +601,14 @@ export function VideoCurriculumContent({
           </Button>
           
           <div className="text-center">
-            <div className="text-sm text-muted-foreground">Day {currentDay} of {totalDays}</div>
+            <div className="text-sm text-muted-foreground">Day {currentDay} of {totalModules}</div>
             <div className="font-medium">{currentModule.title}</div>
           </div>
           
           <Button 
             variant="outline" 
             onClick={onNextDay}
-            disabled={currentDay >= totalDays}
+            disabled={currentDay >= totalModules}
             className="flex items-center gap-2"
           >
             Next Day

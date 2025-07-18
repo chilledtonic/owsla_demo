@@ -43,8 +43,8 @@ export const UpcomingSchedule = React.memo(function UpcomingSchedule({
       {!isMobile && (
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-blue-600" />
-          <h2 className="text-xl font-semibold">Upcoming Schedule</h2>
-          <Badge variant="outline">{sortedDates.length} days</Badge>
+          <h2 className="text-xl font-semibold">Upcoming Modules</h2>
+          <Badge variant="outline">{sortedDates.length} study sessions</Badge>
         </div>
       )}
       

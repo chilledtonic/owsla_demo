@@ -9,11 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarIcon, Youtube, BookOpen, ArrowRight, Library } from "lucide-react"
+import { Youtube, BookOpen, ArrowRight, Library } from "lucide-react"
 import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 import { submitNewCurriculum, submitYoutubeCurriculum, submitSourceCurriculum } from "@/lib/actions"
 import { TopicTab } from "./new-curriculum-form/topic-tab"
 import { YoutubeTab } from "./new-curriculum-form/youtube-tab"
@@ -103,7 +100,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
   const isMobile = useIsMobile()
   const [isAdvanced, setIsAdvanced] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [startDate, setStartDate] = useState<Date>()
+  const [startDate] = useState<Date>()
   const [activeTab, setActiveTab] = useState<"topic" | "youtube" | "source">("topic")
 
   // YouTube-specific state
@@ -307,7 +304,10 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user?.id || !startDate) return
+    if (!user?.id) return
+
+    // Use today's date as the start date (hidden from user)
+    const autoStartDate = startDate || new Date()
 
     setIsSubmitting(true)
 
@@ -337,7 +337,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
             learner_profile: submissionData.learner_profile,
             curriculum_preferences: submissionData.curriculum_preferences,
             schedule: {
-              start_date: format(startDate, "yyyy-MM-dd"),
+              start_date: format(autoStartDate, "yyyy-MM-dd"),
               study_days: submissionData.schedule.study_days,
               break_weeks: submissionData.schedule.break_weeks
             }
@@ -392,7 +392,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
             learner_profile: submissionData.learner_profile,
             curriculum_preferences: submissionData.curriculum_preferences,
             schedule: {
-              start_date: format(startDate, "yyyy-MM-dd"),
+              start_date: format(autoStartDate, "yyyy-MM-dd"),
               study_days: submissionData.schedule.study_days,
               break_weeks: submissionData.schedule.break_weeks
             }
@@ -420,7 +420,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
             learner_profile: submissionData.learner_profile,
             curriculum_preferences: submissionData.curriculum_preferences,
             schedule: {
-              start_date: format(startDate, "yyyy-MM-dd"),
+              start_date: format(autoStartDate, "yyyy-MM-dd"),
               study_days: submissionData.schedule.study_days,
               break_weeks: submissionData.schedule.break_weeks
             }
@@ -552,8 +552,8 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
           </div>
 
           {/* Additional Info Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 gap-6">
+            <div>
               <Label htmlFor="preliminaries" className="text-base font-medium">Prerequisites (Optional)</Label>
               <Textarea
                 id="preliminaries"
@@ -562,32 +562,6 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                 onChange={(e) => setCurriculumFormData(prev => ({ ...prev, preliminaries: e.target.value }))}
                 className="mt-2 min-h-[80px]"
               />
-            </div>
-
-            <div>
-              <Label className="text-base font-medium">Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal mt-2 h-12",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : "Select start date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
             </div>
           </div>
 
@@ -634,12 +608,7 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
           )}
 
           {/* Submit Section */}
-          <div className="flex items-center justify-between pt-8 border-t">
-            <div className="text-sm text-muted-foreground">
-              {startDate && (
-                <span>Starting {format(startDate, "MMMM d, yyyy")}</span>
-              )}
-            </div>
+          <div className="flex items-center justify-end pt-8 border-t">
             <div className="flex items-center gap-3">
               <Button 
                 type="button" 
@@ -653,7 +622,6 @@ export function NewCurriculumForm({ onCancel, onSuccess }: NewCurriculumFormProp
                 type="submit" 
                 disabled={
                   isSubmitting || 
-                  !startDate || 
                   (activeTab === "topic" && !curriculumFormData.topic) || 
                   (activeTab === "youtube" && (!youtubeUrl || !youtubeMetadata || !!durationError)) ||
                   (activeTab === "source" && !primaryResource)

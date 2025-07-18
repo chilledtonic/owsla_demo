@@ -64,7 +64,7 @@ export const TodaysFocus = React.memo(function TodaysFocus({
       {!isMobile && (
         <div className="flex items-center gap-2">
           <BookOpenCheck className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">Today&apos;s Focus</h2>
+          <h2 className="text-xl font-semibold">Current Modules</h2>
           <Badge variant="outline">{modules.length} modules</Badge>
         </div>
       )}
@@ -143,7 +143,7 @@ const TodayModule = React.memo(function TodayModule({
                   {module.curriculumTitle}
                 </Badge>
                 <Badge variant="outline" className="text-xs flex-shrink-0">
-                  Day {module.day}
+                  Module {module.day}
                 </Badge>
               </div>
             )}
@@ -153,7 +153,7 @@ const TodayModule = React.memo(function TodayModule({
             <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
               <span>{module.curriculumTitle}</span>
               <Badge variant="outline" className="text-xs">
-                Day {module.day}
+                Module {module.day}
               </Badge>
             </div>
           )}

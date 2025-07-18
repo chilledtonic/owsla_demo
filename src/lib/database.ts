@@ -551,4 +551,131 @@ export async function deleteZoteroResources(userId: string): Promise<void> {
   }
 }
 
+// Module completion functions
+export interface ModuleCompletion {
+  id: number
+  user_id: string
+  curriculum_id: number
+  module_number: number
+  completed_at: string
+  created_at: string
+  updated_at: string
+}
+
+export async function getModuleCompletions(userId: string, curriculumId: number): Promise<ModuleCompletion[]> {
+  try {
+    const result = await sql`
+      SELECT * FROM module_completions 
+      WHERE user_id = ${userId} AND curriculum_id = ${curriculumId}
+      ORDER BY module_number
+    `
+    return result as ModuleCompletion[]
+  } catch (error) {
+    console.error('Error fetching module completions:', error)
+    throw new Error('Failed to fetch module completions')
+  }
+}
+
+export async function toggleModuleCompletion(
+  userId: string,
+  curriculumId: number,
+  moduleNumber: number
+): Promise<{ completed: boolean }> {
+  try {
+    // Check if completion exists
+    const existing = await sql`
+      SELECT * FROM module_completions 
+      WHERE user_id = ${userId} 
+      AND curriculum_id = ${curriculumId}
+      AND module_number = ${moduleNumber}
+    `
+
+    if (existing.length > 0) {
+      // Delete if exists (marking as incomplete)
+      await sql`
+        DELETE FROM module_completions 
+        WHERE user_id = ${userId} 
+        AND curriculum_id = ${curriculumId}
+        AND module_number = ${moduleNumber}
+      `
+      return { completed: false }
+    } else {
+      // Insert if doesn't exist (marking as complete)
+      await sql`
+        INSERT INTO module_completions (user_id, curriculum_id, module_number)
+        VALUES (${userId}, ${curriculumId}, ${moduleNumber})
+      `
+      return { completed: true }
+    }
+  } catch (error) {
+    console.error('Error toggling module completion:', error)
+    throw new Error('Failed to toggle module completion')
+  }
+}
+
+export async function markModuleComplete(
+  userId: string,
+  curriculumId: number,
+  moduleNumber: number
+): Promise<void> {
+  try {
+    await sql`
+      INSERT INTO module_completions (user_id, curriculum_id, module_number)
+      VALUES (${userId}, ${curriculumId}, ${moduleNumber})
+      ON CONFLICT (user_id, curriculum_id, module_number) DO NOTHING
+    `
+  } catch (error) {
+    console.error('Error marking module complete:', error)
+    throw new Error('Failed to mark module complete')
+  }
+}
+
+export async function markModuleIncomplete(
+  userId: string,
+  curriculumId: number,
+  moduleNumber: number
+): Promise<void> {
+  try {
+    await sql`
+      DELETE FROM module_completions 
+      WHERE user_id = ${userId} 
+      AND curriculum_id = ${curriculumId}
+      AND module_number = ${moduleNumber}
+    `
+  } catch (error) {
+    console.error('Error marking module incomplete:', error)
+    throw new Error('Failed to mark module incomplete')
+  }
+}
+
+export async function getCurriculumProgress(userId: string, curriculumId: number): Promise<{
+  totalModules: number
+  completedModules: number
+  completionPercentage: number
+}> {
+  try {
+    // Get total modules from curriculum data
+    const curriculum = await getCurriculumById(curriculumId)
+    if (!curriculum || !curriculum.full_curriculum_data?.daily_modules) {
+      return { totalModules: 0, completedModules: 0, completionPercentage: 0 }
+    }
+
+    const totalModules = curriculum.full_curriculum_data.daily_modules.length
+
+    // Get completed modules count
+    const result = await sql`
+      SELECT COUNT(*) as count FROM module_completions 
+      WHERE user_id = ${userId} AND curriculum_id = ${curriculumId}
+    `
+    
+    const completedModules = parseInt(result[0].count as string)
+    const completionPercentage = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0
+
+    return { totalModules, completedModules, completionPercentage }
+  } catch (error) {
+    console.error('Error fetching curriculum progress:', error)
+    throw new Error('Failed to fetch curriculum progress')
+  }
+}
+
  

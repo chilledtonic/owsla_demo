@@ -4,9 +4,9 @@ import { AppLayout } from "@/components/app-layout"
 import { CurriculumContent } from "@/components/curriculum-content"
 import { deleteCurriculum, forkCurriculum } from "@/lib/actions"
 import { useCurriculumCache } from "@/lib/curriculum-cache"
-import { CurriculumData, CurriculumDataWithUser } from "@/lib/database"
+import { CurriculumData } from "@/lib/database"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -71,7 +71,7 @@ interface CurriculumViewProps {
   initialCurriculum: TransformedCurriculum;
   initialCurrentDay: number;
   initialActualDay: number;
-  rawCurriculum: CurriculumDataWithUser;
+  rawCurriculum: CurriculumData;
 }
 
 export function CurriculumView({ initialCurriculum, initialCurrentDay, initialActualDay, rawCurriculum }: CurriculumViewProps) {
@@ -80,9 +80,9 @@ export function CurriculumView({ initialCurriculum, initialCurrentDay, initialAc
   const curriculumCache = useCurriculumCache()
   const isMobile = useIsMobile()
   
-  const [curriculumData, setCurriculumData] = useState({ curriculum: initialCurriculum });
+  const [curriculumData] = useState({ curriculum: initialCurriculum });
   const [currentDay, setCurrentDay] = useState(initialCurrentDay)
-  const [actualDay, setActualDay] = useState(initialActualDay)
+  const [actualDay] = useState(initialActualDay)
   const [isForking, setIsForking] = useState(false)
 
   const handlePreviousDay = () => {
@@ -526,6 +526,7 @@ export function CurriculumView({ initialCurriculum, initialCurrentDay, initialAc
               onPreviousDay={handlePreviousDay}
               onNextDay={handleNextDay}
               actualDay={actualDay}
+              curriculumId={rawCurriculum.id}
             />
           </div>
         ) : (

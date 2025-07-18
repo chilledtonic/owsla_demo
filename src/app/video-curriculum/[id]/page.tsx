@@ -541,6 +541,7 @@ export default function VideoCurriculumPage({ params }: { params: Promise<{ id: 
               onPreviousDay={handlePreviousDay}
               onNextDay={handleNextDay}
               actualDay={actualDay}
+              curriculumId={curriculum?.id || curriculumId || 0}
             />
           </div>
         ) : (
